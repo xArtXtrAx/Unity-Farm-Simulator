@@ -18,6 +18,7 @@ Documento maestro de continuidad. Debe permitir retomar el proyecto en un chat n
 - **Plataforma inicial:** Windows PC
 - **Control prioritario:** DualSense, además de teclado y mouse
 - **Ruta local de Arturo:** `D:\Git\Unity-Farm-Simulator`
+- **Rama estable actual:** `main`
 - **Rama de cimentación concluida:** `chore/unity-project-foundation`
 - **Proyecto fuente de migración:** `xArtXtrAx/farming-game-A`
 - **Commit fuente congelado:** `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
@@ -120,7 +121,7 @@ La primera versión jugable será pequeña y deberá incluir:
 
 ## 6. Estado actual
 
-### Fase 1 — Cimentación del proyecto: COMPLETADA Y VALIDADA
+### Fase 1 — Cimentación del proyecto: COMPLETADA, VALIDADA E INTEGRADA
 
 - [x] Proyecto Unity 6.3 LTS Universal 3D / URP creado en el repositorio.
 - [x] `Visible Meta Files`, `Force Text`, `.gitignore` y `.gitattributes` configurados.
@@ -137,13 +138,13 @@ La primera versión jugable será pequeña y deberá incluir:
 - [x] Consola final: **0 errores y 0 advertencias**.
 - [x] Ruta de resultados confirmada bajo `jarturoga/Unity Farm Simulator`.
 - [x] `ProjectSettings/ProjectSettings.asset` versionado en `bd17f89`.
+- [x] PR #1 fusionado en `main` mediante el commit `ece618c`.
 - [x] No se detectaron bugs que requirieran entrada en `BUGS.MD`.
 
-### Estado de integración
+### Estado local pendiente
 
-- [x] Rama `chore/unity-project-foundation` lista para integrarse en `main`.
-- [ ] Abrir y fusionar el pull request de cimentación.
-- [ ] Sincronizar `main` localmente después de la fusión.
+- [ ] Arturo debe cambiar a `main` en GitHub Desktop y ejecutar **Fetch origin / Pull origin**.
+- [ ] Abrir Unity desde `main` y confirmar que la consola sigue limpia después de la fusión.
 
 ### Próxima fase
 
@@ -200,17 +201,23 @@ Objetivos inmediatos:
 - Commit `ba6b62f`: identidad centralizada y configurador automático del Editor.
 - Commit `bd17f89`: persistencia final de `ProjectSettings.asset` con la identidad correcta.
 - EditMode terminó en **2/2**, PlayMode en **1/1** y la consola en **0 errores / 0 advertencias**.
-- La Fase 1 se considera cerrada con evidencia visual y archivos versionados.
+
+### 2026-08-05 — Fase 1 integrada en main
+
+- Commit `d65ea25`: cierre documental de la cimentación.
+- PR #1 `chore: establish Unity 6.3 project foundation` abierto y revisado como fusionable.
+- PR #1 fusionado mediante merge commit `ece618c10dfa19e1189405b21aacdef1661cdc65`.
+- `main` contiene ahora la base completa y validada del proyecto Unity.
 
 ---
 
 ## 9. Próximo paso exacto
 
-1. Abrir un pull request de `chore/unity-project-foundation` hacia `main`.
-2. Revisar el diff y fusionar sin borrar todavía la rama remota hasta confirmar sincronización local.
-3. En GitHub Desktop, cambiar a `main` y ejecutar **Fetch origin / Pull origin**.
-4. Abrir Unity desde `main` y confirmar una última vez que la consola permanezca limpia.
-5. Crear la siguiente rama: `feature/lab-spatial-calibration`.
+1. En GitHub Desktop, cambiar de `chore/unity-project-foundation` a `main`.
+2. Ejecutar **Fetch origin** y **Pull origin**.
+3. Abrir el proyecto con Unity `6000.3.21f1` desde `main`.
+4. Confirmar consola en `0` errores y `0` advertencias.
+5. Obtener la rama remota `feature/lab-spatial-calibration` cuando esté creada y cambiar a ella.
 6. Documentar y decidir el modelo espacial 2.5D, cámara, escala y resolución antes de implementar movimiento.
 
 ---
