@@ -57,7 +57,7 @@ Desarrollar un simulador de granja 2.5D con una arquitectura limpia, escalable y
 ### 3.2 Versión y plantilla
 
 - **Versión instalada y fijada para el proyecto:** Unity 6.3 LTS `6000.3.21f1`.
-- **Plantilla prevista:** Universal 3D / URP.
+- **Plantilla:** Universal 3D / URP.
 - La elección está orientada a combinar sprites 2D con profundidad, iluminación, cámara y elementos tridimensionales propios de un juego 2.5D.
 - No abrir ni actualizar el proyecto con otra versión de Unity sin documentar y aprobar previamente la migración del editor.
 
@@ -270,22 +270,24 @@ El objetivo no es producir contenido abundante, sino validar el flujo completo U
 - [x] Instalación de Unity 6.3 LTS `6000.3.21f1`.
 - [x] Clonación del repositorio en `D:\Git\Unity-Farm-Simulator`.
 - [x] Creación de `.gitignore` para excluir cachés, archivos de IDE y builds generados por Unity.
+- [x] Materialización del proyecto Universal 3D / URP dentro de la raíz clonada.
+- [x] Apertura del proyecto desde `D:\Git\Unity-Farm-Simulator` con Unity `6000.3.21f1`.
+- [x] Finalización de la importación inicial sin errores visibles: consola en `0` errores, `0` advertencias y `0` mensajes.
 
 ### En curso
 
-- [ ] Sincronización local del `.gitignore` mediante GitHub Desktop.
-- [ ] Creación segura del proyecto Unity dentro del repositorio ya clonado.
+- [ ] Configuración de `Visible Meta Files` y `Force Text`.
+- [ ] Limpieza de recursos tutoriales de la plantilla URP.
+- [ ] Revisión de paquetes, estructura `_Project` y assemblies iniciales.
 - [ ] Confirmación de los módulos instalados junto al editor.
 
 ### Próximo paso inmediato
 
-1. En GitHub Desktop, ejecutar **Fetch origin** y **Pull origin** para descargar `.gitignore` y esta actualización.
-2. Crear un proyecto temporal con plantilla **Universal 3D** usando Unity 6.3 LTS.
-3. Cerrar el editor cuando termine la importación inicial.
-4. Copiar únicamente `Assets`, `Packages` y `ProjectSettings` desde el proyecto temporal a `D:\Git\Unity-Farm-Simulator`.
-5. Añadir la raíz clonada a Unity Hub mediante **Add/Open project from disk**.
-6. Abrirla exclusivamente con `6000.3.21f1` y comprobar que no existan errores de consola.
-7. Configurar serialización, archivos `.meta`, paquetes y assemblies para completar la **Fase 1**.
+1. Crear en GitHub Desktop la rama `chore/unity-project-foundation`, conservando en ella los cambios locales generados por Unity.
+2. Configurar `Version Control Mode: Visible Meta Files` y `Asset Serialization Mode: Force Text`.
+3. Retirar los recursos tutoriales de la plantilla mediante `Remove Readme Assets`.
+4. Revisar los cambios locales en GitHub Desktop sin hacer commit todavía.
+5. Preparar la estructura inicial, paquetes y assemblies para completar la **Fase 1**.
 
 ---
 
@@ -318,16 +320,23 @@ El objetivo no es producir contenido abundante, sino validar el flujo completo U
 
 - Arturo instaló Unity 6.3 LTS `6000.3.21f1` mediante Unity Hub.
 - El repositorio se clonó correctamente en `D:\Git\Unity-Farm-Simulator`.
-- La raíz del repositorio todavía contiene únicamente documentación y debe convertirse en proyecto Unity sin eliminar esos archivos.
-- El siguiente paso es generar un proyecto temporal Universal 3D y trasladar a la raíz solo las carpetas nativas necesarias.
+- Se eligió la plantilla Universal 3D / URP sin AI Assistant ni proveedor adicional de control de código fuente.
 
 ### 2026-08-05 — Protección inicial del repositorio Unity
 
 - Se creó `.gitignore` en `main` mediante el commit `04f6c9133a1960977cfd6f1db2bf74ea78f67c5e`.
 - Se excluyeron `Library`, `Temp`, `Obj`, `Logs`, `UserSettings`, builds, archivos generados de IDE y otros artefactos regenerables.
 - Los archivos `.meta` no se ignoran porque preservan las referencias de assets de Unity.
-- No se ejecutaron pruebas funcionales: el proyecto Unity todavía no ha sido materializado en la raíz del repositorio.
-- Acción requerida de Arturo: sincronizar con GitHub Desktop antes de abrir la raíz con Unity.
+
+### 2026-08-05 — Proyecto Unity abierto y validado inicialmente
+
+- Arturo materializó las carpetas nativas `Assets`, `Packages` y `ProjectSettings` dentro de `D:\Git\Unity-Farm-Simulator`.
+- Unity Hub abrió la raíz correcta con Unity 6.3 LTS `6000.3.21f1`.
+- URP cargó correctamente y terminó la importación inicial.
+- La consola fue revisada visualmente y mostró `0` errores, `0` advertencias y `0` mensajes.
+- Esta validación confirma que la base generada por la plantilla puede continuar hacia la configuración formal de la Fase 1.
+- No se ejecutaron todavía pruebas automatizadas ni build de Windows; aún no existe implementación funcional del juego.
+- Próxima acción requerida de Arturo: crear la rama local `chore/unity-project-foundation` desde GitHub Desktop antes de seguir modificando configuraciones y assets.
 
 ---
 
