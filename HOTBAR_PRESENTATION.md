@@ -6,8 +6,10 @@
 - Base original: `main` en `57d7d165cfba47dcc753a6fc9c484a7191ab068a`.
 - Commit funcional inicial: `9084ab05874ae8e7f013d701135d8e9ce1cef762`.
 - Corrección de compatibilidad NUnit: `6cb50b63a91cc35463419e9ad0b594036a56165c`.
-- Estado: **implementación, suites completas, inspección visual y controles manuales validados; publicación del prefab generado pendiente**.
-- Línea base validada de la rama: **166/166 EditMode**, **8/8 PlayMode**, **0 errores**.
+- Prefab generado: `a6e84425b72d9cfa656adf756bb69bfdbf6e599b`.
+- Merge automático de GitHub Desktop: `85e0365bad0df07c2d3b79a51b3de3047ecb6226`.
+- Estado: **fase cerrada y lista para PR**.
+- Línea base validada: **166/166 EditMode**, **8/8 PlayMode**, **0 errores**.
 
 ## Fuente congelada estudiada
 
@@ -68,7 +70,7 @@ La UI no replica reglas de catálogo, selección o inventario.
 3. semillas de nabo ×20;
 4. cinco slots vacíos.
 
-### Editor
+### Editor y prefab
 
 `InventoryHotbarAssetPipeline` genera reproduciblemente:
 
@@ -82,7 +84,20 @@ Comando manual:
 Tools > Farm Simulator > Rebuild Inventory Hotbar
 ```
 
-Contrato visual inicial:
+El prefab quedó versionado junto con:
+
+```text
+Assets/_Project/Resources/Prefabs/UI.meta
+Assets/_Project/Resources/Prefabs/UI/InventoryHotbar.prefab.meta
+```
+
+Su metadata conserva la firma:
+
+```text
+inventory-hotbar-prefab-v1
+```
+
+Contrato visual:
 
 - Canvas Screen Space Overlay;
 - referencia 960×540;
@@ -152,13 +167,7 @@ Corrección:
 Assert.That(view.IconSprites.Count, Is.EqualTo(expectedIds.Length));
 ```
 
-Commit:
-
-```text
-6cb50b63a91cc35463419e9ad0b594036a56165c
-```
-
-Después de la corrección, Arturo confirmó **166/166 EditMode** y **8/8 PlayMode**, sin errores.
+Después de la corrección, Arturo confirmó todas las suites sin errores.
 
 ## Validación visual y manual — aprobada
 
@@ -176,19 +185,20 @@ Arturo confirmó el 5 de agosto de 2026 que:
 - el movimiento y comportamiento del héroe permanecen intactos;
 - no se observaron errores adicionales.
 
-La fase queda aprobada técnica, visual y funcionalmente.
+## Pull previo al push del prefab
 
-## Asset generado pendiente de publicación
-
-El prefab generado existe localmente y fue utilizado por las pruebas, pero todavía no está publicado en GitHub. Deben versionarse exactamente:
+GitHub Desktop solicitó un Pull porque la documentación remota avanzó mientras el prefab se preparaba localmente. La integración automática creó el merge commit:
 
 ```text
-Assets/_Project/Resources/Prefabs/UI.meta
-Assets/_Project/Resources/Prefabs/UI/InventoryHotbar.prefab
-Assets/_Project/Resources/Prefabs/UI/InventoryHotbar.prefab.meta
+85e0365bad0df07c2d3b79a51b3de3047ecb6226
 ```
 
-El prefab debe quedar versionado porque `InventoryHotbarInstaller` lo carga mediante `Resources.Load`; el pipeline Editor permite reconstruirlo, pero una compilación o clon limpio necesita el asset incluido.
+No hubo conflictos manuales ni pérdida de archivos. El merge combinó:
+
+- `a6e84425b72d9cfa656adf756bb69bfdbf6e599b`: prefab y metadatos;
+- `f2c79fb6f5fb74c7c837602f427392e8c328176d`: validación documental.
+
+El historial intermedio se limpiará mediante **Squash and merge** al integrar el PR.
 
 ## Exclusiones
 
@@ -208,15 +218,6 @@ No se implementaron:
 
 El prefab, collider, spritesheet, animaciones y movimiento del héroe siguen intactos.
 
-## Próximo paso exacto
+## Criterio de integración
 
-1. En GitHub Desktop, confirmar que solo aparezcan los tres archivos del bloque `Resources/Prefabs/UI` indicados arriba.
-2. Hacer commit con el mensaje:
-
-```text
-Add generated inventory hotbar prefab
-```
-
-3. Pulsar **Push origin**.
-4. No modificar otros archivos ni regenerar escenas.
-5. Después del push, revisar el commit remoto, cerrar la bitácora y preparar el PR hacia `main`.
+La rama está lista para PR hacia `main` con **Squash and merge**. No requiere nuevas pruebas locales mientras el head funcional no cambie.
