@@ -10,6 +10,7 @@ namespace FarmSimulator.Presentation.Calibration
     {
         public const string GeneratedRootName = "Generated Calibration";
         public const string GroundObjectName = "Calibration Ground";
+        public const string GroundVisualObjectName = "Calibration Ground Visual";
         public const string SpriteProxyObjectName = "Sprite Proxy";
         public const string DepthStackObjectName = "Depth Stack Front";
 
@@ -90,15 +91,22 @@ namespace FarmSimulator.Presentation.Calibration
         {
             float width = SpatialModel.GridColumns * SpatialModel.GridCellSize;
             float height = SpatialModel.GridRows * SpatialModel.GridCellSize;
+            Vector3 groundPosition = new(0f, 0f, 0.2f);
 
-            GameObject ground = CreatePrimitive(
+            var ground = new GameObject(GroundObjectName);
+            ground.transform.SetParent(generatedRoot, false);
+            ground.transform.position = groundPosition;
+            ground.transform.localScale = new Vector3(width, height, 1f);
+
+            BoxCollider2D groundCollider = ground.AddComponent<BoxCollider2D>();
+            groundCollider.size = Vector2.one;
+
+            CreatePrimitive(
                 PrimitiveType.Cube,
-                GroundObjectName,
-                new Vector3(0f, 0f, 0.2f),
+                GroundVisualObjectName,
+                groundPosition,
                 new Vector3(width, height, 0.1f),
                 material);
-
-            ground.AddComponent<BoxCollider2D>();
         }
 
         private void BuildMapReferences(
