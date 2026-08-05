@@ -11,7 +11,7 @@ Este archivo complementa `BITÁCORA_GPT.MD`: la bitácora conserva el contexto g
 - **ABIERTO:** confirmado y pendiente de corrección.
 - **INVESTIGANDO:** se está buscando la causa raíz.
 - **BLOQUEADO:** no puede continuar hasta disponer de información, recurso o dependencia.
-- **CORREGIDO:** existe una solución implementada.
+- **CORREGIDO:** existe una solución implementada, pendiente de validación local.
 - **VERIFICADO:** la solución fue probada satisfactoriamente.
 - **NO REPRODUCIBLE:** no pudo reproducirse con la información disponible.
 - **DESCARTADO:** no es un bug, es comportamiento esperado o no se corregirá por una razón documentada.
@@ -32,7 +32,7 @@ Este archivo complementa `BITÁCORA_GPT.MD`: la bitácora conserva el contexto g
 ## 3. Formato de cada registro
 
 ```markdown
-## BUG-0001 — Título breve
+## BUG-0000 — Título breve
 
 - **Estado:** ABIERTO
 - **Severidad:** S2 — Alta
@@ -74,25 +74,84 @@ Qué debe comprobarse en futuras versiones para evitar que reaparezca.
 
 ## 4. Bugs activos
 
-No hay bugs registrados todavía. El proyecto Unity aún no ha sido creado o sincronizado con este repositorio.
+No hay bugs activos.
 
 ---
 
 ## 5. Bugs corregidos y verificados
 
-No hay entradas todavía.
+## BUG-0001 — Conflicto entre BoxCollider 3D y BoxCollider2D en el suelo de Lab
+
+- **Estado:** VERIFICADO
+- **Severidad:** S3 — Media
+- **Detectado:** 2026-08-05
+- **Verificado/cerrado:** 2026-08-05
+- **Versión de Unity:** `6000.3.21f1`
+- **Escena o sistema:** `Lab` / calibración espacial cenital
+- **Rama/commit afectado:** `feature/lab-spatial-calibration` en `5b3dbda`
+- **Corrección:** `cdb6cdd`
+- **Prueba de regresión:** `c8342a2`
+- **Reportado por:** Arturo y prueba PlayMode
+
+### Descripción
+
+La prueba `LabBuildsFrontFacingOrthographicXYCalibration` fallaba porque el objeto `Calibration Ground` no lograba recibir su `BoxCollider2D`. La consola registraba un conflicto entre componentes de colisión 3D y 2D.
+
+### Pasos para reproducir
+
+1. Sincronizar la rama en el estado `5b3dbda`.
+2. Abrir Unity y ejecutar `Test Runner → PlayMode → Run All`.
+3. Observar resultado **1/2** y el mensaje de conflicto en la consola.
+
+### Resultado esperado
+
+El suelo lógico debe contener un `BoxCollider2D`, no debe conservar un `Collider` 3D y las dos pruebas PlayMode deben aprobarse.
+
+### Evidencia
+
+```text
+Can't add component 'BoxCollider2D' to Calibration Ground because it conflicts with the existing 'BoxCollider'-derived component!
+```
+
+En el estado afectado, EditMode terminó en **3/3** y PlayMode en **1/2**.
+
+### Causa raíz
+
+`GameObject.CreatePrimitive(PrimitiveType.Cube)` agrega automáticamente un `BoxCollider` 3D. El código llamaba `Destroy` sobre ese collider, pero `Destroy` se procesa al final del frame. Antes de que desapareciera, se intentaba añadir `BoxCollider2D` al mismo objeto y Unity rechazaba la combinación.
+
+### Solución aplicada
+
+- `Calibration Ground` se crea como un `GameObject` lógico limpio.
+- El objeto lógico recibe directamente `BoxCollider2D`.
+- La representación verde vive por separado como `Calibration Ground Visual`.
+- Las primitivas visuales eliminan sus colliders 3D automáticos.
+- La prueba PlayMode comprueba que las referencias visuales no conserven colliders 3D.
+
+### Verificación
+
+Validación local de Arturo el 2026-08-05:
+
+- PlayMode: **2/2 aprobadas**.
+- Consola: sin errores y sin el mensaje de conflicto.
+- La escena cenital `Lab` se ejecutó correctamente desde `Bootstrap`.
+
+La prueba EditMode ya se había mantenido verde en **3/3** durante la detección y no dependía de la corrección de collider.
+
+### Notas de regresión
+
+No añadir colliders 2D a un objeto creado mediante `GameObject.CreatePrimitive` durante el mismo frame. Separar la representación visual 3D del objeto lógico que contiene Physics 2D, o usar una representación 2D nativa.
 
 ---
 
 ## 6. Reglas de mantenimiento
 
 1. Asignar un identificador incremental: `BUG-0001`, `BUG-0002`, etc.
-2. No borrar registros corregidos; moverlos a la sección histórica correspondiente.
+2. No borrar registros corregidos.
 3. Documentar la causa raíz cuando sea posible, no solo el síntoma.
 4. Vincular el commit o pull request que contiene la corrección.
 5. Un bug solo pasa de **CORREGIDO** a **VERIFICADO** después de una prueba satisfactoria.
 6. Si reaparece, conservar el registro original y marcarlo como **REABIERTO**.
-7. Evitar registrar solicitudes de funciones como bugs; esas deben quedar en la planificación o en issues separados.
+7. Evitar registrar solicitudes de funciones como bugs.
 
 ---
 
@@ -100,6 +159,6 @@ No hay entradas todavía.
 
 ### 2026-08-05
 
-- Se creó el registro de bugs.
-- Se definieron estados, niveles de severidad y plantilla estándar.
-- Estado inicial: sin bugs, porque todavía no existe implementación Unity dentro del repositorio.
+- Se creó el registro de bugs y se definieron estados y severidades.
+- Se añadió `BUG-0001` por el conflicto de colliders detectado en la calibración cenital.
+- `BUG-0001` quedó verificado con PlayMode **2/2** y consola limpia.

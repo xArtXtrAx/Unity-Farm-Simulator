@@ -1,5 +1,8 @@
 using System.Collections;
+using FarmSimulator.Application.Display;
 using FarmSimulator.Application.Scenes;
+using FarmSimulator.Application.Spatial;
+using FarmSimulator.Presentation.Calibration;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -33,6 +36,97 @@ namespace FarmSimulator.Tests.PlayMode
             Assert.Fail(
                 $"Bootstrap did not transition to '{ProjectSceneNames.Lab}' " +
                 $"within {maximumFrames} frames.");
+        }
+
+        [UnityTest]
+        public IEnumerator LabBuildsFrontFacingOrthographicXYCalibration()
+        {
+            AsyncOperation loadOperation = SceneManager.LoadSceneAsync(
+                ProjectSceneNames.Lab,
+                LoadSceneMode.Single);
+
+            Assert.That(loadOperation, Is.Not.Null);
+            yield return loadOperation;
+            yield return null;
+
+            LabSpatialCalibration calibration =
+                Object.FindFirstObjectByType<LabSpatialCalibration>();
+            Assert.That(calibration, Is.Not.Null);
+
+            Camera sceneCamera = Camera.main;
+            Assert.That(sceneCamera, Is.Not.Null);
+            Assert.That(sceneCamera.orthographic, Is.True);
+            Assert.That(
+                sceneCamera.orthographicSize,
+                Is.EqualTo(SpatialModel.CameraOrthographicSize).Within(0.001f));
+            Assert.That(
+                Vector3.Distance(
+                    sceneCamera.transform.position,
+                    new Vector3(0f, 0f, SpatialModel.CameraDepth)),
+                Is.LessThan(0.001f));
+            Assert.That(
+                Vector3.Dot(sceneCamera.transform.forward, Vector3.forward),
+                Is.GreaterThan(0.999f));
+
+            ReferenceAspectCamera aspectCamera =
+                sceneCamera.GetComponent<ReferenceAspectCamera>();
+            Assert.That(aspectCamera, Is.Not.Null);
+
+            NormalizedViewport expectedViewport =
+                PixelArtDisplayModel.CalculateViewport(
+                    Screen.width,
+                    Screen.height);
+            Assert.That(
+                sceneCamera.rect.x,
+                Is.EqualTo(expectedViewport.X).Within(0.001f));
+            Assert.That(
+                sceneCamera.rect.y,
+                Is.EqualTo(expectedViewport.Y).Within(0.001f));
+            Assert.That(
+                sceneCamera.rect.width,
+                Is.EqualTo(expectedViewport.Width).Within(0.001f));
+            Assert.That(
+                sceneCamera.rect.height,
+                Is.EqualTo(expectedViewport.Height).Within(0.001f));
+
+            GameObject ground = GameObject.Find(LabSpatialCalibration.GroundObjectName);
+            Assert.That(ground, Is.Not.Null);
+            Assert.That(ground.GetComponent<BoxCollider2D>(), Is.Not.Null);
+            Assert.That(ground.GetComponent<Collider>(), Is.Null);
+            Assert.That(
+                ground.transform.localScale.x,
+                Is.EqualTo(SpatialModel.GridColumns * SpatialModel.GridCellSize)
+                    .Within(0.001f));
+            Assert.That(
+                ground.transform.localScale.y,
+                Is.EqualTo(SpatialModel.GridRows * SpatialModel.GridCellSize)
+                    .Within(0.001f));
+
+            GameObject groundVisual = GameObject.Find(
+                LabSpatialCalibration.GroundVisualObjectName);
+            Assert.That(groundVisual, Is.Not.Null);
+
+            Assert.That(
+                calibration.GetComponentsInChildren<Collider>(includeInactive: true),
+                Is.Empty,
+                "Generated calibration visuals must not retain 3D colliders.");
+
+            GameObject spriteProxy =
+                GameObject.Find(LabSpatialCalibration.SpriteProxyObjectName);
+            Assert.That(spriteProxy, Is.Not.Null);
+            Assert.That(
+                spriteProxy.transform.localScale.x,
+                Is.EqualTo(SpatialModel.ReferenceCharacterWidth).Within(0.001f));
+            Assert.That(
+                spriteProxy.transform.localScale.y,
+                Is.EqualTo(SpatialModel.ReferenceCharacterHeight).Within(0.001f));
+            Assert.That(
+                spriteProxy.transform.position.z,
+                Is.LessThan(ground.transform.position.z));
+
+            GameObject depthStackFront = GameObject.Find(
+                LabSpatialCalibration.DepthStackObjectName);
+            Assert.That(depthStackFront, Is.Not.Null);
         }
     }
 }
