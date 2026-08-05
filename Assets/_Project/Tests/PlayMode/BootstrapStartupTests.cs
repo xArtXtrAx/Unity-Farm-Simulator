@@ -182,10 +182,48 @@ namespace FarmSimulator.Tests.PlayMode
                 Is.EqualTo(PlayerProxyFacingView.CalculateMarkerLocalPosition(
                     FacingDirection.Right)));
 
-            Assert.That(
+            EdgeCollider2D movementBounds =
                 GameObject.Find(LabSpatialCalibration.MovementBoundsObjectName)
-                    ?.GetComponent<EdgeCollider2D>(),
-                Is.Not.Null);
+                    ?.GetComponent<EdgeCollider2D>();
+            Assert.That(movementBounds, Is.Not.Null);
+            Assert.That(movementBounds.points, Has.Length.EqualTo(5));
+
+            float width = SpatialModel.GridColumns * SpatialModel.GridCellSize;
+            float height = SpatialModel.GridRows * SpatialModel.GridCellSize;
+            float mapLeft = -width * 0.5f + LabSpatialCalibration.MovementBoundsMargin;
+            float mapRight = width * 0.5f - LabSpatialCalibration.MovementBoundsMargin;
+            float mapBottom = -height * 0.5f + LabSpatialCalibration.MovementBoundsMargin;
+            float mapTop = height * 0.5f - LabSpatialCalibration.MovementBoundsMargin;
+
+            Vector2[] points = movementBounds.points;
+            float leftWall = points[0].x;
+            float bottomWall = points[0].y;
+            float topWall = points[1].y;
+            float rightWall = points[2].x;
+
+            float colliderMinX = playerCollider.offset.x - playerCollider.size.x * 0.5f;
+            float colliderMaxX = playerCollider.offset.x + playerCollider.size.x * 0.5f;
+            float colliderMinY = playerCollider.offset.y - playerCollider.size.y * 0.5f;
+            float colliderMaxY = playerCollider.offset.y + playerCollider.size.y * 0.5f;
+
+            float minimumRootX = leftWall - colliderMinX;
+            float maximumRootX = rightWall - colliderMaxX;
+            float minimumRootY = bottomWall - colliderMinY;
+            float maximumRootY = topWall - colliderMaxY;
+
+            Assert.That(
+                minimumRootX - PlayerProxyFacingView.HorizontalVisualExtent,
+                Is.GreaterThanOrEqualTo(mapLeft - 0.001f));
+            Assert.That(
+                maximumRootX + PlayerProxyFacingView.HorizontalVisualExtent,
+                Is.LessThanOrEqualTo(mapRight + 0.001f));
+            Assert.That(
+                minimumRootY - PlayerProxyFacingView.BottomVisualExtent,
+                Is.GreaterThanOrEqualTo(mapBottom - 0.001f));
+            Assert.That(
+                maximumRootY + PlayerProxyFacingView.TopVisualExtent,
+                Is.LessThanOrEqualTo(mapTop + 0.001f));
+
             Assert.That(
                 motor.Speed,
                 Is.EqualTo(PlayerMovementModel.DefaultSpeedUnitsPerSecond)
