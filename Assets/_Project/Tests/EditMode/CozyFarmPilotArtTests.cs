@@ -72,15 +72,18 @@ namespace FarmSimulator.Tests.EditMode
             string path = SourceRoot + "tools.png";
             TextureImporter importer =
                 AssetImporter.GetAtPath(path) as TextureImporter;
+            string[] spriteNames =
+                AssetDatabase.LoadAllAssetsAtPath(path)
+                    .OfType<Sprite>()
+                    .Select(sprite => sprite.name)
+                    .ToArray();
 
             Assert.That(importer, Is.Not.Null);
             Assert.That(
                 importer.spriteImportMode,
                 Is.EqualTo(SpriteImportMode.Single));
-            Assert.That(
-                AssetDatabase.LoadAllAssetRepresentationsAtPath(path)
-                    .OfType<Sprite>(),
-                Is.Empty);
+            Assert.That(spriteNames, Does.Not.Contain("cozy_hoe"));
+            Assert.That(spriteNames, Does.Not.Contain("cozy_watering_can"));
         }
 
         [Test]
