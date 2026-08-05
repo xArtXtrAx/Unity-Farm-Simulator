@@ -4,6 +4,8 @@ Documento maestro de continuidad del proyecto. Su objetivo es conservar el conte
 
 > **Regla de continuidad:** antes de iniciar trabajo en una conversación nueva, GPT debe leer este archivo, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, el estado actual del repositorio y los commits recientes.
 
+> **Regla crucial de sincronización:** toda nueva implementación, corrección o cambio técnico realizado por GPT debe ir seguido, dentro del mismo bloque de trabajo, por una actualización de esta bitácora. Ninguna implementación se considera terminada hasta registrar qué cambió, qué se comprobó, cuál es el estado resultante y cuál es el siguiente paso exacto. Esta regla existe para que, si el contexto del chat se interrumpe súbitamente, el proyecto pueda retomarse de inmediato usando únicamente el repositorio.
+
 ---
 
 ## 1. Identidad del proyecto
@@ -97,6 +99,22 @@ Al crear el proyecto se configurará:
 - `MonoBehaviour`, escenas, prefabs, animación y UI serán la capa de presentación.
 - Las pruebas Edit Mode protegerán reglas; las Play Mode protegerán integración con Unity.
 
+### 3.6 Bitácora transaccional obligatoria
+
+- Cada implementación o corrección realizada por GPT debe actualizar `BITÁCORA_GPT.MD` antes de dar el bloque de trabajo por concluido.
+- La actualización debe formar parte del mismo conjunto lógico de cambios y, cuando sea posible, del mismo commit o PR documentalmente coherente.
+- Debe registrarse como mínimo:
+  - objetivo y fase afectada;
+  - archivos y sistemas modificados;
+  - decisiones o supuestos relevantes;
+  - pruebas realmente ejecutadas y sus resultados;
+  - bugs abiertos, corregidos o pendientes de validación;
+  - estado exacto de la rama o implementación;
+  - próximo paso concreto y cualquier acción requerida de Arturo.
+- Si la implementación queda parcial, bloqueada o pendiente de prueba manual, debe decirse expresamente; nunca registrar como terminado lo que no se comprobó.
+- Si el chat se interrumpe antes de una respuesta final, la prioridad al recuperar acceso será actualizar la bitácora con el último estado verificable antes de continuar desarrollando.
+- Los detalles específicos de errores permanecerán en `BUGS.MD`; esta bitácora debe enlazar o resumir su efecto sobre el estado general.
+
 ---
 
 ## 4. División de responsabilidades
@@ -118,7 +136,7 @@ Al crear el proyecto se configurará:
 - Importadores, validadores y automatización de contenido.
 - Revisión del repositorio, commits, ramas, pull requests y CI cuando corresponda.
 - Pruebas automatizadas y documentación.
-- Actualización continua de esta bitácora, de la bitácora de migración y de `BUGS.MD`.
+- Actualización obligatoria de esta bitácora después de cada implementación o corrección, además del mantenimiento de la bitácora de migración y de `BUGS.MD`.
 
 ---
 
@@ -246,6 +264,7 @@ El objetivo no es producir contenido abundante, sino validar el flujo completo U
 - [x] Auditoría del repositorio `farming-game-A`.
 - [x] Confirmación de la línea base `dd32056` y del PR #43 fusionado.
 - [x] Creación de `MIGRACION_DESDE_FARMING_GAME_A.MD` con fases, contratos y criterios de cierre.
+- [x] Establecimiento de la actualización obligatoria de la bitácora después de cada implementación o corrección.
 
 ### En curso
 
@@ -281,23 +300,37 @@ El objetivo no es producir contenido abundante, sino validar el flujo completo U
 - Se decidió sustituir las herramientas genéricas web por las herramientas nativas de Unity.
 - Se creó `MIGRACION_DESDE_FARMING_GAME_A.MD` con once fases posteriores a la congelación de la fuente, criterios de paridad, riesgos y puertas de salida.
 
+### 2026-08-05 — Regla obligatoria de continuidad inmediata
+
+- Arturo estableció como requisito crucial que toda implementación de GPT vaya seguida de una actualización de esta bitácora.
+- Se convirtió el requisito en una puerta de cierre: una implementación no se considera terminada hasta que su estado quede documentado.
+- La actualización debe permitir reconstruir el punto exacto de trabajo incluso si la memoria del chat se interrumpe sin aviso.
+- Se definieron los datos mínimos que debe contener cada registro y la obligación de distinguir entre completado, parcial, bloqueado y pendiente de validación manual.
+
 ---
 
 ## 11. Protocolo de actualización
 
-Al terminar cada bloque importante de trabajo, actualizar este archivo con:
+### Regla obligatoria
+
+Después de **cada implementación, corrección o cambio técnico realizado por GPT**, actualizar esta bitácora antes de declarar terminado el bloque de trabajo. No esperar al final de una fase grande ni acumular varias implementaciones sin documentarlas.
+
+Cada actualización debe registrar:
 
 - Fecha.
 - Objetivo realizado.
 - Fase de migración afectada.
 - Archivos o sistemas modificados.
 - Decisiones tomadas y motivo.
-- Pruebas ejecutadas y resultado.
-- Bugs abiertos o corregidos.
-- Estado actual del juego.
+- Pruebas realmente ejecutadas y resultado.
+- Bugs abiertos, corregidos o pendientes.
+- Estado exacto del juego, rama o PR.
 - Próximo paso concreto.
+- Cualquier acción manual requerida de Arturo.
 
-No convertir la bitácora en un volcado de cada comando. Registrar decisiones, resultados y contexto que permitan continuar el proyecto.
+Cuando un cambio sea únicamente documental o administrativo, bastará un registro breve. Cuando sea funcional, el registro debe contener suficiente información para que otro chat pueda continuar sin reconstruir el contexto desde cero.
+
+No convertir la bitácora en un volcado de cada comando. Registrar decisiones, resultados, límites y contexto operativo que permitan continuar el proyecto.
 
 ---
 
@@ -306,6 +339,8 @@ No convertir la bitácora en un volcado de cada comando. Registrar decisiones, r
 En una conversación nueva, utilizar una instrucción equivalente a:
 
 > Continúa el desarrollo del repositorio `xArtXtrAx/Unity-Farm-Simulator`. Antes de modificar archivos, lee `BITÁCORA_GPT.MD`, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, el estado actual del repositorio y los commits recientes. Resume brevemente el estado del proyecto y continúa desde el próximo paso documentado.
+
+La bitácora debe poder indicar por sí misma cuál fue la última implementación, qué quedó comprobado, qué está pendiente y qué debe hacerse inmediatamente después.
 
 ---
 
