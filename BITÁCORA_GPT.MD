@@ -1,6 +1,6 @@
 # BITÁCORA GPT — Unity Farm Simulator
 
-Documento maestro de continuidad. Debe permitir retomar el proyecto sin depender de la memoria del chat.
+Documento maestro de continuidad. Debe permitir reanudar el proyecto sin depender de la memoria del chat.
 
 > **Regla de continuidad:** antes de modificar el repositorio, leer `CONTINUIDAD_GPT.md` desde `main`; después leer este archivo, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, ramas y commits recientes.
 
@@ -18,7 +18,7 @@ Documento maestro de continuidad. Debe permitir retomar el proyecto sin depender
 - **Control prioritario:** DualSense, además de teclado y mouse
 - **Ruta local:** `D:\Git\Unity-Farm-Simulator`
 - **Rama estable:** `main`
-- **Rama activa:** `feature/player-prefab-depth-sorting`
+- **Próxima rama:** `feature/domain-item-inventory-foundation`
 - **Proyecto fuente:** `xArtXtrAx/farming-game-A`
 - **Commit fuente congelado:** `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
 - **Identidad Unity:** `jarturoga` / `Unity Farm Simulator` / `com.jarturoga.unityfarmsimulator`
@@ -47,6 +47,18 @@ Arquitectura:
 - `FarmSimulator.Tests.EditMode`
 - `FarmSimulator.Tests.PlayMode`
 
+Regla de dependencias:
+
+```text
+Domain
+  ↑
+Application
+  ↑
+Infrastructure / Presentation
+```
+
+`Domain` no depende de `UnityEngine`.
+
 ---
 
 ## 3. Fases completadas e integradas
@@ -67,106 +79,114 @@ WASD, flechas, stick, D-pad, zona muerta, diagonales, orientación, collider de 
 
 Spritesheet congelado `src/assets/hero_hd.png`, 192 × 288 px, frames 64 × 72, idle y walk en cuatro direcciones a 8 FPS. PNG, ocho clips y Animator versionados.
 
-Validación local:
+Validación:
 
 - EditMode: **27/27**.
 - PlayMode: **5/5**.
 - Consola: **0 errores y 0 advertencias**.
-- Teclado y DualSense aprobados.
-- Sprite, animación, pivote y límites aprobados.
+- Teclado, DualSense, sprite, animación, pivote y límites aprobados.
 
 Integración:
 
 - PR #4: `Add animated farmer sprite and import pipeline`.
 - Merge en `main`: `d04a35934df167db1c6366ee59846c36a0228470`.
-- Registro de integración: `8ee1e35d689f7ea71a528da5d6f8fdec7ae45d42`.
 
-Bugs verificados: `BUG-0001` a `BUG-0006`.
+### Fase 5 — Prefab reutilizable y profundidad visual
 
----
+Incluye:
 
-## 4. Fase 5 — Prefab reutilizable y profundidad visual: VALIDADA LOCALMENTE; VERSIONADO LOCAL PENDIENTE
+- Player prefab reutilizable;
+- `Rigidbody2D`, collider de pies, input, motor, sprite y Animator dentro del prefab;
+- sorting layers para suelo, mundo, actores, efectos y UI;
+- orden dinámico por coordenada Y de los pies;
+- referencia morada 2D para comprobar oclusión delante/detrás;
+- pipeline de generación y recursos Unity versionados;
+- instalación idempotente en `Lab`;
+- pruebas de composición, generación y profundidad.
 
-Rama: `feature/player-prefab-depth-sorting`.
+Bugs de la fase:
 
-### Commits funcionales
+- `BUG-0005`: colisión entre `FarmSimulator.Application` y `UnityEngine.Application`; **VERIFICADO**.
+- `BUG-0006`: no existía referencia 2D compatible para validar oclusión; **VERIFICADO**.
 
-- `9e09fdb` — implementación inicial del prefab y orden visual.
-- `489851d` — endurece el ciclo de generación del prefab y sorting layers.
-- `a9a3fe2` — corrige la colisión de namespace en `PlayerSpriteAnimator`.
-- `19147bd` — añade referencia visual 2D de profundidad.
-- `b2e746a` — instala la referencia dentro de la calibración del laboratorio.
-- `e93efe9` — prueba ambas relaciones delante/detrás del jugador.
-
-### Implementación principal
-
-- [x] `TopDownSortingModel` puro en Application.
-- [x] Los pies más abajo reciben un `sortingOrder` mayor y se renderizan delante.
-- [x] Cuantización determinista: base 10000 y 100 órdenes por unidad.
-- [x] Sorting layers para suelo, objetos, actores, efectos y UI.
-- [x] `TopDownSpriteSorting` actualiza el `SpriteRenderer` desde la Y de los pies.
-- [x] `PlayerPrefabIdentity` identifica el prefab generado.
-- [x] `PlayerPrefabAssetCatalog` centraliza rutas, nombres y firma.
-- [x] `PlayerPrefabAssetPipeline` genera el Player prefab reutilizable.
-- [x] El prefab conserva Rigidbody2D, collider de pies, input, motor, sprite, Animator, animación, sorting y marcador.
-- [x] `PlayerSpriteRuntimeInstaller` instancia el prefab en lugar de construir el jugador manualmente.
-- [x] El pipeline espera la recarga de AssetDatabase después de modificar sorting layers.
-- [x] La firma del prefab permite regenerarlo cuando cambia su composición.
-- [x] El laboratorio contiene una referencia 2D solapable que usa el mismo sistema de sorting por pies.
-
-### Bugs de la fase
-
-#### BUG-0005 — compilación
-
-Unity abrió inicialmente en Safe Mode por la resolución ambigua de `Application.isPlaying`. Se corrigió con `global::UnityEngine.Application.isPlaying`.
-
-Verificación:
-
-- Unity abrió fuera de Safe Mode.
-- Consola: **0 errores y 0 advertencias**.
-- Prefab reutilizable y sorting layers generados.
-- Estado: **VERIFICADO**.
-
-#### BUG-0006 — no existía una referencia visual compatible
-
-El jugador modificaba correctamente su `sortingOrder`, pero las primitivas 3D opacas del laboratorio no podían intercalarse con un `SpriteRenderer` transparente.
-
-Corrección:
-
-- `LabDepthSortingReference`.
-- Rectángulo morado 2D de **1.5 × 2.25 unidades**.
-- Pivote inferior como punto de pies.
-- Pies en `(0, 0.65)`.
-- Sin collider.
-- `SpriteRenderer`, sorting layer `Actors` y `TopDownSpriteSorting` iguales al jugador.
-- Prueba PlayMode que exige ambas relaciones delante/detrás.
-
-Verificación de Arturo:
-
-- el rectángulo morado apareció correctamente;
-- al caminar hacia arriba y superar su línea de pies, el personaje se ocultó detrás;
-- al regresar hacia abajo, el personaje volvió a mostrarse delante;
-- estado: **VERIFICADO**.
-
-### Validación automatizada final — 2026-08-05
-
-Arturo confirmó:
+Validación local de Arturo — 2026-08-05:
 
 - EditMode: **36/36**.
 - PlayMode: **6/6**.
-- Todas las pruebas pasaron sin errores.
-- La profundidad dinámica varió aproximadamente entre **9600 y 10400** al recorrer el laboratorio.
-- La oclusión visual delante/detrás funcionó en ambos sentidos.
+- Consola: **0 errores y 0 advertencias**.
+- Teclado y DualSense aprobados.
+- Límites aprobados.
+- `Order in Layer`: aproximadamente **9600–10400**.
+- Jugador detrás al superar hacia arriba la línea de pies de la referencia y delante al regresar hacia abajo.
 
-### Recursos generados localmente
+Recursos versionados:
 
-Unity generó o actualizó:
+- `Assets/_Project/Resources/Prefabs/Player/Player.prefab`;
+- sus metadatos de carpetas y asset;
+- `ProjectSettings/TagManager.asset`.
 
-- `ProjectSettings/TagManager.asset` con las sorting layers;
-- Player prefab bajo la ruta definida en `PlayerPrefabAssetCatalog`;
-- metadatos de carpetas y del prefab asociados.
+Integración:
 
-Estos cambios todavía son locales y no están protegidos por GitHub hasta hacer commit y push. No hacer commit antes de revisar la lista completa en GitHub Desktop.
+- Commit de recursos: `258de79c40cb8f419f1f9a4b7d737c379015c6e1`.
+- Cabeza final de rama: `b4db4b915119effa2e1f1c5eb2e83f1d51f47929`.
+- PR #5: `Add reusable player prefab and top-down depth sorting`.
+- Merge en `main`: `341051f097d9d70796e69b9cddc9277ba3902ed0`.
+
+Bugs verificados acumulados: `BUG-0001` a `BUG-0006`.
+
+---
+
+## 4. Próxima fase — Catálogo de objetos e inventario de dominio
+
+Rama prevista:
+
+```text
+feature/domain-item-inventory-foundation
+```
+
+Este bloque inicia el núcleo de dominio recomendado en la migración. No añade todavía hotbar visual ni interacción en escenas.
+
+### Fuente congelada que debe estudiarse
+
+- `src/game/data/items.ts`
+- `src/game/inventory/InventoryState.ts`
+- `src/game/inventory/InventoryManager.ts`
+- pruebas fuente relacionadas con catálogo e inventario
+
+### Alcance funcional
+
+1. IDs estables de objetos.
+2. Categorías y definiciones puras de dominio.
+3. Catálogo inicial de ocho objetos:
+   - `hoe`;
+   - `watering-can`;
+   - `turnip-seeds`;
+   - `turnip`;
+   - `carrot-seeds`;
+   - `carrot`;
+   - `cabbage-seeds`;
+   - `cabbage`.
+4. Precios y límites de stack equivalentes a la fuente.
+5. `InventoryState` de ocho slots por defecto.
+6. Selección directa y ciclo con wrap-around.
+7. Adición atómica: si no cabe toda la cantidad, no mutar nada.
+8. Completar stacks existentes antes de usar slots vacíos.
+9. Consumo desde slot seleccionado o índice explícito.
+10. Snapshot y restauración defensiva.
+11. Estado inicial: azada, regadera y veinte semillas de nabo en los tres primeros slots.
+12. Pruebas EditMode puras; sin cargar escenas.
+
+### Restricciones arquitectónicas
+
+- `FarmSimulator.Domain` no debe depender de `UnityEngine`.
+- No traducir TypeScript línea por línea.
+- Conservar comportamientos, IDs y atomicidad.
+- No crear todavía UI, ScriptableObjects ni almacenamiento; esos consumidores vendrán después.
+- Las colecciones expuestas no deben permitir mutar el estado interno accidentalmente.
+
+### Puerta de salida
+
+El catálogo y el inventario pasan pruebas EditMode exhaustivas sin abrir Unity Play Mode, incluyendo límites, datos inválidos, stacking, capacidad, atomicidad, consumo, selección y snapshots.
 
 ---
 
@@ -191,23 +211,25 @@ Los cambios exclusivamente locales siguen siendo el único estado que GitHub no 
 
 ## 6. Próximo paso exacto
 
-1. Detener Play Mode.
-2. Cerrar Unity para que todos los archivos generados queden liberados y escritos.
-3. Abrir GitHub Desktop en `feature/player-prefab-depth-sorting`.
-4. Revisar la lista completa de cambios locales.
-5. Enviar una captura donde se vean todos los archivos modificados o añadidos.
-6. No desmarcar archivos ni hacer commit todavía.
-7. Tras confirmar que solo contiene el prefab, sus metadatos y `ProjectSettings/TagManager.asset`, crear un commit local para los recursos generados.
-8. Hacer push, revisar el commit remoto y preparar el PR de Fase 5 hacia `main`.
+1. Crear `feature/domain-item-inventory-foundation` desde el `main` que contiene el PR #5.
+2. Actualizar `CONTINUIDAD_GPT.md` para apuntar a la nueva rama.
+3. En la nueva rama, estudiar los archivos fuente congelados del catálogo e inventario y localizar sus pruebas.
+4. Documentar las reglas extraídas antes de implementar.
+5. Implementar primero tipos y catálogo puros en `FarmSimulator.Domain`.
+6. Implementar `InventoryState` y snapshots sin `UnityEngine`.
+7. Añadir pruebas EditMode de cada regla y regresión.
+8. No crear UI ni modificar escenas en este bloque.
+9. No afirmar que Unity compila o que las pruebas pasan hasta validación local de Arturo.
+10. Actualizar esta bitácora tras cada implementación o corrección.
 
 ---
 
 ## 7. Línea base pendiente de migrar
 
-Granja, casa, mercado, hotbar, inventario, almacenamiento, doce parcelas, herramientas, tres cultivos, tienda, economía, envíos, reloj, estaciones, sueño, fin de día y guardado JSON versionado. Detalle en `MIGRACION_DESDE_FARMING_GAME_A.MD`.
+Hotbar visual, almacenamiento, economía, tiempo, agricultura, herramientas, tres cultivos, interacciones, granja, casa, mercado, envíos, estaciones, sueño, fin de día y guardado JSON versionado. Detalle en `MIGRACION_DESDE_FARMING_GAME_A.MD`.
 
 ---
 
 ## 8. Protocolo para chat nuevo
 
-> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`; después sigue el orden de lectura y el “Próximo paso exacto” que ahí se indican. No asumas que los cambios locales pendientes ya fueron versionados. Tras cada implementación o corrección, actualiza `BITÁCORA_GPT.MD` y mantén actualizado `CONTINUIDAD_GPT.md` cuando cambie la rama activa, la fase o el estado.
+> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`; después sigue el orden de lectura y el “Próximo paso exacto”. La Fase 5 está integrada mediante el PR #5. La siguiente fase comienza en `feature/domain-item-inventory-foundation` y debe implementar catálogo e inventario puros de dominio, sin UI ni escenas.
