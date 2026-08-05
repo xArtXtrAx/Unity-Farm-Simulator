@@ -127,12 +127,11 @@ Cambios implementados:
 ### Validación local del estado `5b3dbda`
 
 - [x] EditMode: **3/3 aprobadas**.
-- [ ] PlayMode: **1/2 aprobada**.
-- [x] Se identificó la prueba fallida: `LabBuildsFrontFacingOrthographicXYCalibration`.
+- [x] Se identificó la prueba PlayMode fallida: `LabBuildsFrontFacingOrthographicXYCalibration`.
 - [x] Consola mostró conflicto entre `BoxCollider` 3D y `BoxCollider2D`.
 - [x] Incidente registrado como `BUG-0001` en `BUGS.MD`.
 
-### BUG-0001 — Corrección remota pendiente de verificación
+### BUG-0001 — Corrección aplicada
 
 Causa raíz:
 
@@ -147,16 +146,22 @@ Corrección aplicada:
 - La primitiva verde queda en un objeto visual separado y sus colliders 3D se eliminan normalmente.
 - Commit `c8342a2`: refuerza PlayMode para verificar que no queden colliders 3D en los objetos visuales generados.
 - Commit `a791641`: registra `BUG-0001` con causa, evidencia y solución.
-- Estado del bug: **CORREGIDO**, no **VERIFICADO** hasta repetir pruebas localmente.
+- Estado del bug: **CORREGIDO**, pendiente de evidencia explícita del resultado automatizado final para marcarlo **VERIFICADO**.
+
+### Validación visual posterior a la corrección
+
+- [x] Arturo sincronizó la corrección y ejecutó `Bootstrap → Lab` correctamente.
+- [x] La pestaña Game muestra una cuadrícula rectangular alineada a pantalla.
+- [x] El mapa técnico cenital muestra caminos, parcelas, estanque, árboles y referencias de sprites sin perspectiva isométrica.
+- [x] La dirección visual coincide con el objetivo de una base tipo Harvest Moon/Stardew Valley.
+- [x] La aplicación entra en Play Mode y construye la calibración sin bloquearse.
 
 Pendiente:
 
-- [ ] Sincronizar los commits posteriores a `5b3dbda`.
-- [ ] Unity debe compilar sin errores.
-- [ ] EditMode esperado: **3/3**.
-- [ ] PlayMode esperado: **2/2**.
-- [ ] La consola no debe volver a mostrar el conflicto de colliders.
-- [ ] Abrir `Bootstrap`, entrar en Play y evaluar la vista cenital corregida.
+- [ ] Confirmar mediante Test Runner que PlayMode termina en **2/2**.
+- [ ] Confirmar consola final sin errores ni advertencias relacionadas con colliders.
+- [ ] Tras esa evidencia, cambiar `BUG-0001` a **VERIFICADO**.
+- [ ] Decidir resolución base, relación de aspecto y Pixels Per Unit.
 - [ ] No fusionar todavía esta rama.
 
 ---
@@ -169,16 +174,12 @@ El proyecto anterior contiene granja, casa, mercado, personaje, teclado/mouse/ga
 
 ## 8. Próximo paso exacto
 
-1. Detener Play Mode y cerrar Unity.
-2. En GitHub Desktop, permanecer en `feature/lab-spatial-calibration`.
-3. Ejecutar **Fetch origin** y **Pull origin**.
-4. Abrir Unity `6000.3.21f1` y esperar compilación.
-5. Limpiar la consola antes de volver a probar.
-6. Ejecutar EditMode: resultado esperado **3/3**.
-7. Ejecutar PlayMode: resultado esperado **2/2**.
-8. Confirmar que ya no aparece el mensaje `Can't add component 'BoxCollider2D'...`.
-9. Abrir `Assets/_Project/Scenes/Bootstrap.unity`, pulsar Play y enviar captura de la pestaña Game.
-10. Tras validar la corrección, cambiar `BUG-0001` a **VERIFICADO** y continuar con resolución base, relación de aspecto y Pixels Per Unit.
+1. Ejecutar `Test Runner → PlayMode → Run All`.
+2. Confirmar resultado **2/2**.
+3. Revisar que la consola no muestre el conflicto `Can't add component 'BoxCollider2D'...`.
+4. Enviar captura de Test Runner y consola.
+5. Marcar `BUG-0001` como **VERIFICADO**.
+6. Continuar con la decisión de resolución base, relación de aspecto y Pixels Per Unit antes de implementar movimiento.
 
 ---
 
