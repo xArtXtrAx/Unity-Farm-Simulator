@@ -154,7 +154,7 @@ Arturo observó que el marcador lateral amarillo cambiaba correctamente de direc
 Corrección implementada:
 
 - Commit `dd7357c` — `fix: center player facing marker`.
-- Reconciliación de código y documentación: `40ba7e7`.
+- Reconciliación final de código y documentación: `7249c58`.
 - Las posiciones ahora se calculan desde el ancho y alto reales del personaje.
 - Izquierda y derecha se centran verticalmente sobre el cuerpo.
 - Arriba queda sobre la cabeza y abajo bajo los pies.
