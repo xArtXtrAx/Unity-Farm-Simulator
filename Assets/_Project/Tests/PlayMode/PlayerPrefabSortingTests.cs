@@ -49,6 +49,25 @@ namespace FarmSimulator.Tests.PlayMode
                 renderer.sortingLayerName,
                 Is.EqualTo(TopDownSortingLayers.Actors));
 
+            GameObject depthReference = GameObject.Find(
+                LabDepthSortingReference.ObjectName);
+            Assert.That(depthReference, Is.Not.Null);
+
+            TopDownSpriteSorting referenceSorting =
+                depthReference.GetComponent<TopDownSpriteSorting>();
+            SpriteRenderer referenceRenderer =
+                depthReference.GetComponent<SpriteRenderer>();
+            Assert.That(referenceSorting, Is.Not.Null);
+            Assert.That(referenceRenderer, Is.Not.Null);
+            Assert.That(
+                referenceRenderer.sortingLayerName,
+                Is.EqualTo(TopDownSortingLayers.Actors));
+            Assert.That(
+                referenceRenderer.sortingOrder,
+                Is.EqualTo(
+                    TopDownSortingModel.OrderForFeetY(
+                        LabDepthSortingReference.FeetPosition.y)));
+
             player.transform.position = new Vector3(0f, 2f, -0.55f);
             sorting.Refresh();
             int higherFeetOrder = renderer.sortingOrder;
@@ -63,6 +82,28 @@ namespace FarmSimulator.Tests.PlayMode
                 lowerFeetOrder,
                 Is.EqualTo(TopDownSortingModel.OrderForFeetY(-2f)));
             Assert.That(lowerFeetOrder, Is.GreaterThan(higherFeetOrder));
+
+            player.transform.position = new Vector3(
+                0f,
+                LabDepthSortingReference.FeetPosition.y + 1f,
+                -0.55f);
+            sorting.Refresh();
+            referenceSorting.Refresh();
+            Assert.That(
+                renderer.sortingOrder,
+                Is.LessThan(referenceRenderer.sortingOrder),
+                "The player must render behind the reference when its feet are higher.");
+
+            player.transform.position = new Vector3(
+                0f,
+                LabDepthSortingReference.FeetPosition.y - 1f,
+                -0.55f);
+            sorting.Refresh();
+            referenceSorting.Refresh();
+            Assert.That(
+                renderer.sortingOrder,
+                Is.GreaterThan(referenceRenderer.sortingOrder),
+                "The player must render in front of the reference when its feet are lower.");
 
             GameObject samePlayer = GameObject.Find(
                 LabSpatialCalibration.PlayablePlayerObjectName);
