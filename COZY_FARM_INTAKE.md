@@ -3,6 +3,7 @@
 ## Estado actual
 
 - Rama: `chore/cozy-farm-art-intake`.
+- Head funcional A3 corregido: `0a05af5a50538e31acdd849d7eb603d4a6096c76`.
 - El héroe actual se conserva sin cambios.
 - El paquete completo `full version.zip` permanece fuera del repositorio.
 - A1, recepción de cinco hojas fuente: **VALIDADA LOCALMENTE**.
@@ -115,13 +116,15 @@ Tools > Farm Simulator > Rebuild Cozy Farm Showcase
 
 La escena es independiente de `Lab` y contiene:
 
-- cámara ortográfica con viewport lógico 16:9;
+- cámara ortográfica basada en `SpatialModel.CameraOrthographicSize` (**4.21875**) y `ReferenceAspectCamera`;
 - fondo de césped;
 - cuatro muestras de terreno;
 - tres objetos cosechados;
 - tres bolsas de semillas;
 - dieciocho etapas de cultivo distribuidas en tres filas;
 - una instancia conectada al prefab actual del héroe, colocada sobre una referencia de tierra para comparar escala.
+
+Los fondos y muestras se construyen con parches de sprites individuales. No se usa `SpriteDrawMode.Tiled`, evitando depender de una malla Full Rect o producir advertencias con sprites Tight.
 
 No se añadieron Tilemaps, paletas, UI, hotbar, integración de inventario ni lógica de juego.
 
@@ -132,7 +135,7 @@ No se añadieron Tilemaps, paletas, UI, hotbar, integración de inventario ni l�
 - generación y firma de la escena;
 - presencia de grupos y sprites curados;
 - uso del prefab vigente del héroe sin reemplazarlo;
-- cámara ortográfica y `ReferenceAspectCamera`.
+- cámara ortográfica conforme al contrato central de `SpatialModel` y presencia de `ReferenceAspectCamera`.
 
 Resultado esperado, todavía no confirmado localmente:
 
