@@ -9,12 +9,13 @@ Punto de entrada permanente para retomar el desarrollo sin depender de la memori
 - **Repositorio:** `xArtXtrAx/Unity-Farm-Simulator`
 - **Rama estable:** `main`
 - **Rama activa:** `feature/inventory-hotbar-presentation`
-- **Head remoto registrado de la rama:** `19c3d73a349426990be90b7ba99bf8baa2a04664`
+- **Head remoto registrado de la rama:** `f2c79fb6f5fb74c7c837602f427392e8c328176d`
 - **Commit funcional inicial:** `9084ab05874ae8e7f013d701135d8e9ce1cef762`
 - **Corrección NUnit:** `6cb50b63a91cc35463419e9ad0b594036a56165c`
 - **Bloque actual:** presentación de inventario y hotbar
-- **Estado:** compilación, prefab y suites completas validados; inspección visual y controles manuales en `Lab` pendientes
+- **Estado:** implementación, suites, inspección visual y controles manuales validados; publicación del prefab generado pendiente
 - **Validación técnica de la rama:** **166/166 EditMode**, **8/8 PlayMode**, **0 errores**
+- **Validación manual:** hotbar, teclado, teclado numérico, rueda, L1/R1 y movimiento del héroe aprobados
 - **Última integración:** PR #7 — `Add Cozy Farm pilot art and visual calibration`
 - **Squash commit PR #7:** `7860095d0d165c83585f21579e9794ea57ec0a35`
 - **Bugs activos:** ninguno
@@ -73,7 +74,7 @@ Alias provisionales:
 
 La escala 1.5 todavía no se ha trasladado al prefab real.
 
-## Hotbar — validación técnica completada
+## Hotbar — validación completa
 
 Fuente congelada estudiada en `farming-game-A`:
 
@@ -116,6 +117,17 @@ Pruebas añadidas y confirmadas:
 - total final: **8/8 PlayMode**;
 - errores: **0**.
 
+Validación manual confirmada por Arturo el 5 de agosto de 2026:
+
+- hotbar inferior centrada;
+- `AZ`, `RG`, semillas de nabo `×20` y cinco slots vacíos correctos;
+- nombre del objeto seleccionado legible;
+- teclas 1–8 y teclado numérico correctos;
+- rueda del mouse correcta;
+- L1/R1 con DualSense correctos;
+- movimiento del héroe intacto;
+- sin errores observados.
+
 ## Incidencia de NUnit — resuelta
 
 Primera ejecución local:
@@ -145,6 +157,18 @@ Guía operativa de la rama:
 HOTBAR_PRESENTATION.md
 ```
 
+## Asset generado pendiente de publicación
+
+La revisión remota confirma que GitHub todavía no contiene la carpeta `Assets/_Project/Resources/Prefabs/UI`. Deben publicarse desde el proyecto local exactamente:
+
+```text
+Assets/_Project/Resources/Prefabs/UI.meta
+Assets/_Project/Resources/Prefabs/UI/InventoryHotbar.prefab
+Assets/_Project/Resources/Prefabs/UI/InventoryHotbar.prefab.meta
+```
+
+El prefab debe quedar versionado porque `InventoryHotbarInstaller` lo carga mediante `Resources.Load`. El pipeline Editor permite reconstruirlo, pero una compilación o clon limpio necesita el asset.
+
 ## Exclusiones de la rama activa
 
 No se implementaron:
@@ -165,20 +189,17 @@ El prefab, collider, spritesheet, animaciones y movimiento del héroe permanecen
 
 ## Próxima acción local
 
-1. Abrir `Bootstrap` o `Lab` y pulsar Play.
-2. Confirmar visualmente:
-   - hotbar inferior centrada;
-   - slot 1 `AZ` seleccionado;
-   - slot 2 `RG`;
-   - slot 3 con icono de semillas y `×20`;
-   - slots 4–8 vacíos;
-   - nombre del objeto seleccionado legible.
-3. Probar selección con teclas 1–8 y teclado numérico.
-4. Probar ciclo con rueda del mouse.
-5. Probar L1/R1 con DualSense.
-6. Confirmar que el movimiento del héroe permanezca intacto.
-7. Compartir una captura y observaciones de tamaño, posición, contraste o legibilidad.
-8. No abrir PR ni hacer commit manual de assets generados hasta cerrar la revisión visual.
+1. En GitHub Desktop, permanecer en `feature/inventory-hotbar-presentation` y hacer Fetch/Pull.
+2. Confirmar que aparezcan únicamente los tres archivos de `Resources/Prefabs/UI` indicados arriba.
+3. Hacer commit con el mensaje:
+
+```text
+Add generated inventory hotbar prefab
+```
+
+4. Pulsar **Push origin**.
+5. No modificar otros archivos ni escenas.
+6. Después del push, revisar el commit remoto, cerrar la bitácora y preparar el PR hacia `main`.
 
 ---
 
@@ -197,11 +218,11 @@ El prefab, collider, spritesheet, animaciones y movimiento del héroe permanecen
 - No asignar imágenes falsas a azada o regadera.
 - No escalar la raíz o el collider del jugador.
 - No crear Tilemaps o agricultura funcional dentro del bloque de hotbar.
-- No abrir PR ni fusionar la rama antes de cerrar la inspección visual y de controles.
+- No abrir PR ni fusionar la rama antes de publicar y revisar el prefab generado.
 - Mantener documentación sincronizada después de cada transacción.
 
 ## Prompt mínimo para un chat nuevo
 
 ```text
-Continúa xArtXtrAx/Unity-Farm-Simulator. Lee CONTINUIDAD_GPT.md desde main y HOTBAR_PRESENTATION.md desde feature/inventory-hotbar-presentation. Fases 1–6 y Cozy Farm están integrados. La rama activa está en 19c3d73a349426990be90b7ba99bf8baa2a04664. La hotbar compiló, generó prefab y pasó 166/166 EditMode y 8/8 PlayMode sin errores. El único fallo inicial de NUnit fue corregido en 6cb50b63a91cc35463419e9ad0b594036a56165c. Falta revisar visualmente la hotbar en Lab y probar 1–8, rueda y L1/R1 antes del PR. No avances a agricultura o Tilemaps.
+Continúa xArtXtrAx/Unity-Farm-Simulator. Lee CONTINUIDAD_GPT.md desde main y HOTBAR_PRESENTATION.md desde feature/inventory-hotbar-presentation. Fases 1–6 y Cozy Farm están integrados. La rama activa está documentada hasta f2c79fb6f5fb74c7c837602f427392e8c328176d. La hotbar pasó 166/166 EditMode y 8/8 PlayMode sin errores; teclado, rueda, L1/R1 y movimiento fueron aprobados manualmente. Falta publicar exactamente UI.meta, InventoryHotbar.prefab e InventoryHotbar.prefab.meta desde el proyecto local, revisar el commit y preparar el PR. No avances a agricultura o Tilemaps.
 ```
