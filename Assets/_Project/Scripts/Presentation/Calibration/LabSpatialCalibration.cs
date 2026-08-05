@@ -53,7 +53,12 @@ namespace FarmSimulator.Presentation.Calibration
             Material depthMaterial = CreateMaterial(new Color(0.20f, 0.78f, 0.78f));
 
             BuildGround(groundMaterial);
-            BuildMapReferences(pathMaterial, waterMaterial, plotMaterial, foliageMaterial, trunkMaterial);
+            BuildMapReferences(
+                pathMaterial,
+                waterMaterial,
+                plotMaterial,
+                foliageMaterial,
+                trunkMaterial);
             BuildGrid(gridMaterial, xAxisMaterial, yAxisMaterial);
             BuildSpriteReferences(spriteMaterial);
             BuildDepthStack(depthMaterial);
@@ -76,6 +81,15 @@ namespace FarmSimulator.Presentation.Calibration
             camera.backgroundColor = new Color(0.10f, 0.13f, 0.11f);
             camera.transform.position = new Vector3(0f, 0f, SpatialModel.CameraDepth);
             camera.transform.rotation = Quaternion.identity;
+
+            ReferenceAspectCamera aspectCamera =
+                camera.GetComponent<ReferenceAspectCamera>();
+            if (aspectCamera == null)
+            {
+                aspectCamera = camera.gameObject.AddComponent<ReferenceAspectCamera>();
+            }
+
+            aspectCamera.RefreshViewport();
         }
 
         private static void ConfigureLight()
@@ -119,22 +133,22 @@ namespace FarmSimulator.Presentation.Calibration
             CreatePrimitive(
                 PrimitiveType.Cube,
                 "Horizontal Path",
-                new Vector3(0f, -1.5f, 0.10f),
-                new Vector3(14f, 2f, 0.04f),
+                new Vector3(0f, -1.25f, 0.10f),
+                new Vector3(13.5f, 1.5f, 0.04f),
                 pathMaterial);
 
             CreatePrimitive(
                 PrimitiveType.Cube,
                 "Vertical Path",
-                new Vector3(-2.5f, 1.5f, 0.09f),
-                new Vector3(2f, 7f, 0.04f),
+                new Vector3(-2.25f, 1f, 0.09f),
+                new Vector3(1.5f, 5.6f, 0.04f),
                 pathMaterial);
 
             CreatePrimitive(
                 PrimitiveType.Sphere,
                 "Pond Proxy",
-                new Vector3(4.7f, 2.9f, 0.02f),
-                new Vector3(2.6f, 1.6f, 0.08f),
+                new Vector3(4.4f, 2.15f, 0.02f),
+                new Vector3(2.2f, 1.3f, 0.08f),
                 waterMaterial);
 
             for (int column = 0; column < 3; column++)
@@ -144,14 +158,23 @@ namespace FarmSimulator.Presentation.Calibration
                     CreatePrimitive(
                         PrimitiveType.Cube,
                         $"Crop Plot {column}-{row}",
-                        new Vector3(-6f + column * 1.1f, -4.2f + row * 1.1f, 0.03f),
-                        new Vector3(0.9f, 0.9f, 0.04f),
+                        new Vector3(
+                            -5.5f + column * 1.05f,
+                            -3.3f + row * 0.95f,
+                            0.03f),
+                        new Vector3(0.8f, 0.8f, 0.04f),
                         plotMaterial);
                 }
             }
 
-            BuildTreeProxy(new Vector2(-5.2f, 3.2f), foliageMaterial, trunkMaterial);
-            BuildTreeProxy(new Vector2(5.4f, -3.4f), foliageMaterial, trunkMaterial);
+            BuildTreeProxy(
+                new Vector2(-5.2f, 0.9f),
+                foliageMaterial,
+                trunkMaterial);
+            BuildTreeProxy(
+                new Vector2(5.2f, -3.2f),
+                foliageMaterial,
+                trunkMaterial);
         }
 
         private void BuildTreeProxy(
@@ -159,8 +182,8 @@ namespace FarmSimulator.Presentation.Calibration
             Material foliageMaterial,
             Material trunkMaterial)
         {
-            float trunkHeight = 1.2f;
-            float canopyHeight = 2.2f;
+            const float trunkHeight = 1.05f;
+            const float canopyHeight = 1.9f;
 
             CreatePrimitive(
                 PrimitiveType.Cube,
@@ -169,7 +192,7 @@ namespace FarmSimulator.Presentation.Calibration
                     groundPosition.x,
                     groundPosition.y + trunkHeight * 0.5f,
                     VisualDepthForY(groundPosition.y) - 0.01f),
-                new Vector3(0.55f, trunkHeight, 0.05f),
+                new Vector3(0.5f, trunkHeight, 0.05f),
                 trunkMaterial);
 
             CreatePrimitive(
@@ -179,7 +202,7 @@ namespace FarmSimulator.Presentation.Calibration
                     groundPosition.x,
                     groundPosition.y + trunkHeight + canopyHeight * 0.35f,
                     VisualDepthForY(groundPosition.y) - 0.02f),
-                new Vector3(2.2f, canopyHeight, 0.08f),
+                new Vector3(1.9f, canopyHeight, 0.08f),
                 foliageMaterial);
         }
 
@@ -235,14 +258,29 @@ namespace FarmSimulator.Presentation.Calibration
         {
             CreateSpriteProxy(
                 SpriteProxyObjectName,
-                new Vector2(0f, -0.8f),
+                new Vector2(0f, -0.6f),
                 SpatialModel.ReferenceCharacterWidth,
                 SpatialModel.ReferenceCharacterHeight,
                 material);
 
-            CreateSpriteProxy("Sprite North", new Vector2(1.4f, 2.4f), 0.7f, 1.5f, material);
-            CreateSpriteProxy("Sprite Center", new Vector2(1.4f, 0.3f), 0.7f, 1.5f, material);
-            CreateSpriteProxy("Sprite South", new Vector2(1.4f, -2.2f), 0.7f, 1.5f, material);
+            CreateSpriteProxy(
+                "Sprite North",
+                new Vector2(1.4f, 2.1f),
+                SpatialModel.ReferenceCharacterWidth,
+                SpatialModel.ReferenceCharacterHeight,
+                material);
+            CreateSpriteProxy(
+                "Sprite Center",
+                new Vector2(1.4f, 0.2f),
+                SpatialModel.ReferenceCharacterWidth,
+                SpatialModel.ReferenceCharacterHeight,
+                material);
+            CreateSpriteProxy(
+                "Sprite South",
+                new Vector2(1.4f, -2.2f),
+                SpatialModel.ReferenceCharacterWidth,
+                SpatialModel.ReferenceCharacterHeight,
+                material);
         }
 
         private void CreateSpriteProxy(
@@ -269,9 +307,14 @@ namespace FarmSimulator.Presentation.Calibration
             {
                 CreatePrimitive(
                     PrimitiveType.Cube,
-                    layer == 2 ? DepthStackObjectName : $"Depth Stack {layer + 1}",
-                    new Vector3(-4.2f + layer * 0.3f, 0.7f - layer * 0.25f, -0.18f - layer * 0.08f),
-                    new Vector3(1.2f, 1.2f, 0.04f),
+                    layer == 2
+                        ? DepthStackObjectName
+                        : $"Depth Stack {layer + 1}",
+                    new Vector3(
+                        -4f + layer * 0.25f,
+                        0.35f - layer * 0.2f,
+                        -0.18f - layer * 0.08f),
+                    new Vector3(1f, 1f, 0.04f),
                     material);
             }
         }
@@ -279,21 +322,21 @@ namespace FarmSimulator.Presentation.Calibration
         private void BuildArcReference(Material material)
         {
             const int points = 13;
-            Vector3 start = new(-4.5f, 3.7f, -0.35f);
-            Vector3 end = new(4.5f, 3.7f, -0.35f);
+            Vector3 start = new(-4.5f, 2.55f, -0.35f);
+            Vector3 end = new(4.5f, 2.55f, -0.35f);
 
             for (int index = 0; index < points; index++)
             {
                 float t = index / (float)(points - 1);
                 Vector3 position = Vector3.Lerp(start, end, t);
-                position.y += 1.8f * 4f * t * (1f - t);
+                position.y += 1.35f * 4f * t * (1f - t);
                 position.z -= 0.15f * Mathf.Sin(Mathf.PI * t);
 
                 CreatePrimitive(
                     PrimitiveType.Sphere,
                     $"Arc Point {index:00}",
                     position,
-                    Vector3.one * 0.16f,
+                    Vector3.one * 0.14f,
                     material);
             }
         }

@@ -1,4 +1,5 @@
 using System.Collections;
+using FarmSimulator.Application.Display;
 using FarmSimulator.Application.Scenes;
 using FarmSimulator.Application.Spatial;
 using FarmSimulator.Presentation.Calibration;
@@ -67,16 +68,39 @@ namespace FarmSimulator.Tests.PlayMode
                 Vector3.Dot(sceneCamera.transform.forward, Vector3.forward),
                 Is.GreaterThan(0.999f));
 
+            ReferenceAspectCamera aspectCamera =
+                sceneCamera.GetComponent<ReferenceAspectCamera>();
+            Assert.That(aspectCamera, Is.Not.Null);
+
+            NormalizedViewport expectedViewport =
+                PixelArtDisplayModel.CalculateViewport(
+                    Screen.width,
+                    Screen.height);
+            Assert.That(
+                sceneCamera.rect.x,
+                Is.EqualTo(expectedViewport.X).Within(0.001f));
+            Assert.That(
+                sceneCamera.rect.y,
+                Is.EqualTo(expectedViewport.Y).Within(0.001f));
+            Assert.That(
+                sceneCamera.rect.width,
+                Is.EqualTo(expectedViewport.Width).Within(0.001f));
+            Assert.That(
+                sceneCamera.rect.height,
+                Is.EqualTo(expectedViewport.Height).Within(0.001f));
+
             GameObject ground = GameObject.Find(LabSpatialCalibration.GroundObjectName);
             Assert.That(ground, Is.Not.Null);
             Assert.That(ground.GetComponent<BoxCollider2D>(), Is.Not.Null);
             Assert.That(ground.GetComponent<Collider>(), Is.Null);
             Assert.That(
                 ground.transform.localScale.x,
-                Is.EqualTo(SpatialModel.GridColumns * SpatialModel.GridCellSize).Within(0.001f));
+                Is.EqualTo(SpatialModel.GridColumns * SpatialModel.GridCellSize)
+                    .Within(0.001f));
             Assert.That(
                 ground.transform.localScale.y,
-                Is.EqualTo(SpatialModel.GridRows * SpatialModel.GridCellSize).Within(0.001f));
+                Is.EqualTo(SpatialModel.GridRows * SpatialModel.GridCellSize)
+                    .Within(0.001f));
 
             GameObject groundVisual = GameObject.Find(
                 LabSpatialCalibration.GroundVisualObjectName);
@@ -87,8 +111,12 @@ namespace FarmSimulator.Tests.PlayMode
                 Is.Empty,
                 "Generated calibration visuals must not retain 3D colliders.");
 
-            GameObject spriteProxy = GameObject.Find(LabSpatialCalibration.SpriteProxyObjectName);
+            GameObject spriteProxy =
+                GameObject.Find(LabSpatialCalibration.SpriteProxyObjectName);
             Assert.That(spriteProxy, Is.Not.Null);
+            Assert.That(
+                spriteProxy.transform.localScale.x,
+                Is.EqualTo(SpatialModel.ReferenceCharacterWidth).Within(0.001f));
             Assert.That(
                 spriteProxy.transform.localScale.y,
                 Is.EqualTo(SpatialModel.ReferenceCharacterHeight).Within(0.001f));
