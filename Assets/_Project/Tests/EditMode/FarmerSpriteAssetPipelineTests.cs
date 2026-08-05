@@ -12,6 +12,46 @@ namespace FarmSimulator.Tests.EditMode
     public sealed class FarmerSpriteAssetPipelineTests
     {
         [Test]
+        public void FrozenSourceUsesWorkingHeroHdAsset()
+        {
+            Assert.That(
+                FarmerSpriteAssetPipeline.SourceUrl,
+                Does.EndWith("/src/assets/hero_hd.png"));
+            Assert.That(
+                FarmerSpriteAssetPipeline.SourceUrl,
+                Does.Not.Contain(
+                    "/public/assets/farmer/farmer-spritesheet.png"));
+        }
+
+        [Test]
+        public void PngHeaderValidationRequiresExpectedDimensions()
+        {
+            byte[] validHeader = CreatePngHeader(192, 288);
+            byte[] wrongWidth = CreatePngHeader(1955, 288);
+            byte[] wrongHeight = CreatePngHeader(192, 530);
+            byte[] notPng = new byte[24];
+
+            Assert.That(
+                FarmerSpriteAssetPipeline.IsExpectedSpriteSheetBytes(
+                    validHeader),
+                Is.True);
+            Assert.That(
+                FarmerSpriteAssetPipeline.IsExpectedSpriteSheetBytes(
+                    wrongWidth),
+                Is.False);
+            Assert.That(
+                FarmerSpriteAssetPipeline.IsExpectedSpriteSheetBytes(
+                    wrongHeight),
+                Is.False);
+            Assert.That(
+                FarmerSpriteAssetPipeline.IsExpectedSpriteSheetBytes(notPng),
+                Is.False);
+            Assert.That(
+                FarmerSpriteAssetPipeline.IsExpectedSpriteSheetBytes(null),
+                Is.False);
+        }
+
+        [Test]
         public void FarmerTextureUsesPixelArtImportSettings()
         {
             TextureImporter importer =
@@ -88,6 +128,27 @@ namespace FarmSimulator.Tests.EditMode
                     Is.EqualTo(PlayerAnimationModel.FrameRate)
                         .Within(0.001f));
             }
+        }
+
+        private static byte[] CreatePngHeader(int width, int height)
+        {
+            byte[] data = new byte[24];
+            byte[] signature = { 137, 80, 78, 71, 13, 10, 26, 10 };
+            Array.Copy(signature, data, signature.Length);
+            WriteBigEndianInt32(data, 16, width);
+            WriteBigEndianInt32(data, 20, height);
+            return data;
+        }
+
+        private static void WriteBigEndianInt32(
+            byte[] data,
+            int offset,
+            int value)
+        {
+            data[offset] = (byte)(value >> 24);
+            data[offset + 1] = (byte)(value >> 16);
+            data[offset + 2] = (byte)(value >> 8);
+            data[offset + 3] = (byte)value;
         }
     }
 }
