@@ -9,14 +9,14 @@ Punto de entrada permanente para retomar el desarrollo sin depender de la memori
 - **Repositorio:** `xArtXtrAx/Unity-Farm-Simulator`
 - **Rama estable:** `main`
 - **Rama activa:** `feature/inventory-hotbar-presentation`
-- **Head remoto registrado de la rama:** `8bcaa847fd891b45cd25d9f41a39f8be779a84cb`
+- **Head remoto registrado de la rama:** `19c3d73a349426990be90b7ba99bf8baa2a04664`
 - **Commit funcional inicial:** `9084ab05874ae8e7f013d701135d8e9ce1cef762`
 - **Corrección NUnit:** `6cb50b63a91cc35463419e9ad0b594036a56165c`
 - **Bloque actual:** presentación de inventario y hotbar
-- **Estado:** compilación y prefab confirmados; primer pase EditMode 165/166; corrección de aserción publicada; repetición y PlayMode pendientes
+- **Estado:** compilación, prefab y suites completas validados; inspección visual y controles manuales en `Lab` pendientes
+- **Validación técnica de la rama:** **166/166 EditMode**, **8/8 PlayMode**, **0 errores**
 - **Última integración:** PR #7 — `Add Cozy Farm pilot art and visual calibration`
 - **Squash commit PR #7:** `7860095d0d165c83585f21579e9794ea57ec0a35`
-- **Línea base confirmada antes de la hotbar:** **138/138 EditMode**, **6/6 PlayMode**, **0 errores**
 - **Bugs activos:** ninguno
 - **Bugs verificados:** `BUG-0001` a `BUG-0006`
 - **Unity:** `6000.3.21f1`
@@ -73,7 +73,7 @@ Alias provisionales:
 
 La escala 1.5 todavía no se ha trasladado al prefab real.
 
-## Hotbar — implementación remota en validación
+## Hotbar — validación técnica completada
 
 Fuente congelada estudiada en `farming-game-A`:
 
@@ -108,24 +108,18 @@ Comando manual:
 Tools > Farm Simulator > Rebuild Inventory Hotbar
 ```
 
-Pruebas nuevas previstas:
+Pruebas añadidas y confirmadas:
 
-- **28 casos EditMode**;
-- **2 casos PlayMode**.
+- **28 casos EditMode nuevos**;
+- **2 casos PlayMode nuevos**;
+- total final: **166/166 EditMode**;
+- total final: **8/8 PlayMode**;
+- errores: **0**.
 
-Resultados objetivo:
+## Incidencia de NUnit — resuelta
 
-```text
-EditMode: 166/166
-PlayMode: 8/8
-```
+Primera ejecución local:
 
-## Primera ejecución local de hotbar — 2026-08-05
-
-Arturo confirmó:
-
-- Unity compiló correctamente;
-- el prefab de hotbar fue generado;
 - EditMode: **165/166**;
 - único fallo: `HotbarMapsOnlyApprovedCozyFarmIcons`;
 - error: `System.ArgumentException: Property Count was not found`;
@@ -143,7 +137,7 @@ Corrección publicada:
 6cb50b63a91cc35463419e9ad0b594036a56165c
 ```
 
-La repetición de EditMode y PlayMode sigue pendiente.
+Después de la corrección, Arturo confirmó todas las suites sin errores.
 
 Guía operativa de la rama:
 
@@ -171,22 +165,20 @@ El prefab, collider, spritesheet, animaciones y movimiento del héroe permanecen
 
 ## Próxima acción local
 
-1. En GitHub Desktop, hacer Fetch/Pull de `feature/inventory-hotbar-presentation`.
-2. Esperar la recompilación de Unity.
-3. Ejecutar **Rerun Failed** sobre `HotbarMapsOnlyApprovedCozyFarmIcons`.
-4. Si pasa, ejecutar EditMode completo; esperado **166/166**.
-5. Ejecutar PlayMode completo; esperado **8/8**.
-6. Abrir `Bootstrap` o `Lab` y pulsar Play.
-7. Confirmar visualmente:
+1. Abrir `Bootstrap` o `Lab` y pulsar Play.
+2. Confirmar visualmente:
    - hotbar inferior centrada;
    - slot 1 `AZ` seleccionado;
    - slot 2 `RG`;
    - slot 3 con icono de semillas y `×20`;
-   - slots 4–8 vacíos.
-8. Probar 1–8, rueda y L1/R1.
-9. Confirmar que el movimiento del héroe continúe intacto.
-10. Reportar captura, conteos, errores y advertencias.
-11. No hacer commit todavía de los assets generados hasta revisar el resultado.
+   - slots 4–8 vacíos;
+   - nombre del objeto seleccionado legible.
+3. Probar selección con teclas 1–8 y teclado numérico.
+4. Probar ciclo con rueda del mouse.
+5. Probar L1/R1 con DualSense.
+6. Confirmar que el movimiento del héroe permanezca intacto.
+7. Compartir una captura y observaciones de tamaño, posición, contraste o legibilidad.
+8. No abrir PR ni hacer commit manual de assets generados hasta cerrar la revisión visual.
 
 ---
 
@@ -205,12 +197,11 @@ El prefab, collider, spritesheet, animaciones y movimiento del héroe permanecen
 - No asignar imágenes falsas a azada o regadera.
 - No escalar la raíz o el collider del jugador.
 - No crear Tilemaps o agricultura funcional dentro del bloque de hotbar.
-- No afirmar que las pruebas nuevas pasan hasta recibir la validación local de Arturo.
-- No abrir PR ni fusionar la rama antes de cerrar la validación local.
+- No abrir PR ni fusionar la rama antes de cerrar la inspección visual y de controles.
 - Mantener documentación sincronizada después de cada transacción.
 
 ## Prompt mínimo para un chat nuevo
 
 ```text
-Continúa xArtXtrAx/Unity-Farm-Simulator. Lee CONTINUIDAD_GPT.md desde main y HOTBAR_PRESENTATION.md desde feature/inventory-hotbar-presentation. Fases 1–6 y Cozy Farm están integrados. La rama activa está en 8bcaa847fd891b45cd25d9f41a39f8be779a84cb. La hotbar compiló y generó prefab. El primer EditMode fue 165/166; el único fallo era Has.Count sobre Sprite[] en NUnit de Unity y fue corregido en 6cb50b63a91cc35463419e9ad0b594036a56165c. Repite el test fallido, luego 166/166 EditMode y 8/8 PlayMode. No avances a agricultura, Tilemaps, PR o merge antes del reporte de Arturo.
+Continúa xArtXtrAx/Unity-Farm-Simulator. Lee CONTINUIDAD_GPT.md desde main y HOTBAR_PRESENTATION.md desde feature/inventory-hotbar-presentation. Fases 1–6 y Cozy Farm están integrados. La rama activa está en 19c3d73a349426990be90b7ba99bf8baa2a04664. La hotbar compiló, generó prefab y pasó 166/166 EditMode y 8/8 PlayMode sin errores. El único fallo inicial de NUnit fue corregido en 6cb50b63a91cc35463419e9ad0b594036a56165c. Falta revisar visualmente la hotbar en Lab y probar 1–8, rueda y L1/R1 antes del PR. No avances a agricultura o Tilemaps.
 ```
