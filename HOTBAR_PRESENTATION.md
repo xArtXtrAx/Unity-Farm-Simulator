@@ -6,8 +6,8 @@
 - Base: `main` en `57d7d165cfba47dcc753a6fc9c484a7191ab068a`.
 - Commit funcional inicial: `9084ab05874ae8e7f013d701135d8e9ce1cef762`.
 - Corrección de compatibilidad NUnit: `6cb50b63a91cc35463419e9ad0b594036a56165c`.
-- Estado: **compilación y generación del prefab confirmadas; primer pase EditMode 165/166; corrección publicada y repetición pendiente**.
-- Línea base previa confirmada: **138/138 EditMode**, **6/6 PlayMode**, **0 errores**.
+- Estado: **compilación, generación del prefab y suites completas validadas; inspección visual y controles manuales en `Lab` pendientes**.
+- Línea base validada de la rama: **166/166 EditMode**, **8/8 PlayMode**, **0 errores**.
 
 ## Fuente congelada estudiada
 
@@ -104,18 +104,19 @@ No se asignaron imágenes falsas a:
 - azada;
 - regadera.
 
-## Pruebas añadidas
+## Pruebas añadidas y validadas
 
 ### EditMode
 
 - 22 casos del modelo de presentación;
 - 6 casos del prefab/pipeline y su render inicial;
-- total nuevo esperado: **28 casos**.
+- total nuevo: **28 casos**.
 
-Resultado esperado:
+Resultado local confirmado por Arturo el 5 de agosto de 2026:
 
 ```text
 166/166 EditMode
+0 errores
 ```
 
 ### PlayMode
@@ -123,18 +124,17 @@ Resultado esperado:
 - instalación de la hotbar en `Lab`;
 - cambio de selección sin reemplazar al jugador.
 
-Resultado esperado:
+Resultado local confirmado por Arturo:
 
 ```text
 8/8 PlayMode
+0 errores
 ```
 
-## Primera ejecución local — 2026-08-05
+## Incidencia de NUnit — resuelta
 
-Arturo confirmó:
+Primera ejecución local:
 
-- Unity compiló la rama;
-- el prefab fue generado;
 - EditMode: **165/166**;
 - único fallo: `HotbarMapsOnlyApprovedCozyFarmIcons`;
 - excepción: `System.ArgumentException: Property Count was not found`;
@@ -144,7 +144,7 @@ Diagnóstico:
 
 - no falló el mapeo de iconos;
 - no falló la hotbar ni el prefab;
-- la versión de NUnit incluida en Unity intentó resolver una propiedad reflectiva `Count` sobre un arreglo, que expone `Length` y la interfaz `IReadOnlyList.Count`.
+- la versión de NUnit incluida en Unity intentó resolver una propiedad reflectiva `Count` sobre un arreglo.
 
 Corrección:
 
@@ -158,7 +158,7 @@ Commit:
 6cb50b63a91cc35463419e9ad0b594036a56165c
 ```
 
-La repetición de EditMode y PlayMode sigue pendiente.
+Después de la corrección, Arturo confirmó **166/166 EditMode** y **8/8 PlayMode**, sin errores.
 
 ## Exclusiones
 
@@ -178,21 +178,19 @@ No se implementaron:
 
 El prefab, collider, spritesheet, animaciones y movimiento del héroe siguen intactos.
 
-## Validación local requerida
+## Validación visual y manual pendiente
 
-1. En GitHub Desktop, hacer Fetch/Pull de `feature/inventory-hotbar-presentation`.
-2. Esperar la recompilación de Unity.
-3. Ejecutar primero **Rerun Failed** o el test `HotbarMapsOnlyApprovedCozyFarmIcons`.
-4. Si pasa, ejecutar EditMode completo; esperado **166/166**.
-5. Ejecutar PlayMode completo; esperado **8/8**.
-6. Abrir `Bootstrap` o `Lab` y pulsar Play.
-7. Confirmar visualmente:
+1. Abrir `Bootstrap` o `Lab` y pulsar Play.
+2. Confirmar visualmente:
    - hotbar inferior centrada;
    - slot 1 `AZ` seleccionado;
    - slot 2 `RG`;
    - slot 3 con icono de semillas y `×20`;
-   - slots 4–8 vacíos.
-8. Probar selección con 1–8, rueda y L1/R1.
-9. Confirmar que el movimiento del héroe continúe intacto.
-10. Reportar captura, conteos, errores y advertencias.
-11. No hacer commit todavía de los assets generados hasta revisar el resultado.
+   - slots 4–8 vacíos;
+   - nombre del objeto seleccionado legible.
+3. Probar selección con teclas 1–8 y teclado numérico.
+4. Probar ciclo con rueda del mouse.
+5. Probar L1/R1 con DualSense.
+6. Confirmar que el movimiento del héroe permanezca intacto.
+7. Compartir una captura y cualquier observación de tamaño, posición, contraste o legibilidad.
+8. No abrir PR ni hacer commit manual de assets generados hasta cerrar esta revisión visual.
