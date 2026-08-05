@@ -3,14 +3,14 @@
 ## Estado actual
 
 - Rama: `chore/cozy-farm-art-intake`.
-- Head funcional A3.1: `39abe438bb6068b21438fb836b5eea01295f0db3`.
-- El héroe actual se conserva sin cambios.
+- Head funcional A3.2: `d4d3757640aa5b4f232bbd35f28d9e924bb328b7`.
+- El héroe actual se conserva; no se sustituyó su spritesheet ni su prefab.
 - El paquete completo `full version.zip` permanece fuera del repositorio.
 - A1, recepción de cinco hojas fuente: **VALIDADA LOCALMENTE**.
 - A2, slicing curado: **VALIDADO LOCALMENTE**.
 - A3, primera exhibición: **VALIDADA TÉCNICAMENTE; RECHAZADA VISUALMENTE**.
-- A3.1, exhibición reequilibrada: **VALIDADA TÉCNICAMENTE; DIAGNÓSTICO VISUAL COMPLETADO**.
-- Próximo bloque propuesto: **A3.2 — separar mundo real, referencia técnica e interfaz**.
+- A3.1, composición compacta: **VALIDADA TÉCNICAMENTE; LA PROPORCIÓN DEL HÉROE SIGUE RECHAZADA**.
+- A3.2, calibración visual del héroe a 1.5×: **IMPLEMENTADA REMOTAMENTE; VALIDACIÓN LOCAL PENDIENTE**.
 
 ## A1 — Fuente piloto
 
@@ -104,7 +104,7 @@ Problemas visuales observados:
 - muestras 2×2 sobredimensionadas;
 - distribución dispersa.
 
-## A3.1 — Exhibición reequilibrada
+## A3.1 — Composición compacta
 
 Commits funcionales:
 
@@ -116,85 +116,87 @@ Commits funcionales:
 Cambios:
 
 - firma `cozy-farm-showcase-scene-v2`;
-- objetos y semillas a escala **0.55** sobre referencia 3×2;
-- cultivos y héroe a escala de mundo **1.0**;
-- cama compartida de tierra 6×3;
+- objetos y semillas a escala **0.55**;
+- cultivos y héroe a escala **1.0**;
+- cama compartida 6×3;
 - eliminación de `soil_for_*`;
 - cuatro muestras de un solo tile;
 - héroe sobre referencia 2×2;
-- dos pruebas EditMode nuevas;
-- protección frente a reconstrucción con la escena abierta.
+- dos pruebas EditMode nuevas.
 
-No se modificaron PNG, slices A2, `Lab`, prefab/spritesheet del héroe, Domain, inventario, Input System, Tilemaps, paletas o hotbar.
-
-### Validación local A3.1 — 2026-08-05
-
-Arturo regeneró la escena y confirmó:
+Validación local A3.1 — 2026-08-05:
 
 - EditMode: **136/136**;
 - PlayMode: **6/6**;
 - errores: **0**.
 
-La segunda captura confirma que la relación geométrica básica ya es coherente:
+La distribución mejoró, pero las capturas con el héroe colocado junto a cada región demostraron que la conclusión visual anterior era incorrecta: el héroe sigue viéndose demasiado pequeño frente a un tile y frente a los cultivos maduros.
 
-- el héroe ocupa aproximadamente un tile de ancho y algo más de uno de alto;
-- los cultivos maduros caben dentro de una celda;
-- las 18 etapas respetan una cuadrícula de 6×3;
-- los iconos son menores que el héroe.
+### Diagnóstico geométrico corregido
 
-Por ello **no se recomienda reducir indiscriminadamente héroe, cultivos o tiles**. La sensación restante de desproporción procede principalmente de mezclar tres roles visuales en la misma composición:
+- Frame del héroe: 64 × 72 px a 64 PPU → **1 × 1.125 unidades**.
+- Tile Cozy Farm: 16 × 16 px a 16 PPU → **1 × 1 unidad**.
+- El héroe queda prácticamente de un solo tile de alto; para un personaje humano cenital resulta demasiado bajo en comparación con cultivos que llenan una celda.
+- No conviene reducir los tiles: deben conservar continuidad y tamaño de grid.
+- No conviene escalar la raíz del jugador: escalaría collider y referencias técnicas.
 
-1. objetos de mundo;
-2. iconos de interfaz;
-3. lámina técnica con todas las etapas simultáneas.
+A3.1 queda **VALIDADA TÉCNICAMENTE**, pero la proporción héroe/mundo permanece **RECHAZADA VISUALMENTE**.
 
-También se confirma:
+## A3.2 — Calibración visual del héroe
 
-- `cozy_grass` desaparece visualmente sobre el fondo del mismo material;
-- `cozy_tilled_soil` es una silueta circular similar a un hoyo o montículo de plantación, no una parcela cuadrada completa;
-- el héroe de 64×72 tiene más detalle interno que el arte base de 16×16, por lo que existe una diferencia estilística que no se resolverá únicamente cambiando escalas de Transform.
+Commits funcionales:
 
-A3.1 queda **VALIDADA TÉCNICAMENTE** y cumple su objetivo diagnóstico. La composición todavía no se considera una escena final del juego.
+```text
+8c48c55ed5bcc9d6d836f3e83bcc79cc5d7e0200
+d4d3757640aa5b4f232bbd35f28d9e924bb328b7
+```
 
-## A3.2 — Próximo experimento propuesto
+Cambios:
 
-Separar la comparación en contextos reales:
+- firma elevada a `cozy-farm-showcase-scene-v3`;
+- nueva constante `HeroVisualScale = 1.5f`;
+- la raíz `Current Hero` permanece en escala **1.0**;
+- únicamente `Playable Player Sprite` se escala a **1.5×**;
+- collider, Rigidbody2D, motor, pivote lógico, feet sorting y prefab fuente permanecen sin cambios;
+- tiles y cultivos permanecen en escala **1.0**;
+- el tamaño visual esperado del héroe pasa a aproximadamente **1.5 × 1.6875 unidades**.
 
-### Mundo
+La escala 1.5 sigue siendo compatible con la cuadrícula visual: el arte del héroe usa bloques lógicos 4×4, que a 1.5× se muestran como bloques 6×6 en la resolución de referencia, evitando escalado fraccional de esos píxeles lógicos.
 
-Crear una viñeta pequeña de granja con:
+### Pruebas A3.2
 
-- césped;
-- una parcela compacta;
-- héroe a escala 1.0;
-- un cultivo joven, uno intermedio y uno maduro;
-- borde de agua;
-- sin mostrar simultáneamente las 18 etapas.
+`CozyFarmShowcaseSceneTests.cs` pasa de seis a **siete** casos.
 
-Esto permitirá juzgar la proporción que realmente verá el jugador.
+El caso nuevo verifica:
 
-### Interfaz
+- raíz del héroe en escala 1.0;
+- hijo visual en escala 1.5;
+- collider con exactamente el ancho, alto y offset calibrados previamente.
 
-Importar únicamente un panel/slot desde una hoja UI de Cozy Farm, preferentemente `ui/inventory_chopped.png` o un fragmento equivalente de `UI_all.png`, y mostrar los seis iconos en **Canvas Screen Space**. No volver a utilizar tierra de mundo como fondo de inventario.
+A3.2 es solo una calibración dentro de la exhibición. El prefab real no cambiará hasta que Arturo apruebe la nueva proporción.
 
-### Referencia técnica
+Resultado esperado:
 
-Conservar las 18 etapas en una vista secundaria o grupo técnico, no como composición principal.
-
-### Semántica de terreno
-
-- dejar de llamar parcela completa a `cozy_tilled_soil`;
-- tratarla provisionalmente como `planting_hole`/montículo;
-- usar `cozy_dirt` para la parcela hasta localizar y validar un recurso rectangular más adecuado.
+- EditMode: **137/137**;
+- PlayMode: **6/6**.
 
 ## Exclusiones vigentes
 
-No incluir el ZIP, GIF, personajes adicionales, animales, edificios, enemigos, máquinas adicionales ni variantes estacionales completas. No crear todavía agricultura funcional, Tilemap final, hotbar conectada o integración con inventario.
+No incluir el ZIP, GIF, personajes adicionales, animales, edificios, enemigos, máquinas adicionales ni variantes estacionales completas. No modificar todavía el prefab real, agricultura funcional, Tilemap final, hotbar conectada o integración con inventario.
 
 ## Próximo paso exacto
 
-1. Registrar A3.1 como validada: **136/136 EditMode**, **6/6 PlayMode**, cero errores.
-2. No cambiar todavía la escala del héroe ni de los cultivos.
-3. Preparar A3.2 como viñeta de mundo + panel UI separado.
-4. Incorporar solo el mínimo recurso UI necesario mediante un bundle controlado.
-5. Mantener `CozyFarmShowcase.unity` sin commit hasta cerrar la decisión visual.
+1. Cerrar `CozyFarmShowcase` en Unity.
+2. Hacer Fetch/Pull de `chore/cozy-farm-art-intake`.
+3. Abrir Unity y esperar compilación/importación.
+4. La firma `v3` debe regenerar la escena automáticamente.
+5. Si aparece el aviso de escena abierta, cerrarla y ejecutar `Tools > Farm Simulator > Rebuild Cozy Farm Showcase`.
+6. Abrir la escena y colocar al héroe junto a:
+   - un tile individual;
+   - un cultivo joven;
+   - un cultivo maduro;
+   - la cama 6×3.
+7. Compartir una captura para decidir si 1.5× es la escala visual definitiva o si conviene probar 1.25×.
+8. Ejecutar EditMode; esperado **137/137**.
+9. Ejecutar PlayMode; esperado **6/6**.
+10. No hacer commit de `CozyFarmShowcase.unity` ni modificar el prefab real antes de aprobar la comparación.
