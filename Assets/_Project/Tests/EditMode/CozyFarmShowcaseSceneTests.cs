@@ -75,6 +75,9 @@ namespace FarmSimulator.Tests.EditMode
                 string[] catalogSprites = catalog
                     .GetComponentsInChildren<SpriteRenderer>(true)
                     .Select(renderer => renderer.gameObject.name)
+                    .Where(name => name.StartsWith(
+                        "cozy_",
+                        StringComparison.Ordinal))
                     .ToArray();
                 CollectionAssert.AreEquivalent(
                     new[]
@@ -112,6 +115,117 @@ namespace FarmSimulator.Tests.EditMode
         }
 
         [Test]
+        public void ShowcaseSeparatesUiScaleIconsFromWorldScaleSprites()
+        {
+            WithShowcaseScene(scene =>
+            {
+                GameObject root = FindRoot(
+                    scene,
+                    CozyFarmShowcaseScenePipeline.RootObjectName);
+                Assert.That(root, Is.Not.Null);
+
+                Transform catalog = root.transform.Find(
+                    CozyFarmShowcaseScenePipeline.CatalogGroupName);
+                Transform crops = root.transform.Find(
+                    CozyFarmShowcaseScenePipeline.CropGroupName);
+                Assert.That(catalog, Is.Not.Null);
+                Assert.That(crops, Is.Not.Null);
+
+                Transform panel = catalog.Find(
+                    CozyFarmShowcaseScenePipeline.CatalogPanelObjectName);
+                Assert.That(panel, Is.Not.Null);
+                Assert.That(
+                    panel.GetComponentsInChildren<SpriteRenderer>(true),
+                    Has.Length.EqualTo(6));
+
+                SpriteRenderer[] catalogIcons = catalog
+                    .GetComponentsInChildren<SpriteRenderer>(true)
+                    .Where(renderer => renderer.gameObject.name.StartsWith(
+                        "cozy_",
+                        StringComparison.Ordinal))
+                    .ToArray();
+                Assert.That(catalogIcons, Has.Length.EqualTo(6));
+                foreach (SpriteRenderer icon in catalogIcons)
+                {
+                    Assert.That(
+                        icon.transform.localScale.x,
+                        Is.EqualTo(
+                            CozyFarmShowcaseScenePipeline.CatalogIconScale)
+                            .Within(0.001f));
+                    Assert.That(
+                        icon.transform.localScale.y,
+                        Is.EqualTo(
+                            CozyFarmShowcaseScenePipeline.CatalogIconScale)
+                            .Within(0.001f));
+                }
+
+                SpriteRenderer[] cropStages = crops
+                    .GetComponentsInChildren<SpriteRenderer>(true)
+                    .Where(renderer => renderer.gameObject.name.StartsWith(
+                        "cozy_",
+                        StringComparison.Ordinal))
+                    .ToArray();
+                Assert.That(cropStages, Has.Length.EqualTo(18));
+                foreach (SpriteRenderer stage in cropStages)
+                {
+                    Assert.That(
+                        stage.transform.localScale,
+                        Is.EqualTo(Vector3.one));
+                }
+            });
+        }
+
+        [Test]
+        public void ShowcaseUsesCompactSharedBedsAndSingleTileSamples()
+        {
+            WithShowcaseScene(scene =>
+            {
+                GameObject root = FindRoot(
+                    scene,
+                    CozyFarmShowcaseScenePipeline.RootObjectName);
+                Assert.That(root, Is.Not.Null);
+
+                Transform terrain = root.transform.Find(
+                    CozyFarmShowcaseScenePipeline.TerrainGroupName);
+                Transform crops = root.transform.Find(
+                    CozyFarmShowcaseScenePipeline.CropGroupName);
+                Transform heroReference = root.transform.Find(
+                    CozyFarmShowcaseScenePipeline
+                        .HeroScaleReferenceObjectName);
+
+                Assert.That(terrain, Is.Not.Null);
+                Assert.That(crops, Is.Not.Null);
+                Assert.That(heroReference, Is.Not.Null);
+
+                foreach (Transform sample in terrain)
+                {
+                    Assert.That(sample.childCount, Is.Zero);
+                    Assert.That(
+                        sample.GetComponent<SpriteRenderer>(),
+                        Is.Not.Null);
+                }
+
+                Transform cropBed = crops.Find(
+                    CozyFarmShowcaseScenePipeline.CropBedObjectName);
+                Assert.That(cropBed, Is.Not.Null);
+                Assert.That(
+                    cropBed.GetComponentsInChildren<SpriteRenderer>(true),
+                    Has.Length.EqualTo(18));
+                Assert.That(
+                    crops.GetComponentsInChildren<Transform>(true)
+                        .Any(transform => transform.name.StartsWith(
+                            "soil_for_",
+                            StringComparison.Ordinal)),
+                    Is.False);
+
+                Assert.That(
+                    heroReference.GetComponentsInChildren<SpriteRenderer>(
+                        true),
+                    Has.Length.EqualTo(4));
+            });
+        }
+
+        [Test]
         public void ShowcaseUsesCurrentHeroPrefabWithoutReplacingIt()
         {
             WithShowcaseScene(scene =>
@@ -136,6 +250,7 @@ namespace FarmSimulator.Tests.EditMode
                 Assert.That(
                     hero.GetComponent<PlayerPrefabIdentity>(),
                     Is.Not.Null);
+                Assert.That(hero.localScale, Is.EqualTo(Vector3.one));
 
                 SpriteRenderer renderer =
                     hero.GetComponentInChildren<SpriteRenderer>(true);
