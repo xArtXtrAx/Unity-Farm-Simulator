@@ -85,7 +85,7 @@ Bugs verificados: `BUG-0001` a `BUG-0005`.
 
 ---
 
-## 4. Fase 5 — Prefab reutilizable y profundidad visual: COMPILA; VALIDACIÓN FUNCIONAL PENDIENTE
+## 4. Fase 5 — Prefab reutilizable y profundidad visual: COMPILA; PROFUNDIDAD DINÁMICA VERIFICADA; PRUEBAS PENDIENTES
 
 Rama: `feature/player-prefab-depth-sorting`.
 
@@ -164,9 +164,13 @@ Después de sincronizar `a9a3fe2`:
 - la consola mostró **0 errores y 0 advertencias**;
 - desapareció `CS0234`;
 - el Editor informó `Generated reusable Player prefab and top-down sorting layers`;
-- `BUG-0005` quedó **VERIFICADO**.
+- `BUG-0005` quedó **VERIFICADO**;
+- durante Play Mode, Arturo localizó `Playable Player/Playable Player Sprite` dentro de `Generated Calibration`;
+- `SpriteRenderer.Order in Layer` cambió aproximadamente entre **9600 y 10400** al mover al jugador verticalmente;
+- el rango coincide con `TopDownSortingModel`: orden base **10000**, **100 órdenes por unidad**, y cálculo `baseOrder - round(feetY × 100)`;
+- queda verificado que bajar por el mapa aumenta el orden y subir lo disminuye.
 
-Aún faltan las pruebas automatizadas y la validación manual de movimiento, animación y profundidad.
+Aún faltan las suites automatizadas, la validación manual completa de teclado/DualSense, límites y la comprobación visual de solapamiento delante/detrás de referencias.
 
 ---
 
@@ -195,16 +199,11 @@ Los cambios exclusivamente locales siguen siendo el único estado que GitHub no 
 2. Ejecutar todas las pruebas **EditMode**; esperado **36/36**.
 3. Ejecutar todas las pruebas **PlayMode**; esperado **6/6**.
 4. Volver a la consola, limpiarla y confirmar **0 errores y 0 advertencias** después de ambas suites.
-5. Abrir la escena `Assets/_Project/Scenes/Bootstrap.unity` y pulsar Play.
-6. Confirmar transición a `Lab`.
-7. Probar movimiento y animación en cuatro direcciones con teclado y DualSense.
-8. Confirmar límites del terreno y ausencia del rectángulo rojo.
-9. Seleccionar `Playable Player/Playable Player Sprite` durante Play Mode y observar `SpriteRenderer.sortingOrder`:
-   - al mover al personaje hacia abajo debe aumentar;
-   - al moverlo hacia arriba debe disminuir.
-10. Comprobar visualmente que el personaje pueda quedar delante y detrás de referencias según la Y de sus pies.
-11. Enviar capturas de Test Runner, consola, Game y lista completa de cambios locales en GitHub Desktop.
-12. No hacer commit local todavía.
+5. En `Bootstrap → Lab`, probar movimiento y animación en cuatro direcciones con teclado y DualSense.
+6. Confirmar límites del terreno y ausencia del rectángulo rojo.
+7. Mover al personaje por encima y por debajo de referencias visuales y comprobar que queda detrás cuando sus pies están más arriba y delante cuando están más abajo.
+8. Enviar capturas de Test Runner, consola, Game y lista completa de cambios locales en GitHub Desktop.
+9. No hacer commit local todavía.
 
 ---
 
