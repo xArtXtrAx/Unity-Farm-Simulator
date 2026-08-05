@@ -70,6 +70,7 @@ Control de versiones confirmado: `Visible Meta Files`, `Force Text`, `.meta`, `.
 - Tamaño ortográfico: **4.21875**.
 - Frame del personaje: **64 × 72 px**.
 - Personaje en Unity: **1 × 1.125 unidades**.
+- Pivote del sprite: **X 0.5 / Y 0.12**, cerca de los pies.
 - Letterbox o pillarbox fuera de 16:9.
 
 ---
@@ -88,19 +89,16 @@ Vista cenital XY, Physics 2D, 960 × 540, 64 PPU y cámara 16:9. Validación fin
 
 Physics 2D, WASD, flechas, stick izquierdo, D-pad, zona muerta, magnitud analógica, diagonales normalizadas, cuatro orientaciones, collider de pies y límites visuales. Validación final: EditMode **11/11**, PlayMode **4/4**, consola limpia. PR #3 fusionado mediante `32186f1`; registro en `main` `3df4d04`.
 
-Bugs verificados: `BUG-0001`, `BUG-0002`, `BUG-0003`.
-
 ---
 
-## 6. Fase 4 — Sprite y animación: IMPLEMENTADA REMOTAMENTE, PENDIENTE DE VALIDACIÓN
+## 6. Fase 4 — Sprite y animación: VALIDADA LOCALMENTE, RECURSOS PENDIENTES DE VERSIONAR
 
-### Fuente correcta congelada
+### Fuente congelada
 
 - Archivo funcional: `src/assets/hero_hd.png`.
 - Repositorio: `xArtXtrAx/farming-game-A`.
 - Commit: `dd32056c9f8142a2322bc2c1d41f0b05b002598f`.
 - Dimensiones: **192 × 288 px**.
-- Tamaño conocido: **84,514 bytes**.
 - Distribución: **3 columnas × 4 filas**.
 - Frame: **64 × 72 px**.
 - Filas: abajo, izquierda, derecha, arriba.
@@ -110,100 +108,72 @@ Bugs verificados: `BUG-0001`, `BUG-0002`, `BUG-0003`.
   - izquierda `[3, 4, 5, 4]`;
   - derecha `[6, 7, 8, 7]`;
   - arriba `[9, 10, 11, 10]`.
-- Pivote: **X 0.5 / Y 0.12**.
 
 ### Implementación
 
 - `PlayerAnimationModel`: layout, estados, nombres y secuencias.
 - `PlayerSpriteAnimator`: orientación/movimiento → estado Animator.
 - `PlayerSpriteRuntimeInstaller`: instala `SpriteRenderer + Animator` en `Lab`.
-- El rectángulo rojo se oculta, pero la base física validada permanece intacta.
-- El marcador amarillo permanece como depuración.
-- Pipeline Editor idempotente.
-- Importación Multiple Sprite, 64 PPU, Point, sin mipmaps ni compresión.
+- El rectángulo rojo se oculta; motor, Rigidbody2D, collider y límites permanecen sin cambios.
+- El marcador amarillo permanece temporalmente como ayuda de depuración.
+- Pipeline Editor para importar Multiple Sprite a 64 PPU, Point, sin mipmaps ni compresión.
 - Generación de ocho clips y `FarmerAnimator.controller`.
 - Menú manual: `Tools → Farm Simulator → Rebuild Farmer Sprite Assets`.
 
-Commits iniciales:
+Commits principales:
 
 - `d68b9e8` — implementación de animación.
-- `2099118` — registro inicial.
+- `ed840bc` — fuente correcta y validación segura del PNG.
+- `70ec28c` — pruebas de fuente, cabecera y dimensiones.
+- `31d037b` — documentación de la corrección.
 
-### BUG-0004 — Fuente ilegible del spritesheet
+### BUG-0004
 
-Arturo abrió Unity y observó cerca de **273 errores** `File could not be read`. La causa fue que el pipeline descargaba por error:
+La primera fuente descargada era ilegible y quedó atrapada en el importador de Unity. El pipeline fue corregido para usar `src/assets/hero_hd.png` y validar el archivo antes de importarlo. En la instalación local ya afectada fue necesaria una limpieza manual única de la carpeta `Farmer` con Unity cerrado y copiar el PNG correcto sin `.meta`.
 
-```text
-public/assets/farmer/farmer-spritesheet.png
-```
+`BUG-0004` está **VERIFICADO** en `BUGS.MD`.
 
-Arturo compartió el PNG correcto de 192 × 288 RGBA. Coincide con `src/assets/hero_hd.png` del commit congelado.
+### Validación local de Arturo — 2026-08-05
 
-Corrección publicada:
+- Todas las pruebas actuales EditMode y PlayMode pasaron.
+- El personaje real aparece con pixel art nítido.
+- Idle y caminata funcionan en las cuatro orientaciones.
+- Teclado y DualSense continúan funcionando sobre el motor ya validado.
+- Se revisaron capturas en los cuatro extremos del mapa.
+- El sprite y el marcador amarillo permanecen completamente dentro del terreno.
+- Los límites son correctos para el frame de **64 × 72 px**.
 
-- `ed840bc` — cambia a `src/assets/hero_hd.png` y reemplaza archivos inválidos de forma segura.
-- `70ec28c` — pruebas de la ruta fuente y de validación PNG/dimensiones.
-- `a3234ce` — registro de `BUG-0004`.
+### Interpretación de los límites con el sprite real
 
-Protecciones nuevas:
+Los límites se calculan desde el rectángulo lógico completo de **1 × 1.125 unidades**, más el marcador amarillo y el margen del terreno; no desde el contorno opaco del personaje. El spritesheet contiene transparencia alrededor del dibujo, por lo que visualmente parece quedar un poco más de espacio libre. Esto es correcto y evita recortes durante cualquier frame de la animación.
 
-- valida firma PNG antes de escribir;
-- valida exactamente 192 × 288 px;
-- elimina automáticamente el PNG local ilegible y su `.meta`;
-- no escribe descargas inválidas;
-- no vuelve a ejecutar `SaveAndReimport` en bucle sobre un archivo corrupto;
-- firma de importación actualizada a `farm-simulator-farmer-64x72-v2`.
-
-`BUG-0004` está **CORREGIDO**, pendiente de validación local.
-
-### Recursos locales esperados
-
-Unity debe generar bajo:
-
-`Assets/_Project/Resources/Characters/Farmer/`
-
-- `farmer-spritesheet.png` y `.meta`;
-- carpeta `Animations`;
-- ocho `.anim` y sus `.meta`;
-- `FarmerAnimator.controller` y `.meta`.
-
-No hacer commit de estos recursos hasta revisar pruebas, consola, vista y cambios de GitHub Desktop.
+El pivote Y `0.12` hace que una pequeña parte del frame exista bajo el origen de los pies. El margen inferior reservado para el marcador es todavía mayor, por lo que sprite y marcador quedan contenidos de manera segura.
 
 ---
 
-## 7. Resultado esperado de validación
+## 7. Recursos locales pendientes de versionar
 
-- EditMode: **27/27**.
-- PlayMode: **5/5**.
-- Consola: **0 errores y 0 advertencias** después de limpiar los errores históricos.
-- Aparece el personaje real con píxeles nítidos.
-- Idle conserva la última dirección.
-- Caminata funciona en cuatro direcciones a 8 FPS.
-- Teclado y DualSense siguen funcionando.
-- Collider y límites no cambian.
+Bajo `Assets/_Project/Resources/Characters/Farmer/` deben existir:
 
-No afirmar que esta fase está aprobada hasta la validación de Arturo.
+- `farmer-spritesheet.png` y `.meta`;
+- carpeta `Animations` y `.meta`;
+- ocho clips `.anim` y sus `.meta`;
+- `FarmerAnimator.controller` y `.meta`.
+
+Estos recursos fueron generados/importados localmente y todavía deben inspeccionarse en GitHub Desktop antes del commit.
 
 ---
 
 ## 8. Próximo paso exacto
 
-1. Cerrar Unity por completo.
-2. Permanecer en `feature/player-sprite-animation`.
-3. Hacer **Fetch origin** y **Pull origin**.
-4. No copiar manualmente el PNG: el pipeline corregido borrará el archivo inválido y descargará la fuente correcta.
-5. Abrir Unity y esperar a que termine compilación, descarga, importación y generación.
-6. Cuando termine, pulsar **Clear** en la consola para retirar los 273 mensajes históricos.
-7. Confirmar consola limpia.
-8. Ejecutar EditMode: esperado **27/27**.
-9. Ejecutar PlayMode: esperado **5/5**.
-10. Ejecutar `Bootstrap → Lab` y probar idle/caminar con teclado y DualSense.
-11. Enviar capturas de pruebas, consola, Game y cambios locales en GitHub Desktop.
-12. No hacer commit local todavía.
-
-Si el reemplazo automático no ocurre, usar una sola vez:
-
-`Tools → Farm Simulator → Rebuild Farmer Sprite Assets`.
+1. Detener Play Mode y cerrar Unity.
+2. Abrir GitHub Desktop en `feature/player-sprite-animation`.
+3. Enviar una captura con la lista completa de cambios locales dentro de `Assets/_Project/Resources/Characters/Farmer`.
+4. Revisar que solo estén el PNG correcto, sus metadatos, ocho clips y el Animator.
+5. Versionar los recursos generados con un commit local claro.
+6. Hacer Push origin.
+7. Volver a abrir Unity y realizar una última prueba desde un árbol limpio de la rama.
+8. Actualizar la bitácora, abrir PR y fusionar la Fase 4 en `main` después de la validación final.
 
 ---
 
