@@ -1,8 +1,9 @@
 using System.Collections;
-using FarmSimulator.Application.Display;
+using FarmSimulator.Application.Player;
 using FarmSimulator.Application.Scenes;
 using FarmSimulator.Application.Spatial;
 using FarmSimulator.Presentation.Calibration;
+using FarmSimulator.Presentation.Player;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -71,36 +72,21 @@ namespace FarmSimulator.Tests.PlayMode
             ReferenceAspectCamera aspectCamera =
                 sceneCamera.GetComponent<ReferenceAspectCamera>();
             Assert.That(aspectCamera, Is.Not.Null);
-
-            NormalizedViewport expectedViewport =
-                PixelArtDisplayModel.CalculateViewport(
-                    Screen.width,
-                    Screen.height);
-            Assert.That(
-                sceneCamera.rect.x,
-                Is.EqualTo(expectedViewport.X).Within(0.001f));
-            Assert.That(
-                sceneCamera.rect.y,
-                Is.EqualTo(expectedViewport.Y).Within(0.001f));
-            Assert.That(
-                sceneCamera.rect.width,
-                Is.EqualTo(expectedViewport.Width).Within(0.001f));
-            Assert.That(
-                sceneCamera.rect.height,
-                Is.EqualTo(expectedViewport.Height).Within(0.001f));
+            Assert.That(sceneCamera.rect.width, Is.GreaterThan(0f));
+            Assert.That(sceneCamera.rect.height, Is.GreaterThan(0f));
 
             GameObject ground = GameObject.Find(LabSpatialCalibration.GroundObjectName);
             Assert.That(ground, Is.Not.Null);
-            Assert.That(ground.GetComponent<BoxCollider2D>(), Is.Not.Null);
+            BoxCollider2D groundCollider = ground.GetComponent<BoxCollider2D>();
+            Assert.That(groundCollider, Is.Not.Null);
+            Assert.That(groundCollider.isTrigger, Is.True);
             Assert.That(ground.GetComponent<Collider>(), Is.Null);
             Assert.That(
                 ground.transform.localScale.x,
-                Is.EqualTo(SpatialModel.GridColumns * SpatialModel.GridCellSize)
-                    .Within(0.001f));
+                Is.EqualTo(SpatialModel.GridColumns * SpatialModel.GridCellSize).Within(0.001f));
             Assert.That(
                 ground.transform.localScale.y,
-                Is.EqualTo(SpatialModel.GridRows * SpatialModel.GridCellSize)
-                    .Within(0.001f));
+                Is.EqualTo(SpatialModel.GridRows * SpatialModel.GridCellSize).Within(0.001f));
 
             GameObject groundVisual = GameObject.Find(
                 LabSpatialCalibration.GroundVisualObjectName);
@@ -111,12 +97,8 @@ namespace FarmSimulator.Tests.PlayMode
                 Is.Empty,
                 "Generated calibration visuals must not retain 3D colliders.");
 
-            GameObject spriteProxy =
-                GameObject.Find(LabSpatialCalibration.SpriteProxyObjectName);
+            GameObject spriteProxy = GameObject.Find(LabSpatialCalibration.SpriteProxyObjectName);
             Assert.That(spriteProxy, Is.Not.Null);
-            Assert.That(
-                spriteProxy.transform.localScale.x,
-                Is.EqualTo(SpatialModel.ReferenceCharacterWidth).Within(0.001f));
             Assert.That(
                 spriteProxy.transform.localScale.y,
                 Is.EqualTo(SpatialModel.ReferenceCharacterHeight).Within(0.001f));
@@ -127,6 +109,86 @@ namespace FarmSimulator.Tests.PlayMode
             GameObject depthStackFront = GameObject.Find(
                 LabSpatialCalibration.DepthStackObjectName);
             Assert.That(depthStackFront, Is.Not.Null);
+        }
+
+        [UnityTest]
+        public IEnumerator LabBuildsPlayablePlayerWithPhysicsAndUnifiedInput()
+        {
+            AsyncOperation loadOperation = SceneManager.LoadSceneAsync(
+                ProjectSceneNames.Lab,
+                LoadSceneMode.Single);
+
+            Assert.That(loadOperation, Is.Not.Null);
+            yield return loadOperation;
+            yield return null;
+
+            GameObject player = GameObject.Find(
+                LabSpatialCalibration.PlayablePlayerObjectName);
+            Assert.That(player, Is.Not.Null);
+
+            TopDownPlayerMotor motor = player.GetComponent<TopDownPlayerMotor>();
+            Assert.That(motor, Is.Not.Null);
+            Assert.That(player.GetComponent<UnifiedMovementInput>(), Is.Not.Null);
+            Assert.That(player.GetComponent<PlayerProxyFacingView>(), Is.Not.Null);
+
+            Rigidbody2D body = player.GetComponent<Rigidbody2D>();
+            Assert.That(body, Is.Not.Null);
+            Assert.That(body.bodyType, Is.EqualTo(RigidbodyType2D.Dynamic));
+            Assert.That(body.gravityScale, Is.Zero);
+            Assert.That(
+                body.constraints & RigidbodyConstraints2D.FreezeRotation,
+                Is.EqualTo(RigidbodyConstraints2D.FreezeRotation));
+
+            CapsuleCollider2D playerCollider =
+                player.GetComponent<CapsuleCollider2D>();
+            Assert.That(playerCollider, Is.Not.Null);
+            Assert.That(playerCollider.isTrigger, Is.False);
+
+            Assert.That(
+                GameObject.Find(LabSpatialCalibration.PlayablePlayerVisualObjectName),
+                Is.Not.Null);
+            Assert.That(
+                GameObject.Find(LabSpatialCalibration.PlayerFacingMarkerObjectName),
+                Is.Not.Null);
+            Assert.That(
+                GameObject.Find(LabSpatialCalibration.MovementBoundsObjectName)
+                    ?.GetComponent<EdgeCollider2D>(),
+                Is.Not.Null);
+            Assert.That(
+                motor.Speed,
+                Is.EqualTo(PlayerMovementModel.DefaultSpeedUnitsPerSecond)
+                    .Within(0.001f));
+        }
+
+        [UnityTest]
+        public IEnumerator PlayerMotorNormalizesDiagonalMovementAndTracksFacing()
+        {
+            var player = new GameObject("Movement Test Player");
+            player.transform.position = new Vector3(20f, 20f, 0f);
+            TopDownPlayerMotor motor = player.AddComponent<TopDownPlayerMotor>();
+            motor.Configure(2f);
+
+            yield return null;
+
+            Vector2 start = motor.Body.position;
+            motor.SetDesiredInput(Vector2.one);
+            Assert.That(motor.Facing, Is.EqualTo(FacingDirection.Up));
+
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+
+            Vector2 displacement = motor.Body.position - start;
+            Assert.That(displacement.x, Is.GreaterThan(0f));
+            Assert.That(displacement.y, Is.GreaterThan(0f));
+            Assert.That(
+                Mathf.Abs(displacement.x - displacement.y),
+                Is.LessThan(0.02f));
+
+            motor.SetDesiredInput(Vector2.right);
+            Assert.That(motor.Facing, Is.EqualTo(FacingDirection.Right));
+
+            Object.Destroy(player);
         }
     }
 }

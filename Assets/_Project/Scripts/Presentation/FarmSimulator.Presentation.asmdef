@@ -3,7 +3,8 @@
   "rootNamespace": "FarmSimulator.Presentation",
   "references": [
     "FarmSimulator.Domain",
-    "FarmSimulator.Application"
+    "FarmSimulator.Application",
+    "Unity.InputSystem"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
