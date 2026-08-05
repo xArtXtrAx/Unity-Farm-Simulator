@@ -18,13 +18,10 @@ Documento maestro de continuidad. Debe permitir retomar el proyecto sin depender
 - **Control prioritario:** DualSense, además de teclado y mouse
 - **Ruta local:** `D:\Git\Unity-Farm-Simulator`
 - **Rama estable:** `main`
-- **Rama activa:** `feature/lab-spatial-calibration`
+- **Rama activa siguiente:** `feature/player-movement-foundation`
 - **Proyecto fuente:** `xArtXtrAx/farming-game-A`
 - **Commit fuente congelado:** `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
-- **Identidad Unity:**
-  - Company Name: `jarturoga`
-  - Product Name: `Unity Farm Simulator`
-  - Standalone Identifier: `com.jarturoga.unityfarmsimulator`
+- **Identidad Unity:** `jarturoga` / `Unity Farm Simulator` / `com.jarturoga.unityfarmsimulator`
 
 ---
 
@@ -35,14 +32,12 @@ Documento maestro de continuidad. Debe permitir retomar el proyecto sin depender
 - `main` debe permanecer estable.
 - Arturo usa principalmente GitHub Desktop.
 - Todo código propio vive bajo `Assets/_Project` y fuera de `Assembly-CSharp`.
-- Los `ScriptableObject` contendrán definiciones estáticas; el progreso mutable usará DTO e identificadores de texto estables.
+- Reglas importantes deben permanecer fuera de `MonoBehaviour` cuando sea razonable para facilitar pruebas.
 - Cada implementación o corrección de GPT debe actualizar esta bitácora en el mismo bloque.
 
 ---
 
-## 3. Arquitectura
-
-Assemblies vigentes:
+## 3. Arquitectura vigente
 
 - `FarmSimulator.Domain`: reglas puras, sin `UnityEngine`.
 - `FarmSimulator.Application`: casos de uso y contratos; depende de Domain, sin `UnityEngine`.
@@ -52,150 +47,130 @@ Assemblies vigentes:
 - `FarmSimulator.Tests.EditMode`.
 - `FarmSimulator.Tests.PlayMode`.
 
-Control de versiones confirmado:
-
-- `Visible Meta Files`.
-- `Force Text`.
-- `.meta` incluidos.
-- `.gitignore` y `.gitattributes` adecuados para Unity.
+Control de versiones confirmado: `Visible Meta Files`, `Force Text`, `.meta`, `.gitignore` y `.gitattributes` adecuados para Unity.
 
 ---
 
 ## 4. Dirección visual y modelo espacial definitivo
 
-La dirección artística objetivo es una vista cenital de sprites y Tilemaps 2D, inspirada en la legibilidad de juegos como Harvest Moon de SNES y Stardew Valley, sin copiar recursos ni mapas.
-
-### Contrato espacial
-
+- Vista cenital basada en sprites y Tilemaps 2D.
 - Plano lógico principal: **XY**.
 - Profundidad y orden visual: **Z** y orden de renderizado.
 - Cámara: **ortográfica frontal**, sin inclinación ni rotación isométrica.
 - Física principal: **Physics 2D**.
-- Arte principal: sprites y Tilemaps 2D.
-- Se permiten partículas, luces, objetos, trayectorias y efectos 3D cuando aporten valor.
-- Los saltos y arcos pueden representarse mediante desplazamientos visuales, animación o efectos 3D sin convertir el mapa base en XZ.
+- Se permiten partículas, luces, trayectorias y objetos 3D cuando aporten valor.
 
-### Contrato de pantalla y escala de pixel art
+### Contrato de pantalla y pixel art
 
-Se conserva la escala lógica demostrada por el prototipo anterior:
-
-- Resolución lógica de referencia: **960 × 540**.
-- Relación de aspecto objetivo: **16:9**.
+- Resolución lógica: **960 × 540**.
+- Relación de aspecto: **16:9**.
 - Pixels Per Unit inicial: **64**.
-- Una celda de 64 × 64 px equivale a **1 × 1 unidad** de Unity.
-- Campo visible lógico: **15 × 8.4375 unidades**.
-- Tamaño ortográfico de cámara: **4.21875**.
-- Frame de personaje fuente: **64 × 72 px**.
-- Referencia de personaje en Unity: **1 × 1.125 unidades**.
-- Profundidad de cámara: Z `-10`.
-- En salidas 4:3 o ultrawide, la cámara preservará 16:9 mediante letterbox o pillarbox.
+- Celda de referencia: **64 × 64 px = 1 × 1 unidad**.
+- Campo visible: **15 × 8.4375 unidades**.
+- Tamaño ortográfico: **4.21875**.
+- Frame del personaje fuente: **64 × 72 px**.
+- Personaje en Unity: **1 × 1.125 unidades**.
+- Cámara: Z `-10`.
+- Relaciones diferentes conservan 16:9 mediante letterbox o pillarbox.
 
-Esta decisión evita reescalar destructivamente `hero_hd.png` y mantiene compatibilidad conceptual con el mundo lógico de 960 × 540 del prototipo.
-
-### Decisión descartada
-
-La primera calibración usó mundo XZ, física 3D y cámara ortográfica inclinada. Produjo una vista isométrica en rombo que no coincide con la dirección artística. Se conserva solo como aprendizaje histórico.
+La primera calibración XZ/isométrica fue descartada porque no coincide con la estética deseada.
 
 ---
 
 ## 5. Fase 1 — Cimentación: COMPLETADA E INTEGRADA
 
-- [x] Proyecto Unity 6.3 LTS / URP creado.
-- [x] Arquitectura por assemblies.
-- [x] Escenas `Bootstrap` y `Lab` registradas.
-- [x] Transición automática `Bootstrap → Lab`.
-- [x] Paquetes de plantilla innecesarios retirados.
-- [x] Identidad definitiva aplicada y protegida.
-- [x] EditMode: 2/2 aprobadas.
-- [x] PlayMode: 1/1 aprobada.
-- [x] Consola: 0 errores y 0 advertencias.
-- [x] PR #1 fusionado en `main` mediante `ece618c`.
+- Proyecto Unity 6.3 LTS / URP creado.
+- Arquitectura por assemblies.
+- Escenas `Bootstrap` y `Lab`.
+- Transición automática `Bootstrap → Lab`.
+- Paquetes innecesarios retirados.
+- Identidad definitiva aplicada y protegida.
+- Validación: EditMode **2/2**, PlayMode **1/1**, consola limpia.
+- PR #1 fusionado mediante `ece618c`.
 
 ---
 
-## 6. Fase 2 — Calibración visual y espacial
+## 6. Fase 2 — Calibración visual, espacial y de pantalla: COMPLETADA E INTEGRADA
 
-### Calibración cenital validada
+### Implementación
 
-- Commit inicial isométrico: `8ce5c5e`.
-- Corrección a vista cenital XY: `edd6846`.
-- Estado remoto reconciliado: `48adb0f`.
-- Corrección de colliders: `cdb6cdd`.
-- Prueba de regresión de colliders: `c8342a2`.
-- Validación visual documentada: `f0e5df6`.
+- Laboratorio cenital XY con cámara frontal y Physics 2D.
+- Cuadrícula rectangular, caminos, parcelas, estanque, árboles, referencias de sprites, profundidad y arco visual.
+- Resolución lógica 960 × 540, 16:9 y 64 PPU.
+- `ReferenceAspectCamera` para letterbox/pillarbox.
+- Pruebas EditMode y PlayMode para contrato espacial, escala, cámara y colliders.
 
-Validación local confirmada por Arturo:
+### Incidente resuelto
 
-- [x] EditMode previo: **3/3 aprobadas**.
-- [x] PlayMode final de la corrección: **2/2 aprobadas**.
-- [x] Consola sin errores.
-- [x] `Bootstrap → Lab` funciona.
-- [x] Cuadrícula rectangular alineada a pantalla.
-- [x] Caminos, parcelas, estanque, árboles, sprites, profundidad y arco visual se representan sin perspectiva isométrica.
-- [x] La dirección visual cenital queda aceptada.
+`BUG-0001` — conflicto entre `BoxCollider` 3D y `BoxCollider2D`:
 
-### BUG-0001 — VERIFICADO
+- causa: `GameObject.CreatePrimitive` añadía un collider 3D que `Destroy` retiraba al final del frame;
+- corrección: separar el suelo lógico Physics 2D de su representación visual;
+- estado: **VERIFICADO**;
+- registro completo: `BUGS.MD`.
 
-El conflicto entre `BoxCollider` 3D y `BoxCollider2D` quedó resuelto y verificado localmente. El registro completo permanece en `BUGS.MD`.
+### Validación local final de Arturo
 
-### Calibración de resolución y PPU implementada remotamente
+- EditMode: **4/4 aprobadas**.
+- PlayMode: **2/2 aprobadas**.
+- Consola: **0 errores y 0 advertencias**.
+- `Bootstrap → Lab`: aprobado.
+- Vista cenital: aprobada.
+- Escala 960 × 540 / 64 PPU: aprobada visualmente.
+- La cámara preserva el marco 16:9 en la pestaña Game.
 
-Commit funcional: `0b26b2e` — `feat: calibrate pixel-art display scale`.
+### Integración
 
-Implementado:
-
-- [x] `PixelArtDisplayModel.cs` fija resolución 960 × 540, 16:9, 64 PPU, campo visible, cámara y tamaño del personaje.
-- [x] Política pura de viewport para 16:9, 4:3 y ultrawide.
-- [x] `ReferenceAspectCamera.cs` aplica letterbox/pillarbox y responde a cambios de tamaño de ventana.
-- [x] `SpatialModel` adopta 15 columnas × 8 filas de referencia y escala 64 px = 1 unidad.
-- [x] `LabSpatialCalibration` se reencuadra para el campo visible de 960 × 540.
-- [x] Personajes de referencia pasan a 1 × 1.125 unidades, equivalentes a 64 × 72 px.
-- [x] EditMode añade validación de resolución, PPU, cámara y viewports.
-- [x] PlayMode valida componente de aspecto, `Camera.rect`, dimensiones y tamaño de personaje.
-- [x] `BUGS.MD` marca `BUG-0001` como verificado en `9592532`.
-
-Pendiente de validación local del nuevo commit:
-
-- [ ] Unity debe compilar `0b26b2e` sin errores.
-- [ ] EditMode esperado: **4/4**.
-- [ ] PlayMode esperado: **2/2**.
-- [ ] Consola esperada: **0 errores y 0 advertencias**.
-- [ ] `Lab` debe verse más acercado, mostrando una referencia de 15 × 8 celdas con pequeño margen vertical.
-- [ ] La ventana Game debe conservar 16:9 y mostrar barras en relaciones distintas.
-- [ ] No fusionar todavía esta rama.
+- PR #2: `Calibrate top-down pixel-art presentation`.
+- Merge commit: `7ac3f91ddba1f1e6bd8136e22d6ed0a70d19fce8`.
+- Fecha: 2026-08-05.
 
 ---
 
-## 7. Línea base funcional por migrar
+## 7. Fase 3 — Movimiento del jugador: SIGUIENTE
 
-El proyecto anterior contiene granja, casa, mercado, personaje, teclado/mouse/gamepad, hotbar, inventario, almacenamiento, doce parcelas, azada, regadera, semillas, nabo, zanahoria, col, tienda, economía, envíos, reloj, estaciones, sueño, fin de día y guardado JSON versionado. El detalle está en `MIGRACION_DESDE_FARMING_GAME_A.MD`.
+Objetivo del primer bloque:
 
-Datos visuales relevantes del prototipo:
+- personaje provisional controlable dentro de `Lab`;
+- movimiento analógico en ocho direcciones;
+- cuatro direcciones visuales;
+- teclado: WASD y flechas;
+- DualSense/gamepad: stick izquierdo y D-pad;
+- zona muerta inicial `0.18`;
+- velocidad uniforme, sin ventaja diagonal;
+- `Rigidbody2D` y collider 2D;
+- separación entre lectura de input, procesamiento y motor físico;
+- pruebas puras y PlayMode.
 
-- mundo lógico de escena: 960 × 540;
-- personaje: frames de 64 × 72;
-- parcelas de referencia: 48 px con separación de 58 px;
-- colisión de jugador: radio de 12 px;
-- cámara lógica centrada en 480, 270.
-
----
-
-## 8. Próximo paso exacto
-
-1. Detener Play Mode y cerrar Unity.
-2. En GitHub Desktop, permanecer en `feature/lab-spatial-calibration`.
-3. Ejecutar **Fetch origin** y **Pull origin**.
-4. Abrir Unity `6000.3.21f1` y esperar la compilación.
-5. Limpiar la consola.
-6. Ejecutar EditMode: resultado esperado **4/4**.
-7. Ejecutar PlayMode: resultado esperado **2/2**.
-8. Abrir `Assets/_Project/Scenes/Bootstrap.unity` y pulsar Play.
-9. Revisar la pestaña Game en `Free Aspect` y, de ser posible, en una resolución 16:9.
-10. Enviar capturas del Test Runner, consola y nueva vista Game.
-11. Tras validar, cerrar la calibración espacial y comenzar movimiento con teclado y DualSense.
+El sprite real y Animator se incorporarán después de validar el motor y los controles con la referencia provisional.
 
 ---
 
-## 9. Protocolo para un chat nuevo
+## 8. Línea base funcional por migrar
+
+El proyecto anterior contiene granja, casa, mercado, personaje, teclado/mouse/gamepad, hotbar, inventario, almacenamiento, doce parcelas, herramientas, tres cultivos de primavera, tienda, economía, envíos, reloj, estaciones, sueño, fin de día y guardado JSON versionado. El detalle está en `MIGRACION_DESDE_FARMING_GAME_A.MD`.
+
+Datos relevantes:
+
+- mundo lógico: 960 × 540;
+- personaje: 64 × 72 px;
+- colisión de referencia: radio de 12 px;
+- movimiento analógico y DualSense ya existían en el prototipo.
+
+---
+
+## 9. Próximo paso exacto
+
+1. Crear `feature/player-movement-foundation` desde `main` después de `7ac3f91`.
+2. Implementar procesamiento analógico puro con zona muerta `0.18` y normalización diagonal.
+3. Implementar motor `Rigidbody2D` separado de la lectura de input.
+4. Admitir WASD, flechas, stick izquierdo y D-pad.
+5. Generar un personaje provisional controlable en `Lab`.
+6. Añadir pruebas EditMode y PlayMode.
+7. Validar en Unity con teclado y DualSense antes de importar el sprite definitivo.
+
+---
+
+## 10. Protocolo para un chat nuevo
 
 > Continúa `xArtXtrAx/Unity-Farm-Simulator`. Antes de modificar archivos, lee `BITÁCORA_GPT.MD`, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, revisa ramas y commits recientes, resume el estado y continúa desde el próximo paso documentado.
