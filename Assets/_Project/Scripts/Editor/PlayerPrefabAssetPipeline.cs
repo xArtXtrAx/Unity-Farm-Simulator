@@ -36,7 +36,13 @@ namespace FarmSimulator.Editor
                 return;
             }
 
-            EnsureSortingLayers();
+            if (EnsureSortingLayers())
+            {
+                AssetDatabase.Refresh(
+                    ImportAssetOptions.ForceSynchronousImport);
+                EditorApplication.delayCall += EnsureAssets;
+                return;
+            }
 
             if (!TryLoadFarmerAssets(
                     out Sprite idleDown,
@@ -213,7 +219,7 @@ namespace FarmSimulator.Editor
             AssetDatabase.CreateFolder(parent, name);
         }
 
-        private static void EnsureSortingLayers()
+        private static bool EnsureSortingLayers()
         {
             UnityEngine.Object[] assets =
                 AssetDatabase.LoadAllAssetsAtPath(TagManagerPath);
@@ -221,7 +227,7 @@ namespace FarmSimulator.Editor
             {
                 Debug.LogError(
                     "Could not load ProjectSettings/TagManager.asset.");
-                return;
+                return false;
             }
 
             var serialized = new SerializedObject(assets[0]);
@@ -231,7 +237,7 @@ namespace FarmSimulator.Editor
             {
                 Debug.LogError(
                     "TagManager does not expose m_SortingLayers.");
-                return;
+                return false;
             }
 
             var existingNames = new HashSet<string>();
@@ -287,6 +293,8 @@ namespace FarmSimulator.Editor
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 AssetDatabase.SaveAssets();
             }
+
+            return changed;
         }
 
         private static uint StableUniqueId(string value)

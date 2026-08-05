@@ -47,7 +47,11 @@ namespace FarmSimulator.Presentation.Player
         {
             animator = targetAnimator;
             currentStateHash = 0;
-            Refresh();
+
+            if (Application.isPlaying)
+            {
+                Refresh();
+            }
         }
 
         public void Refresh()

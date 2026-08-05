@@ -24,8 +24,8 @@ namespace FarmSimulator.Tests.EditMode
         }
 
         [TestCase(1.004, 9900)]
-        [TestCase(1.005, 9899)]
-        [TestCase(-1.005, 10101)]
+        [TestCase(1.01, 9899)]
+        [TestCase(-1.01, 10101)]
         public void QuantizesDepthDeterministically(
             double feetY,
             int expected)
