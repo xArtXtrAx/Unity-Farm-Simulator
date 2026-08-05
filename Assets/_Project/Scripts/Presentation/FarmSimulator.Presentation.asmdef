@@ -4,7 +4,8 @@
   "references": [
     "FarmSimulator.Domain",
     "FarmSimulator.Application",
-    "Unity.InputSystem"
+    "Unity.InputSystem",
+    "Unity.ugui"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
