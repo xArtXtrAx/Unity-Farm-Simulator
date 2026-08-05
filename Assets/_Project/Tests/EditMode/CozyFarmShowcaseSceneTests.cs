@@ -130,6 +130,9 @@ namespace FarmSimulator.Tests.EditMode
                     CozyFarmShowcaseScenePipeline.CropGroupName);
                 Assert.That(catalog, Is.Not.Null);
                 Assert.That(crops, Is.Not.Null);
+                Assert.That(
+                    CozyFarmShowcaseScenePipeline.CatalogIconScale,
+                    Is.EqualTo(0.75f).Within(0.001f));
 
                 Transform panel = catalog.Find(
                     CozyFarmShowcaseScenePipeline.CatalogPanelObjectName);
@@ -171,6 +174,62 @@ namespace FarmSimulator.Tests.EditMode
                     Assert.That(
                         stage.transform.localScale,
                         Is.EqualTo(Vector3.one));
+                }
+            });
+        }
+
+        [Test]
+        public void ShowcaseCentersPlantedSeedStagesWithinTheirSoilRows()
+        {
+            WithShowcaseScene(scene =>
+            {
+                GameObject root = FindRoot(
+                    scene,
+                    CozyFarmShowcaseScenePipeline.RootObjectName);
+                Assert.That(root, Is.Not.Null);
+
+                Transform crops = root.transform.Find(
+                    CozyFarmShowcaseScenePipeline.CropGroupName);
+                Assert.That(crops, Is.Not.Null);
+                Assert.That(
+                    CozyFarmShowcaseScenePipeline
+                        .PlantedSeedStageYOffset,
+                    Is.EqualTo(-0.3f).Within(0.001f));
+
+                string[] cropNames =
+                    { "turnip", "carrot", "cabbage" };
+                float[] rowY = { 0.05f, -0.95f, -1.95f };
+
+                for (int cropIndex = 0;
+                     cropIndex < cropNames.Length;
+                     cropIndex++)
+                {
+                    string cropName = cropNames[cropIndex];
+                    Transform row = crops.Find(
+                        $"{cropName} stages");
+                    Assert.That(row, Is.Not.Null);
+
+                    Transform plantedSeeds = row.Find(
+                        $"cozy_{cropName}_stage_0");
+                    Transform firstSprout = row.Find(
+                        $"cozy_{cropName}_stage_1");
+                    Assert.That(plantedSeeds, Is.Not.Null);
+                    Assert.That(firstSprout, Is.Not.Null);
+
+                    Assert.That(
+                        plantedSeeds.localPosition.y,
+                        Is.EqualTo(
+                            rowY[cropIndex] +
+                            CozyFarmShowcaseScenePipeline
+                                .PlantedSeedStageYOffset)
+                            .Within(0.001f));
+                    Assert.That(
+                        firstSprout.localPosition.y,
+                        Is.EqualTo(rowY[cropIndex])
+                            .Within(0.001f));
+                    Assert.That(
+                        plantedSeeds.localPosition.x,
+                        Is.EqualTo(-5.35f).Within(0.001f));
                 }
             });
         }
