@@ -129,7 +129,10 @@ namespace FarmSimulator.Tests.PlayMode
             TopDownPlayerMotor motor = player.GetComponent<TopDownPlayerMotor>();
             Assert.That(motor, Is.Not.Null);
             Assert.That(player.GetComponent<UnifiedMovementInput>(), Is.Not.Null);
-            Assert.That(player.GetComponent<PlayerProxyFacingView>(), Is.Not.Null);
+
+            PlayerProxyFacingView facingView =
+                player.GetComponent<PlayerProxyFacingView>();
+            Assert.That(facingView, Is.Not.Null);
 
             Rigidbody2D body = player.GetComponent<Rigidbody2D>();
             Assert.That(body, Is.Not.Null);
@@ -144,12 +147,41 @@ namespace FarmSimulator.Tests.PlayMode
             Assert.That(playerCollider, Is.Not.Null);
             Assert.That(playerCollider.isTrigger, Is.False);
 
+            GameObject playerVisual = GameObject.Find(
+                LabSpatialCalibration.PlayablePlayerVisualObjectName);
+            Assert.That(playerVisual, Is.Not.Null);
+
+            GameObject facingMarker = GameObject.Find(
+                LabSpatialCalibration.PlayerFacingMarkerObjectName);
+            Assert.That(facingMarker, Is.Not.Null);
             Assert.That(
-                GameObject.Find(LabSpatialCalibration.PlayablePlayerVisualObjectName),
-                Is.Not.Null);
+                facingMarker.transform.localPosition,
+                Is.EqualTo(PlayerProxyFacingView.CalculateMarkerLocalPosition(motor.Facing)));
+
+            motor.SetDesiredInput(Vector2.left);
+            facingView.Refresh();
+            Assert.That(motor.Facing, Is.EqualTo(FacingDirection.Left));
             Assert.That(
-                GameObject.Find(LabSpatialCalibration.PlayerFacingMarkerObjectName),
-                Is.Not.Null);
+                facingMarker.transform.localPosition.y,
+                Is.EqualTo(playerVisual.transform.localPosition.y).Within(0.001f),
+                "Left/right markers must be vertically centered on the player visual.");
+            Assert.That(
+                facingMarker.transform.localPosition,
+                Is.EqualTo(PlayerProxyFacingView.CalculateMarkerLocalPosition(
+                    FacingDirection.Left)));
+
+            motor.SetDesiredInput(Vector2.right);
+            facingView.Refresh();
+            Assert.That(motor.Facing, Is.EqualTo(FacingDirection.Right));
+            Assert.That(
+                facingMarker.transform.localPosition.y,
+                Is.EqualTo(playerVisual.transform.localPosition.y).Within(0.001f),
+                "Left/right markers must remain vertically centered on the player visual.");
+            Assert.That(
+                facingMarker.transform.localPosition,
+                Is.EqualTo(PlayerProxyFacingView.CalculateMarkerLocalPosition(
+                    FacingDirection.Right)));
+
             Assert.That(
                 GameObject.Find(LabSpatialCalibration.MovementBoundsObjectName)
                     ?.GetComponent<EdgeCollider2D>(),
