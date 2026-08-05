@@ -231,7 +231,13 @@ namespace FarmSimulator.Domain.Items
 
         public static bool TryGet(ItemId itemId, out ItemDefinition definition)
         {
-            return itemId.IsKnown && DefinitionsById.TryGetValue(itemId, out definition);
+            if (!itemId.IsKnown)
+            {
+                definition = null;
+                return false;
+            }
+
+            return DefinitionsById.TryGetValue(itemId, out definition);
         }
 
         public static bool TryGet(string itemId, out ItemDefinition definition)
