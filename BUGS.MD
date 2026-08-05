@@ -26,40 +26,50 @@ Registro histórico de errores detectados, investigados y corregidos durante el 
 
 ## BUG-0006 — El `sortingOrder` cambia, pero ningún objeto del laboratorio puede ocultar al jugador
 
-- **Estado:** INVESTIGANDO
+- **Estado:** CORREGIDO
 - **Severidad:** S3 — Media
 - **Detectado:** 2026-08-05
+- **Corrección implementada:** 2026-08-05
 - **Versión de Unity:** `6000.3.21f1`
 - **Sistema:** laboratorio de calibración / profundidad visual cenital
 - **Rama afectada:** `feature/player-prefab-depth-sorting`
-- **Cabeza observada:** `080b487`
+- **Commit afectado:** `080b487`
+- **Corrección funcional:** `19147bd`, `b2e746a`
+- **Prueba de regresión:** `e93efe9`
 - **Reportado por:** Arturo
 
 ### Comportamiento observado
 
-Durante Play Mode, `Playable Player Sprite` cambia correctamente su `Order in Layer` aproximadamente entre **9600 y 10400**, pero el personaje se dibuja siempre por encima de todos los objetos visibles del laboratorio. No existe una referencia con la que pueda comprobarse visualmente el cambio delante/detrás.
+Durante Play Mode, `Playable Player Sprite` cambiaba correctamente su `Order in Layer` aproximadamente entre **9600 y 10400**, pero el personaje se dibujaba siempre por encima de todos los objetos visibles del laboratorio. No existía una referencia con la que pudiera comprobarse visualmente el cambio delante/detrás.
 
 ### Comportamiento esperado
 
 El laboratorio debe contener al menos un objeto 2D solapable que participe en el mismo sistema de sorting por Y. Al mover los pies del jugador por encima de la referencia, el jugador debe verse detrás; al moverlos por debajo, debe verse delante.
 
-### Causa raíz confirmada
+### Causa raíz
 
-Las referencias actuales del laboratorio se construyen con `GameObject.CreatePrimitive`, `MeshRenderer` y materiales URP opacos. El personaje se representa mediante `SpriteRenderer`, cuya cola transparente y `sortingOrder` no pueden intercalarse visualmente con esas primitivas opacas. Por eso el valor numérico cambia, pero la visibilidad no.
+Las referencias existentes se construyen con `GameObject.CreatePrimitive`, `MeshRenderer` y materiales URP opacos. El personaje usa `SpriteRenderer`; su cola transparente y `sortingOrder` no se intercalan con esas primitivas opacas. El valor numérico cambiaba correctamente, pero la visibilidad no podía cambiar frente a esos objetos.
 
-### Corrección prevista
+### Solución aplicada
 
-- Añadir una referencia 2D explícita de profundidad con `SpriteRenderer`.
-- Aplicarle `TopDownSpriteSorting` y la misma sorting layer que el jugador.
-- Añadir una regresión PlayMode que compruebe ambas relaciones de orden.
-- Mantener las primitivas 3D existentes únicamente como calibración espacial.
+- Se añadió `LabDepthSortingReference`, una referencia morada 2D de **1.5 × 2.25 unidades**.
+- Su pivote está en los pies y su posición de pies es `Y = 0.65`.
+- Usa `SpriteRenderer`, sorting layer `Actors` y `TopDownSpriteSorting`, igual que el jugador.
+- `LabSpatialCalibrationInstaller` la instala tanto si crea la calibración como si esta ya existe.
+- No tiene collider, para permitir atravesarla y observar el cambio visual.
+- La prueba PlayMode ahora exige:
+  - misma sorting layer;
+  - orden correcto de la referencia;
+  - jugador detrás con pies más arriba;
+  - jugador delante con pies más abajo.
 
-### Validación requerida
+### Pendiente para pasar a VERIFICADO
 
-- Unity compila y abre con consola limpia.
-- PlayMode conserva **6/6** pruebas o el conteo actualizado documentado.
-- La referencia 2D aparece en `Generated Calibration`.
-- Jugador detrás con pies más arriba y delante con pies más abajo.
+- Hacer pull y confirmar compilación limpia.
+- Comprobar que aparece `Depth Sorting Reference` dentro de `Generated Calibration`.
+- Caminar desde abajo hacia arriba atravesando el rectángulo morado.
+- Confirmar el cambio visual delante/detrás.
+- Ejecutar EditMode **36/36** y PlayMode **6/6**.
 
 ---
 
@@ -78,29 +88,7 @@ Las referencias actuales del laboratorio se construyen con `GameObject.CreatePri
 - **Corrección funcional:** `a9a3fe2`
 - **Reportado por:** Arturo
 
-### Comportamiento observado
-
-Unity entró en Safe Mode con:
-
-```text
-Assets/_Project/Scripts/Presentation/Player/PlayerSpriteAnimator.cs(51,17):
-error CS0234: The type or namespace name 'isPlaying' does not exist in the namespace 'FarmSimulator.Application'
-```
-
-### Causa raíz y solución
-
-`Application.isPlaying` se resolvía como el namespace hermano `FarmSimulator.Application`. Se sustituyó por:
-
-```csharp
-global::UnityEngine.Application.isPlaying
-```
-
-### Verificación
-
-- Unity abrió fuera de Safe Mode.
-- Consola en **0 errores y 0 advertencias**.
-- Desapareció `CS0234`.
-- Se generaron el prefab reutilizable y las sorting layers.
+Unity entró en Safe Mode porque `Application.isPlaying` se resolvía como el namespace `FarmSimulator.Application`. Se cambió a `global::UnityEngine.Application.isPlaying`. Arturo verificó apertura normal, consola limpia y generación del prefab y sorting layers.
 
 ---
 
@@ -115,7 +103,7 @@ global::UnityEngine.Application.isPlaying
 - **Corrección funcional:** `ed840bc`
 - **Prueba de regresión:** `70ec28c`
 
-La fuente inicial era incorrecta y no se validaba el archivo antes de importarlo. Se cambió a `src/assets/hero_hd.png`, se validaron firma PNG y dimensiones **192 × 288 px**, y se impidió escribir descargas inválidas. Arturo verificó importación, animación, pruebas y límites visuales.
+La fuente inicial era incorrecta y no se validaba antes de importar. Se cambió a `src/assets/hero_hd.png`, se validaron firma PNG y dimensiones **192 × 288 px**, y se impidió escribir descargas inválidas. Arturo verificó importación, animación, pruebas y límites visuales.
 
 ---
 
@@ -128,7 +116,7 @@ La fuente inicial era incorrecta y no se validaba el archivo antes de importarlo
 - **Corrección:** `9b55ade`
 - **Prueba:** `6c96d10`
 
-El perímetro usaba el collider pequeño de los pies e ignoraba el volumen visual. Se centralizaron dimensiones, marcador, collider y offsets, con límites verticales asimétricos por el pivote en los pies. Arturo verificó los cuatro extremos.
+El perímetro usaba el collider pequeño de los pies e ignoraba el volumen visual. Se centralizaron dimensiones, marcador, collider y offsets, con límites verticales asimétricos por el pivote. Arturo verificó los cuatro extremos.
 
 ---
 
@@ -170,4 +158,5 @@ Se reposicionó el marcador desde las dimensiones visuales: laterales centrados,
 ### 2026-08-05
 
 - Se verificaron `BUG-0001` a `BUG-0005`.
-- Se añadió `BUG-0006`: el jugador cambia numéricamente su profundidad, pero las primitivas opacas del laboratorio no permiten verificar la oclusión visual.
+- Se añadió `BUG-0006` por falta de una referencia visual compatible con el sorting del jugador.
+- Se implementó una referencia 2D con la misma sorting layer y cálculo por pies; queda pendiente de validación local.
