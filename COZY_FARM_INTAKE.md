@@ -7,190 +7,194 @@
 - El héroe actual se conserva sin cambios.
 - El paquete completo `full version.zip` permanece fuera del repositorio.
 - A1, recepción de cinco hojas fuente: **VALIDADA LOCALMENTE**.
-- A2, slicing curado y pruebas automáticas: **VALIDADO LOCALMENTE**.
-- A3, primera exhibición: **VALIDADA TÉCNICAMENTE; COMPOSICIÓN VISUAL RECHAZADA POR DESPROPORCIÓN**.
-- A3.1, exhibición reequilibrada: **IMPLEMENTADA REMOTAMENTE; REGENERACIÓN Y VALIDACIÓN LOCAL PENDIENTES**.
+- A2, slicing curado: **VALIDADO LOCALMENTE**.
+- A3, primera exhibición: **VALIDADA TÉCNICAMENTE; RECHAZADA VISUALMENTE**.
+- A3.1, exhibición reequilibrada: **VALIDADA TÉCNICAMENTE; DIAGNÓSTICO VISUAL COMPLETADO**.
+- Próximo bloque propuesto: **A3.2 — separar mundo real, referencia técnica e interfaz**.
 
-## A1 — Fuente piloto validada
+## A1 — Fuente piloto
 
-Commit local publicado por Arturo:
+Commit de assets publicado por Arturo:
 
 ```text
 e4540b42d275b650f726bad41d4546787ae544e9
 ```
 
-Archivos fuente:
+Hojas versionadas:
 
 ```text
 Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/
-├── items.png
-├── seeds.png
-├── tools.png
-├── crops.png
-└── tiles.png
+├── items.png       160 × 192
+├── seeds.png       112 × 96
+├── tools.png       592 × 64
+├── crops.png        96 × 592
+└── tiles.png       864 × 800
 ```
 
-Arturo confirmó el 5 de agosto de 2026 que la importación inicial quedó correcta. La configuración permanece en 16 PPU, Point, sin mipmaps, Clamp y sin compresión.
+Configuración común:
 
-## A2 — Slicing curado validado
+- Sprite 2D/UI;
+- 16 PPU;
+- Point;
+- sin mipmaps;
+- Clamp;
+- sin compresión.
 
-No se duplicaron ni recortaron los PNG. Se conservaron las hojas originales y se añadieron únicamente rectángulos nombrados en sus `.meta`.
+No entraron ZIP, GIF, `global.png`, personajes, animales, edificios, enemigos ni variantes estacionales completas.
 
-### Objetos y semillas
+Validación A1:
 
-`items.png` expone:
+- EditMode: **124/124**;
+- PlayMode: **6/6**;
+- errores: **0**.
 
-- `cozy_turnip`;
-- `cozy_carrot`;
-- `cozy_cabbage`.
+## A2 — Slicing curado
 
-`seeds.png` expone:
+Slices aprobados:
 
-- `cozy_turnip_seeds`;
-- `cozy_carrot_seeds`;
-- `cozy_cabbage_seeds`.
+- objetos: `cozy_turnip`, `cozy_carrot`, `cozy_cabbage`;
+- semillas: `cozy_turnip_seeds`, `cozy_carrot_seeds`, `cozy_cabbage_seeds`;
+- cultivos: 6 etapas para nabo, zanahoria y col, **18 sprites** en total;
+- muestras de terreno: `cozy_grass`, `cozy_dirt`, `cozy_water`, `cozy_tilled_soil`.
 
-### Cultivos
+`tools.png` permanece Single: contiene máquinas y mobiliario, no iconos apropiados de azada o regadera.
 
-`crops.png` expone seis etapas para cada cultivo:
+Alias provisionales y reversibles:
 
-- `cozy_turnip_stage_0` a `cozy_turnip_stage_5`;
-- `cozy_carrot_stage_0` a `cozy_carrot_stage_5`;
-- `cozy_cabbage_stage_0` a `cozy_cabbage_stage_5`.
+- arte `radish` → ID de dominio `turnip`;
+- arte `lettuce` → ID de dominio `cabbage`.
 
-Los cultivos usan pivote inferior central para futura colocación sobre la parcela.
+Validación A2 — 2026-08-05:
 
-### Terreno
-
-`tiles.png` expone solo cuatro muestras piloto:
-
-- `cozy_grass`;
-- `cozy_dirt`;
-- `cozy_water`;
-- `cozy_tilled_soil`.
-
-`cozy_tilled_soil` se conserva como muestra aislada provisional. A3.1 deja de repetirla bajo cada cultivo porque su silueta circular dominaba la lectura visual de la exhibición.
-
-### Validación local A2 — 2026-08-05
-
-Arturo comprobó dentro de Unity exactamente:
-
-- `items.png`: **3** sprites;
-- `seeds.png`: **3** sprites;
-- `crops.png`: **18** sprites;
-- `tiles.png`: **4** sprites;
-- `tools.png`: una sola planilla sin cortes.
-
-Después ejecutó todas las pruebas:
-
+- `items.png`: **3**;
+- `seeds.png`: **3**;
+- `crops.png`: **18**;
+- `tiles.png`: **4**;
+- `tools.png`: sin cortes;
 - EditMode: **130/130**;
 - PlayMode: **6/6**;
 - errores: **0**.
 
-A2 queda aprobado completamente.
+## A3 — Primera exhibición
 
-### Alias visuales provisionales
-
-El paquete denomina **radish** al recurso usado provisionalmente para el ID de dominio `turnip`, y **lettuce** al usado provisionalmente para `cabbage`. Los IDs de dominio no cambiaron. Estos alias son reversibles.
-
-### Herramientas
-
-`tools.png` contiene máquinas de procesamiento y mobiliario, no iconos adecuados de azada y regadera. Permanece en modo Single y sin slicing. No se asignaron sustitutos falsos a `hoe` o `watering-can`.
-
-## A3 — Primera escena artística de exhibición
-
-El generador Editor reproducible crea:
+El pipeline Editor genera localmente:
 
 ```text
 Assets/_Project/Scenes/CozyFarmShowcase.unity
 ```
 
-También puede regenerarse desde:
+Comando manual:
 
 ```text
 Tools > Farm Simulator > Rebuild Cozy Farm Showcase
 ```
 
-La escena es independiente de `Lab`. La cámara usa `SpatialModel.CameraOrthographicSize` (**4.21875**) y `ReferenceAspectCamera`.
+La escena es independiente de `Lab`, utiliza `SpatialModel.CameraOrthographicSize` (**4.21875**) y conserva el prefab actual del héroe.
 
-### Validación local A3 — 2026-08-05
-
-Arturo confirmó:
+Validación técnica A3:
 
 - EditMode: **134/134**;
 - PlayMode: **6/6**;
 - errores: **0**.
 
-La implementación técnica quedó aprobada, pero la captura visual mostró una composición desproporcionada:
+Problemas visuales observados:
 
-- objetos y semillas tratados como sprites físicos de mundo;
-- bases circulares repetidas bajo las 18 etapas;
-- muestras de terreno 2×2 demasiado grandes;
-- exceso de espacio vacío;
-- comparación de escala poco clara.
-
-A3 queda registrada como validada técnicamente, pero no aceptada visualmente.
+- iconos presentados como objetos físicos de mundo;
+- 18 círculos de suelo repetidos;
+- muestras 2×2 sobredimensionadas;
+- distribución dispersa.
 
 ## A3.1 — Exhibición reequilibrada
 
-Archivos modificados:
+Commits funcionales:
 
 ```text
-Assets/_Project/Scripts/Editor/CozyFarmShowcaseScenePipeline.cs
-Assets/_Project/Tests/EditMode/CozyFarmShowcaseSceneTests.cs
+4e6f8e756a38c6dd1ba9a74032f943105e73a9e7
+39abe438bb6068b21438fb836b5eea01295f0db3
 ```
 
 Cambios:
 
-- firma de escena elevada a `cozy-farm-showcase-scene-v2` para forzar regeneración;
-- objetos y semillas colocados sobre una referencia de 3×2 slots y escalados a **0.55**;
-- cultivos conservados a escala de mundo **1.0**;
-- eliminación de los 18 marcadores `soil_for_*`;
-- las 18 etapas se colocan sobre una cama compartida de tierra de **6×3 tiles**;
-- las cuatro muestras de terreno pasan de bloques 2×2 a tiles individuales alineados;
-- el héroe conserva escala **1.0** y se compara sobre una referencia de tierra de **2×2 tiles**;
-- distribución compactada dentro del contrato visible 960×540;
-- si la escena antigua está abierta durante la recompilación, el pipeline no la sobrescribe: solicita cerrarla y ejecutar el comando de reconstrucción.
+- firma `cozy-farm-showcase-scene-v2`;
+- objetos y semillas a escala **0.55** sobre referencia 3×2;
+- cultivos y héroe a escala de mundo **1.0**;
+- cama compartida de tierra 6×3;
+- eliminación de `soil_for_*`;
+- cuatro muestras de un solo tile;
+- héroe sobre referencia 2×2;
+- dos pruebas EditMode nuevas;
+- protección frente a reconstrucción con la escena abierta.
 
-No se modificaron:
+No se modificaron PNG, slices A2, `Lab`, prefab/spritesheet del héroe, Domain, inventario, Input System, Tilemaps, paletas o hotbar.
 
-- `tiles.png.meta` ni los slices A2;
-- PNG del paquete;
-- `Lab`;
-- prefab, spritesheet o animaciones del héroe;
-- Domain, inventario, Input System o runtime de juego;
-- Tilemaps, paletas, hotbar o UI funcional.
+### Validación local A3.1 — 2026-08-05
 
-### Pruebas A3.1
-
-`CozyFarmShowcaseSceneTests.cs` pasa de cuatro a **seis** casos. Los dos casos nuevos verifican:
-
-- separación explícita entre iconos de interfaz a escala 0.55 y sprites de mundo a escala 1.0;
-- panel compartido, cama de cultivo compartida, ausencia de objetos `soil_for_*`, muestras de un solo tile y referencia 2×2 del héroe.
-
-Resultado esperado, todavía no confirmado localmente:
+Arturo regeneró la escena y confirmó:
 
 - EditMode: **136/136**;
-- PlayMode: **6/6**.
+- PlayMode: **6/6**;
+- errores: **0**.
+
+La segunda captura confirma que la relación geométrica básica ya es coherente:
+
+- el héroe ocupa aproximadamente un tile de ancho y algo más de uno de alto;
+- los cultivos maduros caben dentro de una celda;
+- las 18 etapas respetan una cuadrícula de 6×3;
+- los iconos son menores que el héroe.
+
+Por ello **no se recomienda reducir indiscriminadamente héroe, cultivos o tiles**. La sensación restante de desproporción procede principalmente de mezclar tres roles visuales en la misma composición:
+
+1. objetos de mundo;
+2. iconos de interfaz;
+3. lámina técnica con todas las etapas simultáneas.
+
+También se confirma:
+
+- `cozy_grass` desaparece visualmente sobre el fondo del mismo material;
+- `cozy_tilled_soil` es una silueta circular similar a un hoyo o montículo de plantación, no una parcela cuadrada completa;
+- el héroe de 64×72 tiene más detalle interno que el arte base de 16×16, por lo que existe una diferencia estilística que no se resolverá únicamente cambiando escalas de Transform.
+
+A3.1 queda **VALIDADA TÉCNICAMENTE** y cumple su objetivo diagnóstico. La composición todavía no se considera una escena final del juego.
+
+## A3.2 — Próximo experimento propuesto
+
+Separar la comparación en contextos reales:
+
+### Mundo
+
+Crear una viñeta pequeña de granja con:
+
+- césped;
+- una parcela compacta;
+- héroe a escala 1.0;
+- un cultivo joven, uno intermedio y uno maduro;
+- borde de agua;
+- sin mostrar simultáneamente las 18 etapas.
+
+Esto permitirá juzgar la proporción que realmente verá el jugador.
+
+### Interfaz
+
+Importar únicamente un panel/slot desde una hoja UI de Cozy Farm, preferentemente `ui/inventory_chopped.png` o un fragmento equivalente de `UI_all.png`, y mostrar los seis iconos en **Canvas Screen Space**. No volver a utilizar tierra de mundo como fondo de inventario.
+
+### Referencia técnica
+
+Conservar las 18 etapas en una vista secundaria o grupo técnico, no como composición principal.
+
+### Semántica de terreno
+
+- dejar de llamar parcela completa a `cozy_tilled_soil`;
+- tratarla provisionalmente como `planting_hole`/montículo;
+- usar `cozy_dirt` para la parcela hasta localizar y validar un recurso rectangular más adecuado.
 
 ## Exclusiones vigentes
 
-No incluir ZIP, GIF, `global.png`, `item_carry.png`, personajes adicionales, animales, edificios, enemigos, máquinas adicionales ni variantes estacionales completas. No crear todavía Tilemaps, paletas funcionales, UI o conexión con el inventario.
+No incluir el ZIP, GIF, personajes adicionales, animales, edificios, enemigos, máquinas adicionales ni variantes estacionales completas. No crear todavía agricultura funcional, Tilemap final, hotbar conectada o integración con inventario.
 
-## Próximo paso local
+## Próximo paso exacto
 
-1. Cerrar `CozyFarmShowcase` en Unity antes de actualizar la rama.
-2. En GitHub Desktop, hacer Fetch/Pull de `chore/cozy-farm-art-intake`.
-3. Abrir Unity y esperar compilación e importación completas.
-4. La firma `v2` debe regenerar `Assets/_Project/Scenes/CozyFarmShowcase.unity` automáticamente.
-5. Si Unity avisa que la escena antigua estaba abierta, cerrarla y ejecutar `Tools > Farm Simulator > Rebuild Cozy Farm Showcase`.
-6. Abrir la escena nueva y pulsar Play.
-7. Confirmar visualmente:
-   - iconos notablemente menores que el héroe;
-   - tres filas compactas de crecimiento sin círculos repetidos;
-   - cuatro muestras de un solo tile;
-   - héroe intacto sobre referencia 2×2.
-8. Ejecutar EditMode completo; esperado **136/136**.
-9. Ejecutar PlayMode completo; esperado **6/6**.
-10. Reportar captura, conteos y cualquier error o advertencia.
-11. No hacer commit todavía de la escena generada ni avanzar a Tilemaps/hotbar hasta revisar el resultado visual.
+1. Registrar A3.1 como validada: **136/136 EditMode**, **6/6 PlayMode**, cero errores.
+2. No cambiar todavía la escala del héroe ni de los cultivos.
+3. Preparar A3.2 como viñeta de mundo + panel UI separado.
+4. Incorporar solo el mínimo recurso UI necesario mediante un bundle controlado.
+5. Mantener `CozyFarmShowcase.unity` sin commit hasta cerrar la decisión visual.
