@@ -260,6 +260,54 @@ namespace FarmSimulator.Tests.EditMode
         }
 
         [Test]
+        public void ShowcaseScalesOnlyHeroVisualForWorldComparison()
+        {
+            WithShowcaseScene(scene =>
+            {
+                GameObject root = FindRoot(
+                    scene,
+                    CozyFarmShowcaseScenePipeline.RootObjectName);
+                Assert.That(root, Is.Not.Null);
+
+                Transform hero = root.transform.Find(
+                    CozyFarmShowcaseScenePipeline.HeroObjectName);
+                Assert.That(hero, Is.Not.Null);
+                Assert.That(hero.localScale, Is.EqualTo(Vector3.one));
+
+                Transform visual = hero.Find(
+                    PlayerSpriteAssetCatalog.SpriteVisualObjectName);
+                Assert.That(visual, Is.Not.Null);
+                Assert.That(
+                    visual.localScale.x,
+                    Is.EqualTo(
+                        CozyFarmShowcaseScenePipeline.HeroVisualScale)
+                        .Within(0.001f));
+                Assert.That(
+                    visual.localScale.y,
+                    Is.EqualTo(
+                        CozyFarmShowcaseScenePipeline.HeroVisualScale)
+                        .Within(0.001f));
+                Assert.That(visual.localScale.z, Is.EqualTo(1f));
+
+                CapsuleCollider2D collider =
+                    hero.GetComponent<CapsuleCollider2D>();
+                Assert.That(collider, Is.Not.Null);
+                Assert.That(
+                    collider.size.x,
+                    Is.EqualTo(LabSpatialCalibration.PlayerColliderWidth)
+                        .Within(0.001f));
+                Assert.That(
+                    collider.size.y,
+                    Is.EqualTo(LabSpatialCalibration.PlayerColliderHeight)
+                        .Within(0.001f));
+                Assert.That(
+                    collider.offset.y,
+                    Is.EqualTo(LabSpatialCalibration.PlayerColliderOffsetY)
+                        .Within(0.001f));
+            });
+        }
+
+        [Test]
         public void ShowcaseCameraUsesProjectOrthographicContract()
         {
             WithShowcaseScene(scene =>
