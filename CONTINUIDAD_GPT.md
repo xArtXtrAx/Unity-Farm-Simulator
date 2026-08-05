@@ -13,7 +13,7 @@ Este archivo es el **punto de entrada permanente** para retomar el desarrollo si
 - **Rama activa:** `feature/player-prefab-depth-sorting`
 - **Fase actual:** Fase 5 — Prefab reutilizable y profundidad visual
 - **Estado:** implementación remota terminada; validación local pendiente
-- **Cabeza remota registrada de la rama activa:** `516d6cd4468eaf8f327046f06fa24a5a3e1129c9`
+- **Cabeza remota registrada de la rama activa:** `e88e41b39a797f0ba6d3e0d1d3ea30c2cddc2c44`
 - **Unity:** `6000.3.21f1`
 - **Ruta local habitual:** `D:\Git\Unity-Farm-Simulator`
 
