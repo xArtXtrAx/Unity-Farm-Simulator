@@ -18,7 +18,7 @@ Documento maestro de continuidad. Debe permitir retomar el proyecto sin depender
 - **Control prioritario:** DualSense, además de teclado y mouse
 - **Ruta local:** `D:\Git\Unity-Farm-Simulator`
 - **Rama estable:** `main`
-- **Rama activa:** `feature/player-movement-foundation`
+- **Rama activa:** `feature/player-sprite-animation`
 - **Proyecto fuente:** `xArtXtrAx/farming-game-A`
 - **Commit fuente congelado:** `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
 - **Identidad Unity:** `jarturoga` / `Unity Farm Simulator` / `com.jarturoga.unityfarmsimulator`
@@ -109,54 +109,35 @@ Integración:
 
 ---
 
-## 7. Fase 3 — Base de movimiento del jugador: VALIDADA, PENDIENTE DE INTEGRACIÓN
-
-### Base funcional implementada
-
-Commit inicial: `e0be2afa9681e56a987725385affb8c5e96efdf7` — `feat: add keyboard and gamepad player movement foundation`.
+## 7. Fase 3 — Base de movimiento del jugador: COMPLETADA E INTEGRADA
 
 Incluye:
 
-- [x] `PlayerMovementModel.cs` en Application, sin dependencia de UnityEngine.
-- [x] Zona muerta radial inicial `0.18`.
-- [x] Magnitud analógica remapeada después de la zona muerta.
-- [x] Normalización de entradas digitales diagonales.
-- [x] Resolución de cuatro orientaciones visuales.
-- [x] `TopDownPlayerMotor` separado de la lectura de input.
-- [x] Movimiento mediante `Rigidbody2D.MovePosition` en `FixedUpdate`.
-- [x] `CapsuleCollider2D` de pies, gravedad cero, rotación bloqueada e interpolación.
-- [x] `UnifiedMovementInput` admite WASD, flechas, stick izquierdo y D-pad.
-- [x] Selección de la fuente activa con mayor magnitud entre teclado y gamepad.
-- [x] Compatibilidad con el primer gamepad conectado aunque no sea `Gamepad.current`.
-- [x] Personaje provisional rojo y marcador amarillo de orientación.
-- [x] Perímetro Physics 2D del laboratorio.
-- [x] Presentation referencia explícitamente `Unity.InputSystem`.
-- [x] Pruebas puras de zona muerta, fuerza analógica, diagonal y orientación.
-- [x] Pruebas PlayMode de composición Physics 2D y desplazamiento normalizado.
+- movimiento Physics 2D mediante `Rigidbody2D.MovePosition`;
+- WASD, flechas, stick izquierdo y D-pad;
+- zona muerta radial y magnitud analógica remapeada;
+- diagonales normalizadas;
+- orientación en cuatro direcciones;
+- collider de pies y perímetro de laboratorio;
+- separación entre reglas, input, motor y representación;
+- límites visuales asimétricos compatibles con pivote en los pies;
+- pruebas EditMode y PlayMode;
+- `BUG-0002` y `BUG-0003` verificados.
 
-### Validación local final confirmada por Arturo
+Validación local final de Arturo en Unity `6000.3.21f1`:
 
-Unity `6000.3.21f1`:
+- EditMode: **11/11 aprobadas**.
+- PlayMode: **4/4 aprobadas**.
+- Consola: **0 errores**.
+- Teclado y DualSense: aprobados.
+- Cuerpo y marcador: completamente visibles en los cuatro extremos.
 
-- [x] EditMode: **11/11 aprobadas**.
-- [x] PlayMode: **4/4 aprobadas**.
-- [x] Consola: **0 errores**.
-- [x] WASD y flechas funcionan.
-- [x] Stick izquierdo y D-pad del DualSense funcionan.
-- [x] Movimiento diagonal normalizado.
-- [x] El jugador no atraviesa el perímetro.
-- [x] El cuerpo rojo y el marcador permanecen completamente visibles en los cuatro extremos.
+Integración:
 
-### Bugs de la fase
+- PR #3: `Add keyboard and DualSense player movement foundation`.
+- Merge commit: `32186f1d6a315abd5a3e642cbf54e7cd6b997f4d`.
 
-- `BUG-0002`: marcador de orientación descentrado — **VERIFICADO**.
-- `BUG-0003`: límites físicos permitían recorte visual — **VERIFICADO**.
-
-La corrección de límites considera el volumen visual completo, el pivote situado en los pies, el marcador, el tamaño del `CapsuleCollider2D` y su offset. La prueba PlayMode protege matemáticamente los cuatro extremos.
-
-### Estado de cierre
-
-La base de movimiento está lista para PR e integración en `main`. El rectángulo y el marcador son referencias técnicas; el siguiente bloque sustituirá esa representación por el sprite real y su Animator, sin alterar el motor validado.
+El rectángulo rojo y el marcador amarillo son referencias técnicas. La nueva rama `feature/player-sprite-animation` sustituirá esa presentación por el sprite real y su Animator sin modificar el motor validado.
 
 ---
 
@@ -175,16 +156,15 @@ Datos relevantes:
 
 ## 9. Próximo paso exacto
 
-1. Crear y fusionar el PR de `feature/player-movement-foundation` hacia `main`.
-2. Registrar el merge en la bitácora de `main`.
-3. Crear una rama nueva desde `main` para la representación animada del jugador.
-4. Localizar y copiar el spritesheet congelado del personaje desde `xArtXtrAx/farming-game-A`.
-5. Importarlo con textura Sprite, filtro Point, sin compresión y 64 PPU.
-6. Cortar frames de 64 × 72 px conservando el pivote en los pies.
-7. Crear animaciones idle/caminar para abajo, arriba, izquierda y derecha.
-8. Conectar Animator con velocidad y orientación del motor ya validado.
-9. Sustituir el rectángulo rojo; mantener temporalmente el marcador como herramienta de depuración desactivable.
-10. Añadir pruebas de importación/configuración y validar visualmente en `Bootstrap → Lab`.
+1. Sincronizar `main` localmente para recibir el PR #3 y este registro.
+2. Cambiar a `feature/player-sprite-animation`.
+3. Localizar y copiar el spritesheet congelado del personaje desde `xArtXtrAx/farming-game-A`.
+4. Importarlo con textura Sprite, filtro Point, sin compresión y 64 PPU.
+5. Cortar frames de 64 × 72 px conservando el pivote en los pies.
+6. Crear animaciones idle/caminar para abajo, arriba, izquierda y derecha.
+7. Conectar Animator con velocidad y orientación del motor ya validado.
+8. Sustituir el rectángulo rojo; mantener temporalmente el marcador como herramienta de depuración desactivable.
+9. Añadir pruebas de importación/configuración y validar visualmente en `Bootstrap → Lab`.
 
 ---
 
