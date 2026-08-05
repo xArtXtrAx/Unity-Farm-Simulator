@@ -17,13 +17,20 @@ namespace FarmSimulator.Editor
         public const string SceneAssetPath =
             "Assets/_Project/Scenes/CozyFarmShowcase.unity";
         public const string ImportSignature =
-            "cozy-farm-showcase-scene-v1";
+            "cozy-farm-showcase-scene-v2";
         public const string RootObjectName = "Cozy Farm Showcase";
         public const string CameraObjectName = "Showcase Camera";
         public const string TerrainGroupName = "Terrain Samples";
         public const string CatalogGroupName = "Catalog Icons";
+        public const string CatalogPanelObjectName = "Catalog Panel";
         public const string CropGroupName = "Crop Growth Stages";
+        public const string CropBedObjectName = "Crop Bed";
         public const string HeroObjectName = "Current Hero";
+        public const string HeroScaleReferenceObjectName =
+            "Hero Scale Reference";
+
+        public const float CatalogIconScale = 0.55f;
+        public const float WorldSpriteScale = 1f;
 
         private const string SourceRoot =
             "Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/";
@@ -82,6 +89,20 @@ namespace FarmSimulator.Editor
                 EditorApplication.isUpdating)
             {
                 EditorApplication.delayCall += EnsureScene;
+                return;
+            }
+
+            Scene loadedScene = SceneManager.GetSceneByPath(SceneAssetPath);
+            if (loadedScene.IsValid() && loadedScene.isLoaded)
+            {
+                if (!IsSceneCurrent())
+                {
+                    Debug.LogWarning(
+                        "CozyFarmShowcase is open with an older layout. " +
+                        "Close it and run Tools > Farm Simulator > " +
+                        "Rebuild Cozy Farm Showcase.");
+                }
+
                 return;
             }
 
@@ -158,8 +179,8 @@ namespace FarmSimulator.Editor
 
             AssetDatabase.SaveAssets();
             Debug.Log(
-                "Generated CozyFarmShowcase with the current hero and " +
-                "curated Cozy Farm pilot sprites.");
+                "Generated compact CozyFarmShowcase with UI-scale icons, " +
+                "world-scale crops and the current hero prefab.");
         }
 
         private static bool TryLoadAssets(
@@ -287,10 +308,10 @@ namespace FarmSimulator.Editor
 
             Vector2[] positions =
             {
-                new Vector2(4.6f, 2.8f),
-                new Vector2(6.3f, 2.8f),
-                new Vector2(4.6f, 1.1f),
-                new Vector2(6.3f, 1.1f)
+                new Vector2(3.9f, 3.05f),
+                new Vector2(4.9f, 3.05f),
+                new Vector2(5.9f, 3.05f),
+                new Vector2(6.9f, 3.05f)
             };
 
             for (int index = 0;
@@ -298,14 +319,14 @@ namespace FarmSimulator.Editor
                  index++)
             {
                 string name = TerrainNames[index];
-                CreateTilePatch(
+                CreateSprite(
                     name,
                     assets[name],
                     group,
                     positions[index],
-                    new Vector2Int(2, 2),
                     TopDownSortingLayers.World,
-                    0);
+                    0,
+                    WorldSpriteScale);
             }
         }
 
@@ -316,27 +337,39 @@ namespace FarmSimulator.Editor
             Transform group = CreateGroup(
                 CatalogGroupName,
                 parent);
+
+            CreateTilePatch(
+                CatalogPanelObjectName,
+                assets["cozy_dirt"],
+                group,
+                new Vector2(-5.25f, 2.7f),
+                new Vector2Int(3, 2),
+                TopDownSortingLayers.World,
+                0);
+
             Transform items = CreateGroup("Harvested Items", group);
             Transform seeds = CreateGroup("Seed Bags", group);
 
             for (int index = 0; index < ItemNames.Length; index++)
             {
-                float x = -6.1f + (index * 1.5f);
+                float x = -6.25f + index;
                 CreateSprite(
                     ItemNames[index],
                     assets[ItemNames[index]],
                     items,
-                    new Vector2(x, 3.25f),
+                    new Vector2(x, 3.2f),
                     TopDownSortingLayers.Actors,
-                    100);
+                    100,
+                    CatalogIconScale);
 
                 CreateSprite(
                     SeedNames[index],
                     assets[SeedNames[index]],
                     seeds,
-                    new Vector2(x, 2.05f),
+                    new Vector2(x, 2.2f),
                     TopDownSortingLayers.Actors,
-                    100);
+                    100,
+                    CatalogIconScale);
             }
         }
 
@@ -347,7 +380,17 @@ namespace FarmSimulator.Editor
             Transform group = CreateGroup(
                 CropGroupName,
                 parent);
-            float[] rowY = { 0.55f, -0.95f, -2.45f };
+
+            CreateTilePatch(
+                CropBedObjectName,
+                assets["cozy_dirt"],
+                group,
+                new Vector2(-2.85f, -0.75f),
+                new Vector2Int(6, 3),
+                TopDownSortingLayers.Ground,
+                5);
+
+            float[] rowY = { 0.05f, -0.95f, -1.95f };
 
             for (int cropIndex = 0;
                  cropIndex < CropNames.Length;
@@ -360,17 +403,9 @@ namespace FarmSimulator.Editor
 
                 for (int stage = 0; stage < 6; stage++)
                 {
-                    float x = -6.2f + (stage * 1.05f);
+                    float x = -5.35f + stage;
                     string spriteName =
                         $"cozy_{cropName}_stage_{stage}";
-
-                    CreateSprite(
-                        $"soil_for_{spriteName}",
-                        assets["cozy_tilled_soil"],
-                        row,
-                        new Vector2(x, rowY[cropIndex] - 0.5f),
-                        TopDownSortingLayers.Ground,
-                        10);
 
                     CreateSprite(
                         spriteName,
@@ -378,7 +413,8 @@ namespace FarmSimulator.Editor
                         row,
                         new Vector2(x, rowY[cropIndex]),
                         TopDownSortingLayers.Actors,
-                        100);
+                        100,
+                        WorldSpriteScale);
                 }
             }
         }
@@ -389,11 +425,11 @@ namespace FarmSimulator.Editor
             ShowcaseAssets assets)
         {
             CreateTilePatch(
-                "Hero Scale Reference",
+                HeroScaleReferenceObjectName,
                 assets["cozy_dirt"],
                 parent,
-                new Vector2(5.25f, -2.75f),
-                new Vector2Int(3, 2),
+                new Vector2(5.35f, -1.65f),
+                new Vector2Int(2, 2),
                 TopDownSortingLayers.World,
                 0);
 
@@ -411,7 +447,8 @@ namespace FarmSimulator.Editor
             hero.name = HeroObjectName;
             hero.transform.SetParent(parent, worldPositionStays: true);
             hero.transform.position =
-                new Vector3(5.25f, -3.15f, 0f);
+                new Vector3(5.35f, -2.15f, 0f);
+            hero.transform.localScale = Vector3.one;
         }
 
         private static Transform CreateGroup(
@@ -429,7 +466,8 @@ namespace FarmSimulator.Editor
             Transform parent,
             Vector2 position,
             string sortingLayer,
-            int sortingOrder)
+            int sortingOrder,
+            float uniformScale = WorldSpriteScale)
         {
             var spriteObject = new GameObject(objectName);
             spriteObject.transform.SetParent(
@@ -437,6 +475,8 @@ namespace FarmSimulator.Editor
                 worldPositionStays: false);
             spriteObject.transform.localPosition =
                 new Vector3(position.x, position.y, 0f);
+            spriteObject.transform.localScale =
+                new Vector3(uniformScale, uniformScale, 1f);
 
             SpriteRenderer renderer =
                 spriteObject.AddComponent<SpriteRenderer>();
@@ -472,7 +512,8 @@ namespace FarmSimulator.Editor
                         patch,
                         new Vector2(startX + x, startY + y),
                         sortingLayer,
-                        sortingOrder);
+                        sortingOrder,
+                        WorldSpriteScale);
                 }
             }
 
