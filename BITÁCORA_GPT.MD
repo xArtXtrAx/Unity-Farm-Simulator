@@ -104,7 +104,7 @@ Bugs verificados acumulados: `BUG-0001` a `BUG-0006`.
 
 ---
 
-## 4. Fase 6 — Catálogo de objetos e inventario de dominio: EN IMPLEMENTACIÓN; CATÁLOGO COMPLETADO
+## 4. Fase 6 — Catálogo de objetos e inventario de dominio: IMPLEMENTACIÓN FUNCIONAL COMPLETADA; PRUEBAS PENDIENTES
 
 Rama:
 
@@ -128,22 +128,13 @@ Commit `dd32056c9f8142a2322bc2c1d41f0b05b002598f` de `xArtXtrAx/farming-game-A`:
 
 No existe una prueba unitaria dedicada a `InventoryManager`; su responsabilidad de presentación no se migra en este bloque.
 
-### Datos confirmados de la fuente
+### Datos y reglas confirmados
 
-Ocho IDs iniciales:
-
-- `hoe`;
-- `watering-can`;
-- `turnip-seeds`;
-- `turnip`;
-- `carrot-seeds`;
-- `carrot`;
-- `cabbage-seeds`;
-- `cabbage`.
+Ocho IDs iniciales: `hoe`, `watering-can`, `turnip-seeds`, `turnip`, `carrot-seeds`, `carrot`, `cabbage-seeds` y `cabbage`.
 
 Categorías conocidas: herramienta, semilla, cultivo, material, comida y regalo.
 
-Reglas de catálogo:
+Catálogo:
 
 - herramientas: stack máximo 1;
 - semillas y cosechas actuales: stack máximo 99;
@@ -151,22 +142,19 @@ Reglas de catálogo:
 - cosechas vendibles: nabo 60, zanahoria 100, col 150;
 - IDs desconocidos se rechazan de forma explícita.
 
-Reglas de inventario:
+Inventario:
 
-- ocho slots por defecto;
-- índice seleccionado inicial 0;
-- selección directa validada;
-- ciclo con wrap-around;
+- ocho slots por defecto e índice seleccionado inicial 0;
+- selección directa validada y ciclo con wrap-around;
 - los slots vacíos usan cantidad 0;
-- completar primero stacks existentes;
-- después ocupar slots vacíos;
+- completar primero stacks existentes y después slots vacíos;
 - adición atómica: si no cabe toda la cantidad, no mutar ningún slot;
 - consumo desde slot seleccionado o índice explícito;
 - limpiar el slot cuando llega a cero;
 - snapshots defensivos de slots e índice seleccionado;
 - restauración validada sin exponer referencias mutables internas.
 
-Estado inicial requerido por paridad:
+Estado inicial:
 
 ```text
 slot 0: hoe ×1
@@ -193,60 +181,79 @@ selección: slot 0
 
 ### Implementación 6A — Catálogo puro completado
 
-Archivos añadidos en la rama activa:
+Archivos:
 
 - `Assets/_Project/Scripts/Domain/ItemCatalog.cs`;
 - `Assets/_Project/Scripts/Domain/ItemCatalog.cs.meta`.
 
-Contenido:
+Incluye `ItemId`, `ItemCategory`, `ItemDefinition` inmutable y `ItemCatalog` de solo lectura con validaciones, búsquedas tipadas/por cadena y consultas de comprable/vendible.
 
-- `ItemId` como value object ordinal y case-sensitive con los ocho IDs registrados;
-- `ItemCategory` con las seis categorías conocidas;
-- `ItemDefinition` inmutable con validación de ID, textos, categoría, stack y precios;
-- `ItemCatalog` de solo lectura con búsquedas tipadas y por cadena;
-- propiedades y consultas de comprable/vendible;
-- rechazo explícito de IDs nulos, vacíos o desconocidos.
-
-Commits correctos en `feature/domain-item-inventory-foundation`:
+Commits correctos en la rama activa:
 
 - `deb03849826a5bfb5ecc07e303440e9277de70b3` — `feat(domain): add pure item catalog`;
 - `1264f1996ec462f802316b916471197cfb1fcfc0` — `chore(unity): track item catalog asset`.
 
+### Implementación 6B — Inventario puro completado
+
+Archivos:
+
+- `Assets/_Project/Scripts/Domain/InventoryState.cs`;
+- `Assets/_Project/Scripts/Domain/InventoryState.cs.meta`.
+
+Tipos añadidos:
+
+- `InventorySlot` inmutable, tipado y validado contra el catálogo;
+- `InventorySlotSnapshot` como DTO sin dependencias Unity, capaz de representar datos externos antes de validación;
+- `AddItemResult` inmutable con solicitado, añadido, restante y cambio;
+- `InventorySnapshot` con copia propia y colección de solo lectura;
+- `InventoryState` con ocho slots por defecto y selección inicial 0.
+
+Comportamiento implementado:
+
+- construcción con capacidad configurable, truncado compatible de slots iniciales y copia defensiva;
+- selección directa y ciclo positivo/negativo con wrap-around;
+- acceso defensivo a slots, `SetSlot` y `ClearSlot`;
+- capacidad por stack parcial y slots vacíos;
+- `CanAddItem` para la cantidad completa;
+- `AddItem` determinista: stacks existentes por índice y luego slots vacíos;
+- prevalidación de capacidad para garantizar adición completamente atómica;
+- herramientas con stack 1, por lo que ocupan slots separados;
+- consumo parcial, exacto, seleccionado o por índice;
+- snapshots serializables mediante IDs de cadena;
+- restauración que valida todos los slots en un arreglo temporal antes de mutar el estado;
+- slots omitidos se limpian, slots excedentes se ignoran y selección restaurada se limita al rango válido;
+- `CreateInitialPlayerInventory` con azada, regadera y 20 semillas de nabo.
+
+Commits:
+
+- `dcc20f14e4eca17ca99eccc3342d17e3f2e33bbc` — `feat(domain): add atomic inventory state`;
+- `e909d9aa295caf4d62db905d6d2cc6202e3104bd` — `chore(unity): track inventory domain asset`.
+
+Verificación de rama:
+
+- `InventoryState.cs` existe en `feature/domain-item-inventory-foundation`;
+- `InventoryState.cs` devuelve 404 en `main`.
+
 ### Incidencia transaccional corregida — parámetro de rama del conector
 
-El primer intento usó el nombre antiguo `branch_name`; el conector actual lo ignoró y creó temporalmente los dos archivos en `main`.
+El primer intento del catálogo usó el nombre antiguo `branch_name`; el conector actual lo ignoró y creó temporalmente dos archivos en `main`.
 
-Acciones correctivas realizadas de inmediato:
+- creación accidental: `a43bc0209de7b9c5e18aedc4f7ec2c02727af908` y `63698bebad19755e07e5eb8c6a15b98f400679c3`;
+- eliminación correctiva: `59edfe528f42c238d71491d950dcd71680597f82` y `7ab7d97f76b8eae5be81bcfdb5b64bae343a6db6`;
+- verificación posterior: catálogo presente en rama activa y ausente de `main`.
 
-- creación accidental en `main`: `a43bc0209de7b9c5e18aedc4f7ec2c02727af908` y `63698bebad19755e07e5eb8c6a15b98f400679c3`;
-- eliminación del meta accidental: `59edfe528f42c238d71491d950dcd71680597f82`;
-- eliminación del código accidental: `7ab7d97f76b8eae5be81bcfdb5b64bae343a6db6`;
-- verificación posterior: `ItemCatalog.cs` existe en la rama activa y devuelve 404 en `main`.
-
-Regla operativa añadida: para todas las escrituras GitHub posteriores se usará exclusivamente el parámetro `branch` y se verificará la rama después de publicar.
+Regla operativa: todas las escrituras posteriores usan exclusivamente el parámetro `branch` y se verifica la rama después de publicar.
 
 ### Comprobación estática realizada
 
-- el archivo funcional se ubica únicamente en `FarmSimulator.Domain` de la rama activa;
-- no importa ni menciona `UnityEngine`;
-- no cambia asmdefs, escenas, UI, ScriptableObjects ni capas superiores;
+- ambos archivos funcionales están en `FarmSimulator.Domain` de la rama activa;
+- ninguno importa ni menciona `UnityEngine`;
+- el asmdef de Domain conserva `noEngineReferences: true`;
+- no se tocaron asmdefs, escenas, UI, ScriptableObjects, almacenamiento ni capas superiores;
 - llaves y estructura básica revisadas fuera de Unity;
-- no existe compilador C# ni Unity en el entorno remoto, por lo que la compilación continúa pendiente de Arturo.
+- el entorno remoto no dispone de `dotnet`, `csc`, `mcs` ni Unity, por lo que no se afirma compilación.
 
-### Diseño objetivo restante
-
-Dominio puro, sin `UnityEngine`:
-
-- slot de inventario;
-- resultado de adición;
-- DTO de slot para snapshot;
-- snapshot inmutable;
-- `InventoryState` con ocho slots por defecto;
-- fábrica para crear el estado inicial.
-
-No decidir todavía el formato de ScriptableObjects. El dominio debe poder probarse y serializarse sin referencias Unity.
-
-### Casos EditMode planificados
+### Casos EditMode preparados
 
 Se prepararon **25 casos de catálogo** y **63 casos de inventario**, para **88 casos nuevos**. Sumados a los 36 existentes, el conteo EditMode esperado será **124**, sujeto a compilación y descubrimiento reales en Unity.
 
@@ -259,8 +266,8 @@ El catálogo y el inventario deben compilar y pasar pruebas EditMode exhaustivas
 - Investigación fuente: **completada**.
 - Tabla de paridad: **completada**.
 - Catálogo remoto: **implementado en rama activa; no validado aún en Unity**.
-- Inventario remoto: **pendiente**.
-- Pruebas EditMode nuevas: **pendientes de publicar**.
+- Inventario remoto: **implementado en rama activa; no validado aún en Unity**.
+- Pruebas EditMode nuevas: **preparadas localmente; pendientes de publicar**.
 - Compilación local Unity: **pendiente**.
 - Conteo EditMode esperado al terminar: **124**.
 - PlayMode esperado sin cambios: **6**.
@@ -288,17 +295,15 @@ Los cambios exclusivamente locales siguen siendo el único estado que GitHub no 
 
 ## 6. Próximo paso exacto
 
-1. Implementar `InventoryState`, slots, resultado de adición y snapshots en `FarmSimulator.Domain`.
-2. Preservar stacking determinista, adición atómica, consumo, selección y restauración validada.
-3. Verificar que los archivos existen en `feature/domain-item-inventory-foundation` y no en `main`.
-4. Actualizar esta bitácora inmediatamente después de publicar el inventario.
-5. Añadir los 25 casos EditMode de catálogo y los 63 de inventario.
+1. Publicar `ItemCatalogTests.cs` con 25 casos EditMode.
+2. Publicar `InventoryStateTests.cs` con 63 casos EditMode.
+3. Verificar que pruebas y metas existen en `feature/domain-item-inventory-foundation` y no en `main`.
+4. Revisar estáticamente namespaces, APIs, dependencias y conteo de atributos NUnit.
+5. Actualizar esta bitácora inmediatamente después de publicar las pruebas.
 6. No crear UI, ScriptableObjects, almacenamiento ni modificar escenas.
-7. Revisar estáticamente dependencias y asegurar que Domain no usa `UnityEngine`.
-8. Actualizar esta bitácora con archivos, commits, pruebas añadidas, conteo esperado y validación local pendiente.
-9. Sincronizar `CONTINUIDAD_GPT.md` en `main` cuando quede cerrado el estado remoto de la fase.
-10. Solo entonces pedir a Arturo sincronizar y validar en Unity.
-11. No afirmar que Unity compila o que las pruebas pasan hasta que Arturo lo confirme.
+7. Sincronizar `CONTINUIDAD_GPT.md` en `main` con el estado remoto final de la fase y el head de la rama.
+8. Pedir a Arturo sincronizar y validar en Unity.
+9. No afirmar que Unity compila o que las pruebas pasan hasta que Arturo lo confirme.
 
 ---
 
@@ -310,4 +315,4 @@ Hotbar visual, almacenamiento, economía, tiempo, agricultura, herramientas, tre
 
 ## 8. Protocolo para chat nuevo
 
-> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`; después sigue el orden de lectura y el “Próximo paso exacto”. La Fase 5 está integrada mediante el PR #5. La rama activa es `feature/domain-item-inventory-foundation`. La Fase 6 tiene el catálogo puro implementado y debe continuar con inventario y pruebas EditMode, sin UI ni escenas.
+> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`; después sigue el orden de lectura y el “Próximo paso exacto”. La Fase 5 está integrada mediante el PR #5. La rama activa es `feature/domain-item-inventory-foundation`. La Fase 6 tiene catálogo e inventario puros implementados; faltan publicar las pruebas EditMode y validar localmente, sin UI ni escenas.
