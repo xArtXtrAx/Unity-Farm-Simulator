@@ -1,6 +1,6 @@
 # BITÁCORA GPT — Unity Farm Simulator
 
-Documento maestro de continuidad. Debe permitir retomar el proyecto sin depender de la memoria del chat.
+Documento maestro de continuidad. Debe permitir reanudar el proyecto sin depender de la memoria del chat.
 
 > **Regla de continuidad:** antes de modificar el repositorio, leer `CONTINUIDAD_GPT.md` desde `main`; después leer este archivo, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, ramas y commits recientes.
 
@@ -85,7 +85,7 @@ Bugs verificados: `BUG-0001` a `BUG-0004`.
 
 ---
 
-## 4. Fase 5 — Prefab reutilizable y profundidad visual: IMPLEMENTADA REMOTAMENTE, PENDIENTE DE VALIDACIÓN
+## 4. Fase 5 — Prefab reutilizable y profundidad visual: IMPLEMENTADA REMOTAMENTE, BLOQUEADA EN COMPILACIÓN LOCAL
 
 Rama: `feature/player-prefab-depth-sorting`.
 
@@ -104,16 +104,7 @@ Commits funcionales:
 - [x] `PlayerPrefabIdentity` identifica el prefab generado.
 - [x] `PlayerPrefabAssetCatalog` centraliza rutas, nombres y firma de generación.
 - [x] `PlayerPrefabAssetPipeline` genera un Player prefab reutilizable.
-- [x] El prefab conserva:
-  - `Rigidbody2D`;
-  - `CapsuleCollider2D` de pies;
-  - `UnifiedMovementInput`;
-  - `TopDownPlayerMotor`;
-  - `SpriteRenderer`;
-  - `Animator`;
-  - `PlayerSpriteAnimator`;
-  - `TopDownSpriteSorting`;
-  - marcador de orientación y `PlayerProxyFacingView`.
+- [x] El prefab conserva `Rigidbody2D`, `CapsuleCollider2D`, input, motor, sprite, Animator, controlador de animación, sorting dinámico y marcador de depuración.
 - [x] `PlayerSpriteRuntimeInstaller` pasa a instanciar el prefab en lugar de construir cada componente manualmente.
 - [x] El pipeline espera una recarga de AssetDatabase después de modificar sorting layers antes de generar el prefab.
 - [x] `PlayerSpriteAnimator` evita intentar reproducir estados durante la generación fuera de Play Mode.
@@ -121,7 +112,7 @@ Commits funcionales:
 
 ### Pruebas añadidas
 
-EditMode:
+EditMode, nueve pruebas nuevas:
 
 - sorting layers requeridas;
 - composición completa del prefab;
@@ -131,13 +122,15 @@ EditMode:
 - tres casos de cuantización;
 - rechazo de precisión inválida.
 
-Total nuevo EditMode: **9 pruebas**.
-
-PlayMode:
+PlayMode, una prueba nueva:
 
 - `Lab` instancia el prefab reutilizable y cambia el orden visual al modificar la Y del jugador.
 
-Total nuevo PlayMode: **1 prueba**.
+Resultado total previsto después de corregir la compilación:
+
+- EditMode: **36/36**.
+- PlayMode: **6/6**.
+- Consola: **0 errores y 0 advertencias**.
 
 ### Archivos principales
 
@@ -151,37 +144,31 @@ Total nuevo PlayMode: **1 prueba**.
 - `Assets/_Project/Tests/EditMode/TopDownSortingModelTests.cs`
 - `Assets/_Project/Tests/PlayMode/PlayerPrefabSortingTests.cs`
 
-### Recursos que Unity debe generar localmente
+### Recursos esperados después de compilar
 
-Al abrir la rama, Unity debe modificar o crear:
-
-- `ProjectSettings/TagManager.asset` con las sorting layers requeridas;
-- el Player prefab bajo la ruta definida en `PlayerPrefabAssetCatalog`;
-- `.meta` correspondientes si todavía no existen.
+- `ProjectSettings/TagManager.asset` con las sorting layers requeridas.
+- Player prefab bajo la ruta definida en `PlayerPrefabAssetCatalog`.
+- `.meta` correspondientes.
 
 No hacer commit local antes de revisar la lista completa de cambios.
 
-### Estado de validación
+### Validación local observada — 2026-08-05
 
-La implementación se revisó estructuralmente en GitHub, pero todavía no se ha compilado ni ejecutado en el Unity local de Arturo.
+Al abrir la rama, Unity mostró que el proyecto contiene errores de compilación y ofreció entrar a **Safe Mode**. La Fase 5 todavía no puede validarse.
 
-Resultado esperado:
+Se registró:
 
-- EditMode: **36/36**.
-- PlayMode: **6/6**.
-- Consola: **0 errores y 0 advertencias**.
-- El jugador se mueve y anima igual que antes.
-- Lab contiene una instancia del prefab generado.
-- Al mover al personaje verticalmente cambia su `sortingOrder`.
-- Teclado, DualSense, collider, límites y animaciones no presentan regresiones.
+- `BUG-0005` — bloqueo de compilación al abrir la Fase 5.
+- Estado: **INVESTIGANDO**.
+- Severidad: **S0 — Bloqueante**.
 
-No existe un bug nuevo confirmado. Cualquier fallo observado debe añadirse a `BUGS.MD` antes de corregirse.
+Todavía no se conoce la causa raíz. Se requiere leer los primeros errores completos de la consola, con archivo y línea, antes de modificar código.
 
 ---
 
 ## 5. Protocolo permanente de continuidad
 
-Se creó en `main` el archivo estable `CONTINUIDAD_GPT.md` y el `README.md` apunta a él.
+Existe en `main` el archivo estable `CONTINUIDAD_GPT.md` y el `README.md` apunta a él.
 
 Cadena de recuperación obligatoria:
 
@@ -200,32 +187,20 @@ Reglas:
 - Esta bitácora conserva el detalle técnico y vive actualizada en la rama activa.
 - Cuando cambie la rama activa, la fase, el estado de validación o el commit remoto de referencia, debe actualizarse `CONTINUIDAD_GPT.md`.
 - Los cambios locales sin commit/push siguen siendo el único estado que GitHub no puede proteger; deben comunicarse antes de cambiar de chat.
-- Un chat nuevo puede retomar usando únicamente el prompt mínimo incluido en `CONTINUIDAD_GPT.md`.
-
-Commits de creación en `main`:
-
-- `3cbbee5` — crea `CONTINUIDAD_GPT.md`.
-- `8088bf8` — enlaza el punto de entrada desde `README.md`.
 
 ---
 
 ## 6. Próximo paso exacto
 
-1. Cerrar Unity.
-2. En GitHub Desktop cambiar a `main`.
-3. Ejecutar **Fetch origin** y **Pull origin** para recibir `CONTINUIDAD_GPT.md`, el README actualizado y el cierre de la Fase 4.
-4. Ejecutar nuevamente **Fetch origin**.
-5. Cambiar a `feature/player-prefab-depth-sorting`.
-6. Ejecutar **Pull origin** para recibir la implementación y esta actualización de bitácora.
-7. Abrir Unity y esperar compilación, actualización de sorting layers, recarga y generación del prefab.
-8. Esperar a que Unity termine por completo antes de pulsar Play.
-9. Limpiar la consola y comprobar cero errores/advertencias.
-10. Ejecutar EditMode: esperado **36/36**.
-11. Ejecutar PlayMode: esperado **6/6**.
-12. Ejecutar `Bootstrap → Lab` y comprobar movimiento/animación con teclado y DualSense.
-13. Mover al personaje por encima y por debajo de referencias visuales para evaluar el orden de profundidad.
-14. Enviar capturas de Test Runner, consola, Game y lista completa de cambios locales en GitHub Desktop.
-15. No hacer commit local todavía.
+1. En el diálogo de Unity pulsar **Enter Safe Mode**.
+2. Esperar a que abra el Editor.
+3. Abrir la pestaña **Console**.
+4. No borrar todavía los mensajes.
+5. Capturar los primeros errores completos, incluyendo código, archivo, número de línea y mensaje.
+6. Enviar una captura donde se vean todos los errores distintos; si el texto se corta, seleccionar el primer error para mostrar su detalle inferior.
+7. No pulsar **Ignore**, no ejecutar Play, no correr pruebas y no hacer cambios locales todavía.
+8. Con la evidencia, identificar la causa raíz de `BUG-0005` y corregirla de forma acotada.
+9. Después sincronizar y repetir compilación, EditMode 36/36, PlayMode 6/6 y validación visual.
 
 ---
 
