@@ -4,7 +4,7 @@ Documento maestro de continuidad. Debe permitir reanudar el proyecto sin depende
 
 > **Regla de continuidad:** antes de modificar el repositorio, leer `CONTINUIDAD_GPT.md` desde `main`; después leer este archivo, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, ramas y commits recientes.
 
-> **Regla transaccional:** ninguna implementación o corrección realizada por GPT se considera terminada hasta registrar aquí lo realizado, lo comprobado, lo pendiente y el siguiente paso exacto.
+> **Regla transaccional:** ninguna implementación, corrección o integración realizada por GPT se considera terminada hasta registrar aquí lo realizado, lo comprobado, lo pendiente y el siguiente paso exacto.
 
 ---
 
@@ -18,7 +18,8 @@ Documento maestro de continuidad. Debe permitir reanudar el proyecto sin depende
 - **Control prioritario:** DualSense, además de teclado y mouse
 - **Ruta local:** `D:\Git\Unity-Farm-Simulator`
 - **Rama estable:** `main`
-- **Rama activa:** `feature/domain-item-inventory-foundation`
+- **Rama funcional cerrada:** `feature/domain-item-inventory-foundation`
+- **Rama activa nueva:** ninguna todavía
 - **Proyecto fuente:** `xArtXtrAx/farming-game-A`
 - **Commit fuente congelado:** `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
 - **Identidad Unity:** `jarturoga` / `Unity Farm Simulator` / `com.jarturoga.unityfarmsimulator`
@@ -102,11 +103,11 @@ Integración:
 
 Bugs verificados acumulados: `BUG-0001` a `BUG-0006`.
 
----
+### Fase 6 — Catálogo de objetos e inventario de dominio
 
-## 4. Fase 6 — Catálogo de objetos e inventario de dominio: VALIDADA LOCALMENTE; INTEGRACIÓN PENDIENTE
+Estado: **IMPLEMENTADA, VALIDADA E INTEGRADA**.
 
-Rama:
+Rama cerrada:
 
 ```text
 feature/domain-item-inventory-foundation
@@ -114,7 +115,7 @@ feature/domain-item-inventory-foundation
 
 Objetivo cumplido: núcleo de catálogo e inventario puro en `FarmSimulator.Domain`, sin hotbar visual, ScriptableObjects, almacenamiento, UI ni cambios de escenas.
 
-### Fuente congelada estudiada
+#### Fuente congelada estudiada
 
 Commit `dd32056c9f8142a2322bc2c1d41f0b05b002598f` de `xArtXtrAx/farming-game-A`:
 
@@ -126,24 +127,9 @@ Commit `dd32056c9f8142a2322bc2c1d41f0b05b002598f` de `xArtXtrAx/farming-game-A`:
 - `src/game/core/GameState.ts`;
 - `tests/integration/core/GameState.integration.test.ts`.
 
-No existe una prueba unitaria dedicada a `InventoryManager`; su responsabilidad de presentación no se migró en este bloque.
+No existía una prueba unitaria dedicada a `InventoryManager`; su responsabilidad de presentación no se migró en este bloque.
 
-### Tabla de paridad ejecutada
-
-| Regla fuente | Tipo o método C# | Cobertura EditMode publicada |
-|---|---|---|
-| Ocho IDs estables y ordinales | `ItemId` | IDs exactos, parseo y rechazo de desconocidos |
-| Categorías, nombres, etiquetas, stacks y precios | `ItemCategory`, `ItemDefinition`, `ItemCatalog` | ocho definiciones exactas y validación de invariantes |
-| Comprable/vendible solo con precio válido | `ItemDefinition.IsPurchasable`, `IsSellable` | conjuntos exactos de semillas y cosechas |
-| Ocho slots, selección y wrap-around | `InventoryState` | construcción, índices, selección repetida y ciclos |
-| Capacidad y stacking deterministas | `GetItemCapacity`, `CanAddItem`, `AddItem` | stacks parciales, slots vacíos, orden y distribución |
-| Adición completamente atómica | `AddItemResult`, prevalidación de capacidad | inventario idéntico cuando no cabe todo |
-| Consumo y limpieza | `ConsumeSelected`, `ConsumeFromSlot`, `ClearSlot` | parcial, exacto, insuficiente e índices inválidos |
-| Snapshot serializable y defensivo | `InventorySlotSnapshot`, `InventorySnapshot` | colección inmutable y ausencia de referencias compartidas |
-| Restauración validada | `RestoreSlots`, `Restore` | clamp de selección, slots omitidos y atomicidad ante datos inválidos |
-| Estado inicial | `CreateInitialPlayerInventory` | paridad exacta de los ocho slots y selección |
-
-### Implementación 6A — Catálogo puro
+#### Implementación 6A — Catálogo puro
 
 Archivos:
 
@@ -152,57 +138,45 @@ Archivos:
 
 Incluye:
 
-- `ItemId` ordinal y case-sensitive con los ocho IDs aprobados;
-- `ItemCategory` con herramienta, semilla, cultivo, material, comida y regalo;
-- `ItemDefinition` inmutable;
+- `ItemId` ordinal y case-sensitive con ocho IDs estables;
+- `ItemCategory`, `ItemDefinition` e `ItemCatalog`;
 - stacks 1 para herramientas y 99 para semillas/cosechas actuales;
 - semillas comprables por 30/50/75;
 - cosechas vendibles por 60/100/150;
-- catálogo de solo lectura, búsquedas tipadas y por cadena;
+- catálogo de solo lectura y búsquedas tipadas/por cadena;
 - rechazo explícito de IDs nulos, vacíos o desconocidos.
 
-Commits:
+Commits históricos de la rama:
 
 - `deb03849826a5bfb5ecc07e303440e9277de70b3` — implementación;
 - `1264f1996ec462f802316b916471197cfb1fcfc0` — meta;
-- `88ee0e71acc2dbca944f6b04233be96a1772365a` — corrección de asignación explícita del parámetro `out` en `TryGet(ItemId, ...)` detectada durante revisión estática.
+- `88ee0e71acc2dbca944f6b04233be96a1772365a` — corrección de asignación explícita del parámetro `out` en `TryGet(ItemId, ...)`.
 
-### Implementación 6B — Inventario puro
+#### Implementación 6B — Inventario puro
 
 Archivos:
 
 - `Assets/_Project/Scripts/Domain/InventoryState.cs`;
 - `Assets/_Project/Scripts/Domain/InventoryState.cs.meta`.
 
-Tipos:
+Incluye:
 
-- `InventorySlot` inmutable y validado;
-- `InventorySlotSnapshot` como DTO de cadena sin dependencias Unity;
-- `AddItemResult` inmutable;
-- `InventorySnapshot` con copia propia y colección de solo lectura;
-- `InventoryState`.
-
-Comportamiento:
-
-- ocho slots por defecto, selección inicial 0 y capacidad configurable;
-- selección directa y ciclo positivo/negativo con wrap-around;
-- copia defensiva al construir y consultar slots;
-- completar stacks existentes por índice antes de abrir slots vacíos;
+- `InventorySlot`, `InventorySlotSnapshot`, `AddItemResult`, `InventorySnapshot` e `InventoryState`;
+- ocho slots por defecto y selección inicial 0;
+- selección directa y ciclo con wrap-around;
+- copias defensivas;
+- stacking determinista: stacks existentes antes de slots vacíos;
 - adición completamente atómica por prevalidación de capacidad;
-- herramientas con stack 1 y slots separados;
-- consumo parcial, exacto, seleccionado o por índice;
-- limpieza del slot al llegar a cero;
-- snapshots con IDs serializables;
-- restauración prevalidada en un arreglo temporal antes de mutar;
-- slots omitidos vacíos, excedentes ignorados y selección limitada al rango;
-- estado inicial exacto: azada ×1, regadera ×1, semillas de nabo ×20, cinco slots vacíos, selección 0.
+- consumo parcial/exacto y limpieza de slots;
+- snapshots serializables y restauración prevalidada;
+- estado inicial: azada ×1, regadera ×1, semillas de nabo ×20 y cinco slots vacíos.
 
-Commits:
+Commits históricos de la rama:
 
 - `dcc20f14e4eca17ca99eccc3342d17e3f2e33bbc` — implementación;
 - `e909d9aa295caf4d62db905d6d2cc6202e3104bd` — meta.
 
-### Implementación 6C — Pruebas EditMode exhaustivas
+#### Implementación 6C — Pruebas EditMode
 
 Archivos:
 
@@ -211,14 +185,14 @@ Archivos:
 - `Assets/_Project/Tests/EditMode/InventoryStateTests.cs`;
 - `Assets/_Project/Tests/EditMode/InventoryStateTests.cs.meta`.
 
-Commits:
+Commits históricos de la rama:
 
 - `00c804a3b19258ecbdf71e3cd8bafd7e47b94de4` — 25 casos de catálogo;
 - `75cb1918485e8fb8ecc02d801360866654586fa6` — meta de catálogo;
 - `cedaa70982c5dec0da6bf6fa18a7addf9e36200c` — 63 casos de inventario;
 - `718000a776ac109dfbdd9d053f3aa93ee591e690` — meta de inventario.
 
-Cobertura nueva:
+Cobertura:
 
 - catálogo: **25** casos;
 - inventario: **63** casos;
@@ -226,42 +200,58 @@ Cobertura nueva:
 - línea base existente: **36** casos;
 - total EditMode: **124** casos.
 
-PlayMode no cambió y conserva la línea base previamente validada de **6/6**.
+#### Validación local de Arturo — 2026-08-05
 
-### Revisión estática realizada
+- Unity cargó y ejecutó el conjunto sin errores de compilación reportados.
+- EditMode completo: **124/124**.
+- Fallos: **0**.
+- Casos nuevos aprobados: **88/88**.
+- PlayMode no cambió y conserva la regresión previa confirmada de **6/6**.
+- No se reportó en ese mensaje un conteo independiente de advertencias de consola.
 
-- llaves, paréntesis y corchetes balanceados en los cuatro archivos C#;
-- namespaces: `FarmSimulator.Domain.Items`, `FarmSimulator.Domain.Inventory` y `FarmSimulator.Tests.EditMode`;
-- cero referencias a `UnityEngine`, `UnityEditor`, `MonoBehaviour`, `ScriptableObject`, escenas, UI o `GameObject`;
-- `FarmSimulator.Domain.asmdef` conserva `noEngineReferences: true`;
-- el asmdef EditMode ya referencia `FarmSimulator.Domain`; no requirió cambios;
-- conteo estático confirmado: 25 + 63 = 88 casos nuevos;
-- archivos funcionales y pruebas verificados en la rama activa y ausentes de `main`.
+#### Integración
 
-### Incidencia de escritura en rama — resuelta sin residuo
+- PR #6: `Add domain item catalog and inventory foundation`.
+- Head validado de la rama: `c91b3063f9c06fb949842d64d730694a84d4f416`.
+- Método: **Squash and merge**.
+- Squash commit en `main`: `4abce7561215a28e7a37e082cbaacf3825021e92`.
+- Archivos integrados: dos fuentes Domain, cuatro pruebas/metas EditMode y `BITÁCORA_GPT.MD`.
+- No se integraron escenas, UI, Input System, ScriptableObjects, almacenamiento ni recursos artísticos externos.
+- El héroe existente permanece intacto en `Assets/_Project/Resources/Characters/Farmer/farmer-spritesheet.png`, junto con su prefab, animaciones, pivote, collider y profundidad.
+
+#### Incidencia de escritura en rama — resuelta sin residuo
 
 El primer intento del catálogo usó el parámetro antiguo `branch_name`, que el conector ignoró y escribió temporalmente dos archivos en `main`.
 
 - commits accidentales: `a43bc0209de7b9c5e18aedc4f7ec2c02727af908` y `63698bebad19755e07e5eb8c6a15b98f400679c3`;
 - reversión inicial: `59edfe528f42c238d71491d950dcd71680597f82` y `7ab7d97f76b8eae5be81bcfdb5b64bae343a6db6`;
-- comparación contra el head previo `d1893aa596203546e3915b6babf1f8828d861177`: **cero archivos diferentes**;
-- `main` fue restaurada exactamente a `d1893aa596203546e3915b6babf1f8828d861177`, eliminando también el historial accidental;
+- comparación contra `d1893aa596203546e3915b6babf1f8828d861177`: cero archivos diferentes;
+- `main` fue restaurada exactamente al head previo, eliminando también el historial accidental;
 - todas las escrituras posteriores usaron `branch` y fueron verificadas.
 
-### Validación local de Arturo — 2026-08-05
+---
 
-Arturo sincronizó la rama y confirmó que todas las pruebas del bloque pasaron sin errores.
+## 4. Decisión artística vigente
 
-- Unity pudo cargar y ejecutar el conjunto de pruebas sin errores de compilación reportados.
-- EditMode completo: **124/124**.
-- Fallos de pruebas: **0**.
-- Los **88 casos nuevos** de catálogo e inventario quedan aprobados localmente.
-- PlayMode no era requisito de salida de esta fase; se conserva la última regresión confirmada de **6/6** de la Fase 5.
-- No se registró en este mensaje un conteo independiente de advertencias de consola.
+Arturo proporcionó un ZIP del paquete completo **Cozy Farm** para evaluación.
 
-### Puerta de salida
+Decisiones:
 
-**Cumplida.** El catálogo y el inventario puros pasan pruebas EditMode exhaustivas sin abrir ni modificar escenas. La Fase 6 puede integrarse a `main` mediante PR.
+- el héroe actual **se conserva** durante el desarrollo;
+- no se sustituirá el sprite del jugador de manera automática;
+- Cozy Farm se considera una biblioteca candidata para mundo, agricultura, objetos, edificios, animales y UI;
+- el ZIP y sus recursos no formaron parte del PR #6;
+- no se importará el paquete completo directamente ni se usarán sus GIF como fuentes Unity;
+- cualquier incorporación se hará en una rama dedicada mediante un subconjunto piloto, conservando los originales intactos;
+- antes de subir recursos con licencia, el repositorio deberá mantenerse privado mientras estén publicados.
+
+Rama sugerida para el futuro bloque:
+
+```text
+chore/cozy-farm-art-intake
+```
+
+La primera recepción debería limitarse a iconos de objetos, semillas, herramientas, un cultivo y una pequeña muestra de terreno. No organizar todavía todos los edificios, animales, enemigos y estaciones.
 
 ---
 
@@ -274,7 +264,7 @@ Cadena de recuperación:
 ```text
 README.md en main
   → CONTINUIDAD_GPT.md en main
-  → BITÁCORA_GPT.MD en la rama activa
+  → BITÁCORA_GPT.MD en la rama activa o main
   → BUGS.MD + MIGRACION_DESDE_FARMING_GAME_A.MD
   → comparación main/rama y commits recientes
   → Próximo paso exacto
@@ -286,15 +276,15 @@ Los cambios exclusivamente locales siguen siendo el único estado que GitHub no 
 
 ## 6. Próximo paso exacto
 
-1. No añadir más funcionalidad a `feature/domain-item-inventory-foundation`.
-2. Revisar la diferencia final de la rama contra `main`; el alcance permitido es Domain, pruebas EditMode, metas y documentación.
-3. Crear el PR de la Fase 6 hacia `main`, con título sugerido: `Add domain item catalog and inventory foundation`.
-4. Incluir en el PR la validación local: **124/124 EditMode**, cero fallos y sin cambios de escenas o UI.
-5. Revisar el PR y fusionarlo únicamente cuando el alcance sea correcto.
-6. Tras el merge, registrar en `BITÁCORA_GPT.MD` el número de PR, commit de merge y estado integrado.
-7. Actualizar `CONTINUIDAD_GPT.md` en `main` con la integración y la siguiente rama/fase.
-8. Solo después crear la siguiente rama; no continuar el desarrollo sobre esta rama ya validada.
-9. El siguiente bloque debe definirse desde `MIGRACION_DESDE_FARMING_GAME_A.MD`, priorizando la capa inmediatamente superior que consuma catálogo e inventario sin adelantar todavía agricultura completa.
+1. En GitHub Desktop, cambiar a `main` y ejecutar **Fetch origin / Pull origin**.
+2. Confirmar que `main` contiene el squash commit `4abce7561215a28e7a37e082cbaacf3825021e92` y el registro documental posterior.
+3. No continuar trabajando sobre `feature/domain-item-inventory-foundation`; la rama está cerrada funcionalmente.
+4. Antes de iniciar otra implementación, leer `MIGRACION_DESDE_FARMING_GAME_A.MD` y decidir el siguiente bloque funcional.
+5. Para la biblioteca Cozy Farm, crear después una rama independiente `chore/cozy-farm-art-intake`; no mezclarla con una fase funcional.
+6. En esa rama, documentar origen/licencia y probar un subconjunto mínimo sin reemplazar el héroe actual.
+7. No subir el ZIP completo ni GIF de referencia; importar únicamente PNG seleccionados y sus `.meta` generados por Unity.
+8. Mantener `FarmSimulator.Domain` independiente de `UnityEngine`.
+9. Ejecutar las pruebas relevantes tras cualquier cambio futuro y registrar resultados exactos antes de afirmar éxito.
 
 ---
 
@@ -306,4 +296,4 @@ Hotbar visual, almacenamiento, economía, tiempo, agricultura, herramientas, tre
 
 ## 8. Protocolo para chat nuevo
 
-> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`; después sigue el orden de lectura y el “Próximo paso exacto”. La rama activa es `feature/domain-item-inventory-foundation`. La Fase 6 está implementada y validada localmente con 124/124 EditMode y cero fallos; su integración a `main` mediante PR sigue pendiente. No añadir más funcionalidad a esta rama antes del merge.
+> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`; después sigue el orden de lectura y el “Próximo paso exacto”. La Fase 6 está integrada mediante PR #6 y squash commit `4abce7561215a28e7a37e082cbaacf3825021e92`, validada con 124/124 EditMode y cero fallos. No existe todavía una nueva rama activa. El héroe actual debe conservarse; Cozy Farm solo se incorporará mediante una rama artística dedicada y un piloto mínimo.
