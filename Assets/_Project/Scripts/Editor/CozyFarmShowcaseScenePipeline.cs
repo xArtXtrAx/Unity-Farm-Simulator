@@ -17,7 +17,7 @@ namespace FarmSimulator.Editor
         public const string SceneAssetPath =
             "Assets/_Project/Scenes/CozyFarmShowcase.unity";
         public const string ImportSignature =
-            "cozy-farm-showcase-scene-v2";
+            "cozy-farm-showcase-scene-v3";
         public const string RootObjectName = "Cozy Farm Showcase";
         public const string CameraObjectName = "Showcase Camera";
         public const string TerrainGroupName = "Terrain Samples";
@@ -31,6 +31,7 @@ namespace FarmSimulator.Editor
 
         public const float CatalogIconScale = 0.55f;
         public const float WorldSpriteScale = 1f;
+        public const float HeroVisualScale = 1.5f;
 
         private const string SourceRoot =
             "Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/";
@@ -179,8 +180,8 @@ namespace FarmSimulator.Editor
 
             AssetDatabase.SaveAssets();
             Debug.Log(
-                "Generated compact CozyFarmShowcase with UI-scale icons, " +
-                "world-scale crops and the current hero prefab.");
+                "Generated CozyFarmShowcase with UI-scale icons, " +
+                "world-scale crops and a 1.5x hero visual calibration.");
         }
 
         private static bool TryLoadAssets(
@@ -449,6 +450,19 @@ namespace FarmSimulator.Editor
             hero.transform.position =
                 new Vector3(5.35f, -2.15f, 0f);
             hero.transform.localScale = Vector3.one;
+
+            Transform visual = hero.transform.Find(
+                PlayerSpriteAssetCatalog.SpriteVisualObjectName);
+            if (visual == null)
+            {
+                throw new InvalidOperationException(
+                    "The Player prefab does not contain its sprite visual.");
+            }
+
+            visual.localScale = new Vector3(
+                HeroVisualScale,
+                HeroVisualScale,
+                1f);
         }
 
         private static Transform CreateGroup(
