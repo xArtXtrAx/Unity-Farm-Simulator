@@ -91,6 +91,7 @@ Al crear el proyecto se configurará:
   - `Build/` y `Builds/`
   - `UserSettings/`
 - Evaluar Git LFS únicamente para archivos binarios pesados que realmente lo necesiten.
+- El repositorio incluye un `.gitignore` inicial específico para Unity desde el commit `04f6c91`.
 
 ### 3.5 Arquitectura prevista
 
@@ -268,20 +269,23 @@ El objetivo no es producir contenido abundante, sino validar el flujo completo U
 - [x] Establecimiento de la actualización obligatoria de la bitácora después de cada implementación o corrección.
 - [x] Instalación de Unity 6.3 LTS `6000.3.21f1`.
 - [x] Clonación del repositorio en `D:\Git\Unity-Farm-Simulator`.
+- [x] Creación de `.gitignore` para excluir cachés, archivos de IDE y builds generados por Unity.
 
 ### En curso
 
+- [ ] Sincronización local del `.gitignore` mediante GitHub Desktop.
 - [ ] Creación segura del proyecto Unity dentro del repositorio ya clonado.
 - [ ] Confirmación de los módulos instalados junto al editor.
 
 ### Próximo paso inmediato
 
-1. Crear un proyecto temporal con plantilla **Universal 3D** usando Unity 6.3 LTS.
-2. Cerrar el editor cuando termine la importación inicial.
-3. Copiar únicamente `Assets`, `Packages` y `ProjectSettings` desde el proyecto temporal a `D:\Git\Unity-Farm-Simulator`.
-4. Añadir la raíz clonada a Unity Hub mediante **Add/Open project from disk**.
-5. Abrirla exclusivamente con `6000.3.21f1` y comprobar que no existan errores de consola.
-6. Configurar `.gitignore`, serialización, archivos `.meta`, paquetes y assemblies para completar la **Fase 1**.
+1. En GitHub Desktop, ejecutar **Fetch origin** y **Pull origin** para descargar `.gitignore` y esta actualización.
+2. Crear un proyecto temporal con plantilla **Universal 3D** usando Unity 6.3 LTS.
+3. Cerrar el editor cuando termine la importación inicial.
+4. Copiar únicamente `Assets`, `Packages` y `ProjectSettings` desde el proyecto temporal a `D:\Git\Unity-Farm-Simulator`.
+5. Añadir la raíz clonada a Unity Hub mediante **Add/Open project from disk**.
+6. Abrirla exclusivamente con `6000.3.21f1` y comprobar que no existan errores de consola.
+7. Configurar serialización, archivos `.meta`, paquetes y assemblies para completar la **Fase 1**.
 
 ---
 
@@ -316,6 +320,14 @@ El objetivo no es producir contenido abundante, sino validar el flujo completo U
 - El repositorio se clonó correctamente en `D:\Git\Unity-Farm-Simulator`.
 - La raíz del repositorio todavía contiene únicamente documentación y debe convertirse en proyecto Unity sin eliminar esos archivos.
 - El siguiente paso es generar un proyecto temporal Universal 3D y trasladar a la raíz solo las carpetas nativas necesarias.
+
+### 2026-08-05 — Protección inicial del repositorio Unity
+
+- Se creó `.gitignore` en `main` mediante el commit `04f6c9133a1960977cfd6f1db2bf74ea78f67c5e`.
+- Se excluyeron `Library`, `Temp`, `Obj`, `Logs`, `UserSettings`, builds, archivos generados de IDE y otros artefactos regenerables.
+- Los archivos `.meta` no se ignoran porque preservan las referencias de assets de Unity.
+- No se ejecutaron pruebas funcionales: el proyecto Unity todavía no ha sido materializado en la raíz del repositorio.
+- Acción requerida de Arturo: sincronizar con GitHub Desktop antes de abrir la raíz con Unity.
 
 ---
 
