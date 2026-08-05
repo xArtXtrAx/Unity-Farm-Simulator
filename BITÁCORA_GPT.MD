@@ -81,11 +81,11 @@ Integración:
 - Merge en `main`: `d04a35934df167db1c6366ee59846c36a0228470`.
 - Registro de integración: `8ee1e35d689f7ea71a528da5d6f8fdec7ae45d42`.
 
-Bugs verificados: `BUG-0001` a `BUG-0004`.
+Bugs verificados: `BUG-0001` a `BUG-0005`.
 
 ---
 
-## 4. Fase 5 — Prefab reutilizable y profundidad visual: IMPLEMENTADA, CORRECCIÓN DE COMPILACIÓN PENDIENTE DE VALIDACIÓN
+## 4. Fase 5 — Prefab reutilizable y profundidad visual: COMPILA; VALIDACIÓN FUNCIONAL PENDIENTE
 
 Rama: `feature/player-prefab-depth-sorting`.
 
@@ -127,7 +127,7 @@ PlayMode, una prueba nueva:
 
 - `Lab` instancia el prefab reutilizable y cambia el orden visual al modificar la Y del jugador.
 
-Resultado total previsto:
+Resultado total esperado:
 
 - EditMode: **36/36**.
 - PlayMode: **6/6**.
@@ -146,35 +146,27 @@ Resultado total previsto:
 - `Assets/_Project/Tests/EditMode/TopDownSortingModelTests.cs`
 - `Assets/_Project/Tests/PlayMode/PlayerPrefabSortingTests.cs`
 
-### Recursos esperados después de compilar
+### Recursos generados localmente
 
-- `ProjectSettings/TagManager.asset` con las sorting layers requeridas.
-- Player prefab bajo la ruta definida en `PlayerPrefabAssetCatalog`.
-- `.meta` correspondientes.
+Unity confirmó la generación de:
+
+- sorting layers cenitales en `ProjectSettings/TagManager.asset`;
+- Player prefab reutilizable bajo la ruta definida en `PlayerPrefabAssetCatalog`;
+- metadatos asociados.
 
 No hacer commit local antes de revisar la lista completa de cambios.
 
-### BUG-0005 — error de compilación al abrir la Fase 5
+### Validación local observada — 2026-08-05
 
-Evidencia local de Arturo — 2026-08-05:
+Después de sincronizar `a9a3fe2`:
 
-```text
-Assets/_Project/Scripts/Presentation/Player/PlayerSpriteAnimator.cs(51,17):
-error CS0234: The type or namespace name 'isPlaying' does not exist in the namespace 'FarmSimulator.Application'
-```
+- Unity abrió normalmente fuera de Safe Mode;
+- la consola mostró **0 errores y 0 advertencias**;
+- desapareció `CS0234`;
+- el Editor informó `Generated reusable Player prefab and top-down sorting layers`;
+- `BUG-0005` quedó **VERIFICADO**.
 
-Causa raíz confirmada:
-
-- `Application.isPlaying` se resolvía como el namespace hermano `FarmSimulator.Application`.
-- La intención era consultar `UnityEngine.Application.isPlaying`.
-
-Corrección:
-
-```csharp
-global::UnityEngine.Application.isPlaying
-```
-
-Estado de `BUG-0005`: **CORREGIDO**, pendiente de validación local. La corrección es acotada y no modifica movimiento, input, animación ni sorting.
+Aún faltan las pruebas automatizadas y la validación manual de movimiento, animación y profundidad.
 
 ---
 
@@ -199,19 +191,20 @@ Los cambios exclusivamente locales siguen siendo el único estado que GitHub no 
 
 ## 6. Próximo paso exacto
 
-1. Cerrar Unity mientras permanece en Safe Mode.
-2. En GitHub Desktop, manteniéndose en `feature/player-prefab-depth-sorting`, ejecutar **Fetch origin** y **Pull origin**.
-3. Confirmar que se recibió el commit funcional `a9a3fe2` y los commits documentales posteriores.
-4. Abrir Unity nuevamente.
-5. Esperar a que compile por completo; no pulsar Play durante la importación.
-6. Si Unity abre aún en Safe Mode pero la consola queda sin errores, pulsar **Exit Safe Mode**.
-7. Limpiar la consola y confirmar **0 errores y 0 advertencias**.
-8. Ejecutar EditMode: esperado **36/36**.
-9. Ejecutar PlayMode: esperado **6/6**.
-10. Ejecutar `Bootstrap → Lab` y comprobar movimiento/animación con teclado y DualSense.
-11. Mover al personaje por encima y por debajo de referencias visuales para evaluar el orden de profundidad.
-12. Enviar capturas de Test Runner, consola, Game y lista completa de cambios locales en GitHub Desktop.
-13. No hacer commit local todavía.
+1. Abrir **Window → General → Test Runner**.
+2. Ejecutar todas las pruebas **EditMode**; esperado **36/36**.
+3. Ejecutar todas las pruebas **PlayMode**; esperado **6/6**.
+4. Volver a la consola, limpiarla y confirmar **0 errores y 0 advertencias** después de ambas suites.
+5. Abrir la escena `Assets/_Project/Scenes/Bootstrap.unity` y pulsar Play.
+6. Confirmar transición a `Lab`.
+7. Probar movimiento y animación en cuatro direcciones con teclado y DualSense.
+8. Confirmar límites del terreno y ausencia del rectángulo rojo.
+9. Seleccionar `Playable Player/Playable Player Sprite` durante Play Mode y observar `SpriteRenderer.sortingOrder`:
+   - al mover al personaje hacia abajo debe aumentar;
+   - al moverlo hacia arriba debe disminuir.
+10. Comprobar visualmente que el personaje pueda quedar delante y detrás de referencias según la Y de sus pies.
+11. Enviar capturas de Test Runner, consola, Game y lista completa de cambios locales en GitHub Desktop.
+12. No hacer commit local todavía.
 
 ---
 
