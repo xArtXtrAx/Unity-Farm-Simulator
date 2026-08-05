@@ -17,7 +17,7 @@ namespace FarmSimulator.Editor
         public const string SceneAssetPath =
             "Assets/_Project/Scenes/CozyFarmShowcase.unity";
         public const string ImportSignature =
-            "cozy-farm-showcase-scene-v3";
+            "cozy-farm-showcase-scene-v4";
         public const string RootObjectName = "Cozy Farm Showcase";
         public const string CameraObjectName = "Showcase Camera";
         public const string TerrainGroupName = "Terrain Samples";
@@ -29,9 +29,10 @@ namespace FarmSimulator.Editor
         public const string HeroScaleReferenceObjectName =
             "Hero Scale Reference";
 
-        public const float CatalogIconScale = 0.55f;
+        public const float CatalogIconScale = 0.75f;
         public const float WorldSpriteScale = 1f;
         public const float HeroVisualScale = 1.5f;
+        public const float PlantedSeedStageYOffset = -0.3f;
 
         private const string SourceRoot =
             "Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/";
@@ -180,8 +181,8 @@ namespace FarmSimulator.Editor
 
             AssetDatabase.SaveAssets();
             Debug.Log(
-                "Generated CozyFarmShowcase with UI-scale icons, " +
-                "world-scale crops and a 1.5x hero visual calibration.");
+                "Generated CozyFarmShowcase with 0.75x catalog icons, " +
+                "centered planted seeds and a 1.5x hero visual.");
         }
 
         private static bool TryLoadAssets(
@@ -405,6 +406,8 @@ namespace FarmSimulator.Editor
                 for (int stage = 0; stage < 6; stage++)
                 {
                     float x = -5.35f + stage;
+                    float y = rowY[cropIndex] +
+                        GetCropStageYOffset(stage);
                     string spriteName =
                         $"cozy_{cropName}_stage_{stage}";
 
@@ -412,12 +415,19 @@ namespace FarmSimulator.Editor
                         spriteName,
                         assets[spriteName],
                         row,
-                        new Vector2(x, rowY[cropIndex]),
+                        new Vector2(x, y),
                         TopDownSortingLayers.Actors,
                         100,
                         WorldSpriteScale);
                 }
             }
+        }
+
+        private static float GetCropStageYOffset(int stage)
+        {
+            return stage == 0
+                ? PlantedSeedStageYOffset
+                : 0f;
         }
 
         private static void CreateHero(
