@@ -26,52 +26,66 @@ Registro histórico de errores detectados, investigados y corregidos durante el 
 
 ## BUG-0005 — La Fase 5 abre Unity con errores de compilación y solicita Safe Mode
 
-- **Estado:** INVESTIGANDO
+- **Estado:** CORREGIDO
 - **Severidad:** S0 — Bloqueante
 - **Detectado:** 2026-08-05
+- **Corrección implementada:** 2026-08-05
 - **Versión de Unity:** `6000.3.21f1`
 - **Sistema:** prefab reutilizable y orden visual por profundidad
 - **Rama afectada:** `feature/player-prefab-depth-sorting`
-- **Cabeza remota observada:** `e88e41b`
+- **Commit afectado:** `489851d`
+- **Corrección funcional:** `a9a3fe2`
 - **Reportado por:** Arturo
 
 ### Comportamiento observado
 
-Al abrir el proyecto después de sincronizar la rama de la Fase 5, Unity mostró el diálogo:
+Al abrir el proyecto después de sincronizar la rama de la Fase 5, Unity entró en Safe Mode y mostró un único error de compilación:
 
 ```text
-The project you are opening contains compilation errors.
-Entering Safe Mode allows you to resolve these errors without waiting for the rest of your project to import.
+Assets/_Project/Scripts/Presentation/Player/PlayerSpriteAnimator.cs(51,17):
+error CS0234: The type or namespace name 'isPlaying' does not exist in the namespace 'FarmSimulator.Application'
 ```
 
-La validación local no puede comenzar porque el proyecto todavía no compila.
+La validación local no podía comenzar porque el proyecto no compilaba.
 
 ### Comportamiento esperado
 
-Unity debe abrir normalmente, completar la compilación, crear las sorting layers y generar el Player prefab antes de ejecutar las pruebas.
-
-### Evidencia pendiente
-
-Se indicó entrar mediante **Enter Safe Mode**. Falta capturar desde la consola los primeros errores completos, incluyendo:
-
-- código del error;
-- archivo;
-- número de línea;
-- mensaje completo;
-- cualquier error adicional distinto del primero.
+Unity debe resolver el estado de reproducción desde `UnityEngine.Application`, compilar normalmente, crear las sorting layers y generar el Player prefab antes de ejecutar las pruebas.
 
 ### Causa raíz
 
-Pendiente de determinar. No aplicar correcciones hasta revisar los mensajes exactos del compilador.
+Dentro del namespace `FarmSimulator.Presentation.Player`, la expresión no cualificada:
 
-### Siguiente paso
+```csharp
+Application.isPlaying
+```
 
-1. Entrar a Safe Mode.
-2. Abrir la consola.
-3. Mostrar los primeros errores completos.
-4. Identificar la causa raíz.
-5. Implementar una corrección acotada y añadir o ajustar la prueba de regresión correspondiente.
-6. Volver a validar compilación, EditMode, PlayMode y consola.
+se resolvía contra el namespace hermano `FarmSimulator.Application`, no contra la clase `UnityEngine.Application`. Por eso el compilador intentaba encontrar `isPlaying` dentro de un namespace.
+
+### Solución aplicada
+
+Se sustituyó la referencia ambigua por la forma completamente cualificada:
+
+```csharp
+global::UnityEngine.Application.isPlaying
+```
+
+La corrección está limitada a `PlayerSpriteAnimator.Initialize` y no cambia el comportamiento de animación, prefab, input ni movimiento.
+
+### Prueba de regresión
+
+La propia compilación de `FarmSimulator.Presentation` cubre esta regresión: cualquier retorno a la referencia ambigua vuelve a producir `CS0234` antes de ejecutar tests. Tras sincronizar, se debe validar además:
+
+- salida correcta de Safe Mode;
+- consola sin errores de compilación;
+- EditMode **36/36**;
+- PlayMode **6/6**;
+- generación del prefab y sorting layers;
+- movimiento, animación y profundidad sin regresiones.
+
+### Pendiente para pasar a VERIFICADO
+
+Arturo debe hacer pull del commit `a9a3fe2`, permitir que Unity recompile y confirmar que Safe Mode puede cerrarse sin errores. Después debe completar la validación de la Fase 5.
 
 ---
 
@@ -179,4 +193,6 @@ El marcador lateral se calculaba alrededor del pivote de los pies. Se reposicion
 ### 2026-08-05
 
 - Se verificaron `BUG-0001`, `BUG-0002`, `BUG-0003` y `BUG-0004`.
-- Se añadió `BUG-0005` como bloqueo de compilación al abrir la Fase 5; está en investigación pendiente de los mensajes exactos del compilador.
+- Se añadió `BUG-0005` como bloqueo de compilación de la Fase 5.
+- Se confirmó la causa raíz de `BUG-0005`: colisión entre `FarmSimulator.Application` y `UnityEngine.Application`.
+- Se implementó la corrección `a9a3fe2`; queda pendiente la validación local para marcarla VERIFICADA.
