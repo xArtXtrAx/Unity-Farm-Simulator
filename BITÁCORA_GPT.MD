@@ -111,7 +111,7 @@ Integración:
 
 ## 7. Fase 3 — Movimiento del jugador
 
-### Implementación remota inicial
+### Implementación inicial
 
 Commit funcional: `e0be2afa9681e56a987725385affb8c5e96efdf7` — `feat: add keyboard and gamepad player movement foundation`.
 
@@ -130,27 +130,39 @@ Implementado:
 - [x] El primer gamepad conectado funciona aunque todavía no sea `Gamepad.current`.
 - [x] `PlayerProxyFacingView` muestra la orientación mediante un marcador provisional.
 - [x] `Lab` genera un personaje rojo controlable con marcador amarillo.
-- [x] El suelo de calibración es trigger y el perímetro utiliza `EdgeCollider2D` para contener al jugador.
+- [x] El suelo es trigger y el perímetro utiliza `EdgeCollider2D` para contener al jugador.
 - [x] Presentation referencia explícitamente `Unity.InputSystem`.
-- [x] Nuevas pruebas puras de zona muerta, fuerza analógica, diagonal y orientación.
-- [x] Nuevas pruebas PlayMode para composición Physics 2D y desplazamiento normalizado.
+- [x] Pruebas puras de zona muerta, fuerza analógica, diagonal y orientación.
+- [x] Pruebas PlayMode para composición Physics 2D y desplazamiento normalizado.
 
-### Estado de validación
+### Validación local confirmada por Arturo
 
-La implementación solo está validada estructuralmente en remoto. No afirmar compilación ni pruebas aprobadas hasta ejecutar Unity localmente.
+Estado `724152e`:
 
-Resultado esperado después de sincronizar:
+- [x] EditMode: **11/11 aprobadas**.
+- [x] PlayMode: **4/4 aprobadas**.
+- [x] Consola: **0 errores y 0 advertencias**.
+- [x] WASD y flechas mueven correctamente al jugador.
+- [x] Stick izquierdo y D-pad del DualSense funcionan correctamente.
+- [x] El marcador cambia de acuerdo con la orientación.
+- [x] Las pruebas automatizadas protegen zona muerta, diagonales, orientación, Physics 2D y movimiento.
 
-- EditMode: **8/8**.
-- PlayMode: **4/4**.
-- Consola: **0 errores y 0 advertencias**.
-- En `Bootstrap → Lab`, el rectángulo rojo debe moverse con WASD y flechas.
-- El DualSense debe moverlo con stick izquierdo y D-pad.
-- El marcador amarillo debe cambiar de lado según la dirección dominante.
-- Las diagonales no deben sentirse más rápidas que los ejes rectos.
-- El borde del laboratorio debe impedir salir del área visible.
+### BUG-0002 — Marcador de orientación descentrado
 
-El sprite real y Animator permanecen pendientes; primero se valida el motor y los dispositivos con la referencia provisional.
+Arturo observó que el marcador lateral amarillo cambiaba correctamente de dirección, pero estaba alineado con el pivote de los pies en vez de con el centro del cuerpo rojo.
+
+Corrección implementada:
+
+- Commit `dd7357c` — `fix: center player facing marker`.
+- Las posiciones ahora se calculan desde el ancho y alto reales del personaje.
+- Izquierda y derecha se centran verticalmente sobre el cuerpo.
+- Arriba queda sobre la cabeza y abajo bajo los pies.
+- La prueba PlayMode existente incorpora comprobaciones de alineación lateral.
+- Registro completo en `BUGS.MD` como `BUG-0002`.
+
+Estado: **CORREGIDO**, pendiente de validación local para pasar a **VERIFICADO**.
+
+El sprite real y Animator permanecen pendientes; primero debe verificarse el marcador corregido sobre la referencia provisional.
 
 ---
 
@@ -169,16 +181,16 @@ Datos relevantes:
 
 ## 9. Próximo paso exacto
 
-1. En GitHub Desktop, sincronizar `main` para recibir el merge y el registro `660c7f0`.
-2. Cambiar a `feature/player-movement-foundation` y hacer Pull.
-3. Abrir Unity `6000.3.21f1` y esperar la compilación.
-4. Limpiar la consola.
-5. Ejecutar EditMode: esperado **8/8**.
+1. Detener Play Mode y cerrar Unity.
+2. En GitHub Desktop, permanecer en `feature/player-movement-foundation`.
+3. Ejecutar **Fetch origin** y **Pull origin**.
+4. Abrir Unity `6000.3.21f1` y esperar la compilación.
+5. Ejecutar EditMode: esperado **11/11**.
 6. Ejecutar PlayMode: esperado **4/4**.
-7. Abrir `Bootstrap.unity`, pulsar Play y probar WASD y flechas.
-8. Conectar el DualSense y probar stick izquierdo y D-pad.
-9. Comprobar zona muerta, velocidad diagonal, marcador de orientación y límites del mapa.
-10. Enviar capturas de Test Runner, consola y Game, además de indicar si teclado y DualSense respondieron correctamente.
+7. Confirmar consola limpia.
+8. Ejecutar `Bootstrap → Lab` y orientar al jugador en las cuatro direcciones.
+9. Confirmar que los marcadores laterales están centrados verticalmente respecto al cuerpo rojo, el superior está sobre la cabeza y el inferior bajo los pies.
+10. Tras validar, marcar `BUG-0002` como **VERIFICADO** y comenzar la importación del sprite real y su Animator.
 
 ---
 
