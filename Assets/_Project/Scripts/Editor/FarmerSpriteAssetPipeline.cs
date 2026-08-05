@@ -17,7 +17,7 @@ namespace FarmSimulator.Editor
         public const string SourceUrl =
             "https://raw.githubusercontent.com/xArtXtrAx/farming-game-A/" +
             "dd32056c9f8142a2322bc2c1d41f0b05b002598f/" +
-            "public/assets/farmer/farmer-spritesheet.png";
+            "src/assets/hero_hd.png";
 
         public const string AssetRoot =
             "Assets/_Project/Resources/Characters/Farmer";
@@ -32,7 +32,12 @@ namespace FarmSimulator.Editor
             AnimationFolder + "/FarmerAnimator.controller";
 
         public const string ImportSignature =
-            "farm-simulator-farmer-64x72-v1";
+            "farm-simulator-farmer-64x72-v2";
+
+        private static readonly byte[] PngSignature =
+        {
+            137, 80, 78, 71, 13, 10, 26, 10,
+        };
 
         private static bool downloadInProgress;
 
@@ -45,6 +50,15 @@ namespace FarmSimulator.Editor
         public static void RebuildAssets()
         {
             DeleteGeneratedAnimationAssets();
+
+            if (File.Exists(SpriteSheetAssetPath) &&
+                !IsExpectedSpriteSheetFile(SpriteSheetAssetPath))
+            {
+                RemoveInvalidSpriteSheet();
+                EditorApplication.delayCall += EnsureAssets;
+                return;
+            }
+
             TextureImporter importer =
                 AssetImporter.GetAtPath(SpriteSheetAssetPath) as TextureImporter;
             if (importer != null)
@@ -60,6 +74,17 @@ namespace FarmSimulator.Editor
         {
             if (EditorApplication.isCompiling || EditorApplication.isUpdating)
             {
+                EditorApplication.delayCall += EnsureAssets;
+                return;
+            }
+
+            if (File.Exists(SpriteSheetAssetPath) &&
+                !IsExpectedSpriteSheetFile(SpriteSheetAssetPath))
+            {
+                Debug.LogWarning(
+                    "The local farmer spritesheet is invalid and will be " +
+                    "replaced with the frozen 192 x 288 source asset.");
+                RemoveInvalidSpriteSheet();
                 EditorApplication.delayCall += EnsureAssets;
                 return;
             }
@@ -84,6 +109,55 @@ namespace FarmSimulator.Editor
                 PlayerAnimationModel.StateName(state) + ".anim";
         }
 
+        public static bool IsExpectedSpriteSheetBytes(byte[] data)
+        {
+            if (data == null || data.Length < 24)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < PngSignature.Length; index++)
+            {
+                if (data[index] != PngSignature[index])
+                {
+                    return false;
+                }
+            }
+
+            int width = ReadBigEndianInt32(data, 16);
+            int height = ReadBigEndianInt32(data, 20);
+            return width ==
+                    PlayerAnimationModel.FrameWidthPixels *
+                    PlayerAnimationModel.Columns &&
+                height ==
+                    PlayerAnimationModel.FrameHeightPixels *
+                    PlayerAnimationModel.Rows;
+        }
+
+        private static bool IsExpectedSpriteSheetFile(string path)
+        {
+            try
+            {
+                return IsExpectedSpriteSheetBytes(File.ReadAllBytes(path));
+            }
+            catch (IOException)
+            {
+                return false;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return false;
+            }
+        }
+
+        private static int ReadBigEndianInt32(byte[] data, int offset)
+        {
+            return (data[offset] << 24) |
+                (data[offset + 1] << 16) |
+                (data[offset + 2] << 8) |
+                data[offset + 3];
+        }
+
         private static void BeginDownload()
         {
             if (downloadInProgress)
@@ -98,6 +172,8 @@ namespace FarmSimulator.Editor
             UnityWebRequestAsyncOperation operation = request.SendWebRequest();
             operation.completed += _ =>
             {
+                bool downloaded = false;
+
                 try
                 {
                     if (request.result != UnityWebRequest.Result.Success)
@@ -108,24 +184,55 @@ namespace FarmSimulator.Editor
                         return;
                     }
 
-                    File.WriteAllBytes(
-                        SpriteSheetAssetPath,
-                        request.downloadHandler.data);
+                    byte[] data = request.downloadHandler.data;
+                    if (!IsExpectedSpriteSheetBytes(data))
+                    {
+                        Debug.LogError(
+                            "The downloaded farmer source is not a valid " +
+                            "192 x 288 PNG. No asset was written.");
+                        return;
+                    }
+
+                    File.WriteAllBytes(SpriteSheetAssetPath, data);
                     AssetDatabase.ImportAsset(
                         SpriteSheetAssetPath,
                         ImportAssetOptions.ForceSynchronousImport |
                         ImportAssetOptions.ForceUpdate);
+                    downloaded = true;
+
                     Debug.Log(
                         "Downloaded the frozen farmer spritesheet from " +
-                        "farming-game-A.");
+                        "farming-game-A/src/assets/hero_hd.png.");
                 }
                 finally
                 {
                     request.Dispose();
                     downloadInProgress = false;
-                    EditorApplication.delayCall += EnsureAssets;
+
+                    if (downloaded)
+                    {
+                        EditorApplication.delayCall += EnsureAssets;
+                    }
                 }
             };
+        }
+
+        private static void RemoveInvalidSpriteSheet()
+        {
+            DeleteGeneratedAnimationAssets();
+
+            if (File.Exists(SpriteSheetAssetPath))
+            {
+                File.Delete(SpriteSheetAssetPath);
+            }
+
+            string metaPath = SpriteSheetAssetPath + ".meta";
+            if (File.Exists(metaPath))
+            {
+                File.Delete(metaPath);
+            }
+
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
         }
 
         private static bool ConfigureImporterIfNeeded()
