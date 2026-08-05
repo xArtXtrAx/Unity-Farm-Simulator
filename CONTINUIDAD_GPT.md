@@ -12,8 +12,8 @@ Este archivo es el **punto de entrada permanente** para retomar el desarrollo si
 - **Rama estable:** `main`
 - **Rama activa:** `feature/domain-item-inventory-foundation`
 - **Fase actual:** Fase 6 — Catálogo de objetos e inventario de dominio
-- **Estado:** rama y alcance preparados; investigación fuente e implementación pendientes
-- **Cabeza remota registrada de la rama activa:** `23ea6b945670c913cecb1b681397964dcc4f349d`
+- **Estado:** implementación remota completa; compilación y pruebas Unity pendientes de validación local
+- **Cabeza remota registrada de la rama activa:** `441ccb742ee670bcd93ab920e2e0f73c55161081`
 - **Última integración:** PR #5, merge `341051f097d9d70796e69b9cddc9277ba3902ed0`
 - **Registro de integración en main:** `8a85534526ad1e491cb0687d817f2924acee2d4d`
 - **Bugs activos:** ninguno
@@ -30,39 +30,39 @@ Este archivo es el **punto de entrada permanente** para retomar el desarrollo si
 - Player prefab y sorting layers versionados.
 - Profundidad y oclusión delante/detrás aprobadas.
 
-### Fase activa
+### Implementación remota de la Fase 6
 
-La Fase 6 debe comenzar el núcleo de dominio puro:
+En `feature/domain-item-inventory-foundation` ya existen:
 
-- IDs y catálogo inicial de ocho objetos;
-- límites de stack, categorías y precios;
-- inventario de ocho slots;
-- selección y ciclo de hotbar a nivel de dominio;
-- stacking y capacidad;
+- catálogo puro con los ocho IDs, categorías, stacks y precios aprobados;
+- `ItemId`, `ItemCategory`, `ItemDefinition` e `ItemCatalog`;
+- inventario puro de ocho slots;
+- selección y ciclo con wrap-around;
+- capacidad y stacking deterministas;
 - adición totalmente atómica;
-- consumo;
-- snapshots y restauración;
+- consumo y limpieza de slots;
+- snapshots defensivos y restauración prevalidada;
 - estado inicial con azada, regadera y veinte semillas de nabo;
-- pruebas EditMode exhaustivas.
+- **25 casos EditMode de catálogo**;
+- **63 casos EditMode de inventario**.
 
-No crear todavía UI, ScriptableObjects, almacenamiento ni modificar escenas.
-
-### Fuente congelada prioritaria
-
-Desde `xArtXtrAx/farming-game-A` en `dd32056c9f8142a2322bc2c1d41f0b05b002598f`:
-
-- `src/game/data/items.ts`
-- `src/game/inventory/InventoryState.ts`
-- `src/game/inventory/InventoryManager.ts`
-- pruebas relacionadas con catálogo e inventario
+No se añadieron UI, ScriptableObjects, almacenamiento, cambios de escenas ni referencias `UnityEngine` en Domain.
 
 ### Validación pendiente
 
-- Implementación remota: pendiente.
-- Conteo de pruebas nuevas: pendiente de determinar.
-- Compilación local: pendiente.
-- Validación EditMode local: pendiente.
-- No se espera PlayMode nuevo salvo dependencia Unity justificada.
+- Implementación remota: **completa**.
+- Pruebas nuevas publicadas: **88**.
+- Conteo EditMode esperado: **124** contando los 36 existentes.
+- PlayMode esperado sin cambios: **6**.
+- Compilación local Unity: **pendiente**.
+- Validación EditMode local: **pendiente**.
+- Consola local: **pendiente**.
+
+No afirmar que Unity compila ni que 124/124 pasan hasta recibir la validación local de Arturo.
+
+### Próxima acción
+
+Arturo debe sincronizar `feature/domain-item-inventory-foundation`, abrir el proyecto con Unity `6000.3.21f1`, revisar la consola y ejecutar EditMode completo. El resultado esperado, todavía no confirmado, es 124/124.
 
 ---
 
@@ -80,12 +80,11 @@ Desde `xArtXtrAx/farming-game-A` en `dd32056c9f8142a2322bc2c1d41f0b05b002598f`:
 
 ## Reglas críticas
 
-- No asumir que existe implementación de la Fase 6: la rama solo está preparada y documentada.
-- No modificar el repositorio antes de estudiar los módulos y pruebas fuente congelados.
+- La implementación remota de la Fase 6 existe, pero sigue sin validación Unity local.
 - `FarmSimulator.Domain` no debe depender de `UnityEngine`.
 - No traducir TypeScript línea por línea; conservar comportamientos, IDs y atomicidad.
 - No afirmar que Unity compila o que pruebas pasan hasta validación local de Arturo.
-- `main` debe mantenerse estable.
+- `main` debe mantenerse estable y no contiene la implementación funcional de la Fase 6.
 - Después de cada implementación o corrección realizada por GPT, actualizar `BITÁCORA_GPT.MD` en el mismo bloque.
 - Cada vez que cambie la rama activa, la fase o el estado de validación, actualizar este archivo en `main`.
 
@@ -97,7 +96,7 @@ Desde `xArtXtrAx/farming-game-A` en `dd32056c9f8142a2322bc2c1d41f0b05b002598f`:
 Continúa trabajando en mi repositorio:
 https://github.com/xArtXtrAx/Unity-Farm-Simulator
 
-Lee primero CONTINUIDAD_GPT.md desde main y sigue exactamente su orden de lectura y el “Próximo paso exacto” de la bitácora en la rama activa. La Fase 5 ya está integrada. La rama activa es feature/domain-item-inventory-foundation y la Fase 6 debe implementar catálogo e inventario puros de dominio, sin UI ni escenas. No asumas que existe implementación ni que las pruebas pasan. Tras cada implementación o corrección, actualiza BITÁCORA_GPT.MD y mantén CONTINUIDAD_GPT.md sincronizado.
+Lee primero CONTINUIDAD_GPT.md desde main y sigue exactamente su orden de lectura y el “Próximo paso exacto” de la bitácora en la rama activa. La rama activa es feature/domain-item-inventory-foundation. La implementación remota de la Fase 6 está completa con catálogo, inventario puro y 88 casos EditMode nuevos; Unity y las pruebas siguen pendientes de validación local. No afirmes que compila o que las pruebas pasan hasta recibir los resultados de Arturo. Tras cada implementación o corrección, actualiza BITÁCORA_GPT.MD y mantén CONTINUIDAD_GPT.md sincronizado.
 ```
 
 ---
