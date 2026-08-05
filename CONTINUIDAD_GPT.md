@@ -12,30 +12,35 @@ Este archivo es el **punto de entrada permanente** para retomar el desarrollo si
 - **Rama estable:** `main`
 - **Rama activa:** `feature/player-prefab-depth-sorting`
 - **Fase actual:** Fase 5 — Prefab reutilizable y profundidad visual
-- **Estado:** implementación y corrección visual terminadas remotamente; compilación, pruebas y validación local pendientes
-- **Cabeza remota registrada de la rama activa:** `4e89b1313a7c5d064827911164ff1b859cf46537`
-- **Bug activo:** `BUG-0006` — faltaba una referencia 2D compatible con el sorting; estado CORREGIDO, pendiente de validación
+- **Estado:** implementación y validación local completas; revisión y versionado de recursos generados pendientes
+- **Cabeza remota registrada de la rama activa:** `1f21bccb73015e4c7bfa7cde93f8deab65114540`
+- **Bugs activos:** ninguno
+- **Último bug verificado:** `BUG-0006` — faltaba una referencia 2D compatible con el sorting
 - **Unity:** `6000.3.21f1`
 - **Ruta local habitual:** `D:\Git\Unity-Farm-Simulator`
 
-### Validación ya confirmada
+### Validación confirmada
 
 - Unity abre normalmente fuera de Safe Mode.
-- Consola previa: **0 errores y 0 advertencias**.
 - Player prefab reutilizable generado.
 - Sorting layers cenitales generadas.
 - `Order in Layer` del jugador varía aproximadamente entre **9600 y 10400**.
-- El cálculo numérico por Y funciona en la dirección esperada.
+- El rectángulo morado `Depth Sorting Reference` comparte el sistema de sorting por pies.
+- Al caminar por encima de su línea de pies, el personaje queda detrás.
+- Al regresar por debajo, vuelve a renderizarse delante.
+- EditMode: **36/36**.
+- PlayMode: **6/6**.
+- Todas las pruebas pasaron sin errores.
 
-### Corrección pendiente de validar
+### Estado local no protegido todavía
 
-- Se añadió `Depth Sorting Reference`, un rectángulo morado 2D sin collider.
-- Usa la misma sorting layer y el mismo cálculo por pies que el jugador.
-- Al acercarse desde abajo, el jugador debe verse delante.
-- Tras cruzar hacia arriba la línea de pies de la referencia, debe verse detrás.
-- EditMode esperado: **36/36**.
-- PlayMode esperado: **6/6**.
-- Consola esperada: **0 errores y 0 advertencias**.
+Unity generó o actualizó localmente:
+
+- `ProjectSettings/TagManager.asset`;
+- Player prefab y su `.meta`;
+- posibles metadatos de carpetas asociados.
+
+Estos archivos todavía deben revisarse en GitHub Desktop antes de hacer commit y push.
 
 ---
 
@@ -53,7 +58,7 @@ Este archivo es el **punto de entrada permanente** para retomar el desarrollo si
 
 ## Reglas críticas
 
-- No asumir que una implementación o corrección pasó pruebas locales cuando la bitácora indique que está pendiente.
+- No asumir que los cambios locales pendientes ya fueron versionados.
 - No modificar el repositorio antes de leer la documentación indicada.
 - `main` debe mantenerse estable.
 - Los cambios locales sin commit/push no están protegidos por este sistema y deben comunicarse antes de cambiar de chat.
@@ -69,7 +74,7 @@ Este archivo es el **punto de entrada permanente** para retomar el desarrollo si
 Continúa trabajando en mi repositorio:
 https://github.com/xArtXtrAx/Unity-Farm-Simulator
 
-Lee primero CONTINUIDAD_GPT.md desde main. Después sigue exactamente el orden de lectura y el “Próximo paso exacto” que ahí se indican. No asumas que las pruebas locales pendientes ya pasaron. Tras cada implementación o corrección, actualiza BITÁCORA_GPT.MD y mantén actualizado CONTINUIDAD_GPT.md cuando cambie la rama activa, la fase o el estado.
+Lee primero CONTINUIDAD_GPT.md desde main. Después sigue exactamente el orden de lectura y el “Próximo paso exacto” que ahí se indican. No asumas que los cambios locales pendientes ya fueron versionados. Tras cada implementación o corrección, actualiza BITÁCORA_GPT.MD y mantén actualizado CONTINUIDAD_GPT.md cuando cambie la rama activa, la fase o el estado.
 ```
 
 ---
