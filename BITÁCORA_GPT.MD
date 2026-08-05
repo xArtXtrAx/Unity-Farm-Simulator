@@ -110,7 +110,7 @@ La primera calibración usó mundo XZ, física 3D y cámara ortográfica inclina
 ### Corrección cenital 2D
 
 Commit funcional: `edd6846` — `fix: switch calibration to top-down 2D`.
-Commit de reconciliación: `a2adea9` — combina código y documentación en la rama.
+Commit remoto reconciliado: `48adb0f` — contiene conjuntamente la corrección y su documentación.
 
 Cambios implementados:
 
@@ -127,7 +127,7 @@ Cambios implementados:
 
 Pendiente de validación local:
 
-- [ ] Unity debe compilar `a2adea9` sin errores.
+- [ ] Unity debe compilar el estado posterior a `48adb0f` sin errores.
 - [ ] EditMode esperado: **3/3**.
 - [ ] PlayMode esperado: **2/2**.
 - [ ] Consola esperada: **0 errores y 0 advertencias**.
