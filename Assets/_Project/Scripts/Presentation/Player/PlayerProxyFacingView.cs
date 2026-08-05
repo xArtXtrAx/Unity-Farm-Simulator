@@ -1,4 +1,5 @@
 using FarmSimulator.Application.Player;
+using FarmSimulator.Application.Spatial;
 using UnityEngine;
 
 namespace FarmSimulator.Presentation.Player
@@ -7,6 +8,11 @@ namespace FarmSimulator.Presentation.Player
     [RequireComponent(typeof(TopDownPlayerMotor))]
     public sealed class PlayerProxyFacingView : MonoBehaviour
     {
+        public const float MarkerSize = 0.14f;
+
+        private const float MarkerGap = 0.03f;
+        private const float MarkerDepth = -0.08f;
+
         private TopDownPlayerMotor motor;
         private Transform marker;
 
@@ -33,12 +39,25 @@ namespace FarmSimulator.Presentation.Player
                 return;
             }
 
-            marker.localPosition = motor.Facing switch
+            marker.localPosition = CalculateMarkerLocalPosition(motor.Facing);
+        }
+
+        public static Vector3 CalculateMarkerLocalPosition(FacingDirection facing)
+        {
+            float bodyHalfWidth = SpatialModel.ReferenceCharacterWidth * 0.5f;
+            float bodyHeight = SpatialModel.ReferenceCharacterHeight;
+            float bodyCenterY = bodyHeight * 0.5f;
+            float markerHalfSize = MarkerSize * 0.5f;
+            float horizontalOffset = bodyHalfWidth + markerHalfSize + MarkerGap;
+            float upperOffset = bodyHeight + markerHalfSize + MarkerGap;
+            float lowerOffset = -(markerHalfSize + MarkerGap);
+
+            return facing switch
             {
-                FacingDirection.Up => new Vector3(0f, 0.48f, -0.08f),
-                FacingDirection.Left => new Vector3(-0.42f, 0f, -0.08f),
-                FacingDirection.Right => new Vector3(0.42f, 0f, -0.08f),
-                _ => new Vector3(0f, -0.48f, -0.08f),
+                FacingDirection.Up => new Vector3(0f, upperOffset, MarkerDepth),
+                FacingDirection.Left => new Vector3(-horizontalOffset, bodyCenterY, MarkerDepth),
+                FacingDirection.Right => new Vector3(horizontalOffset, bodyCenterY, MarkerDepth),
+                _ => new Vector3(0f, lowerOffset, MarkerDepth),
             };
         }
     }
