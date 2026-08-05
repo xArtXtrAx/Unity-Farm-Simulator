@@ -109,33 +109,55 @@ La primera calibración usó mundo XZ, física 3D y cámara ortográfica inclina
 
 ### Corrección cenital 2D
 
-Commit funcional: `edd6846` — `fix: switch calibration to top-down 2D`.
-Commit remoto reconciliado: `48adb0f` — contiene conjuntamente la corrección y su documentación.
+- Commit funcional inicial: `edd6846` — `fix: switch calibration to top-down 2D`.
+- Estado remoto reconciliado: `48adb0f`.
+- Documentación alineada: `5b3dbda`.
 
 Cambios implementados:
 
-- [x] `SpatialModel` ahora fija plano `XY`, profundidad `Z`, física 2D y cámara ortográfica frontal.
+- [x] `SpatialModel` fija plano `XY`, profundidad `Z`, Physics 2D y cámara ortográfica frontal.
 - [x] Se mantiene explícitamente la libertad de integrar efectos tridimensionales.
-- [x] La cámara se coloca en `(0, 0, -10)` con rotación identidad.
-- [x] Se elimina la inclinación y el giro diagonal que producían el tablero en rombo.
-- [x] El suelo de calibración usa `BoxCollider2D`; se eliminan colliders 3D generados por primitivas.
-- [x] La cuadrícula queda paralela a los bordes de la pantalla.
-- [x] Se añadieron referencias cenitales simples: caminos, estanque, parcelas, árboles, sprites, pila de profundidad y trayectoria visual en arco.
-- [x] Los materiales de calibración son planos y sin sombras para aproximarse mejor a una presentación 2D.
-- [x] La prueba EditMode protege el contrato XY/Physics 2D.
-- [x] La prueba PlayMode protege la cámara frontal, `BoxCollider2D`, dimensiones y profundidad visual.
+- [x] Cámara en `(0, 0, -10)` con rotación identidad.
+- [x] Cuadrícula rectangular paralela a la pantalla.
+- [x] Referencias cenitales simples: caminos, estanque, parcelas, árboles, sprites, pila de profundidad y trayectoria en arco.
+- [x] Materiales planos y sin sombras.
+- [x] EditMode protege el contrato espacial XY/Physics 2D.
+- [x] PlayMode protege la cámara frontal, dimensiones, profundidad visual y collider del suelo.
 
-Pendiente de validación local:
+### Validación local del estado `5b3dbda`
 
-- [ ] Unity debe compilar el estado posterior a `48adb0f` sin errores.
+- [x] EditMode: **3/3 aprobadas**.
+- [ ] PlayMode: **1/2 aprobada**.
+- [x] Se identificó la prueba fallida: `LabBuildsFrontFacingOrthographicXYCalibration`.
+- [x] Consola mostró conflicto entre `BoxCollider` 3D y `BoxCollider2D`.
+- [x] Incidente registrado como `BUG-0001` en `BUGS.MD`.
+
+### BUG-0001 — Corrección remota pendiente de verificación
+
+Causa raíz:
+
+- `GameObject.CreatePrimitive(PrimitiveType.Cube)` agrega un `BoxCollider` 3D.
+- `Destroy(collider)` no lo elimina hasta el final del frame.
+- El código intentaba agregar `BoxCollider2D` al mismo objeto antes de que el collider 3D desapareciera.
+
+Corrección aplicada:
+
+- Commit `cdb6cdd`: separa el objeto lógico `Calibration Ground` de su representación `Calibration Ground Visual`.
+- `Calibration Ground` se crea como `GameObject` limpio y recibe directamente `BoxCollider2D`.
+- La primitiva verde queda en un objeto visual separado y sus colliders 3D se eliminan normalmente.
+- Commit `c8342a2`: refuerza PlayMode para verificar que no queden colliders 3D en los objetos visuales generados.
+- Commit `a791641`: registra `BUG-0001` con causa, evidencia y solución.
+- Estado del bug: **CORREGIDO**, no **VERIFICADO** hasta repetir pruebas localmente.
+
+Pendiente:
+
+- [ ] Sincronizar los commits posteriores a `5b3dbda`.
+- [ ] Unity debe compilar sin errores.
 - [ ] EditMode esperado: **3/3**.
 - [ ] PlayMode esperado: **2/2**.
-- [ ] Consola esperada: **0 errores y 0 advertencias**.
-- [ ] Abrir `Bootstrap`, entrar en Play y comprobar que `Lab` aparece como una cuadrícula rectangular alineada a pantalla.
-- [ ] Evaluar encuadre, escala de celdas y tamaño provisional del personaje.
+- [ ] La consola no debe volver a mostrar el conflicto de colliders.
+- [ ] Abrir `Bootstrap`, entrar en Play y evaluar la vista cenital corregida.
 - [ ] No fusionar todavía esta rama.
-
-No se añadió entrada a `BUGS.MD`: se trata de una corrección de dirección artística detectada durante la calibración, no de un defecto del motor o del sistema.
 
 ---
 
@@ -147,16 +169,16 @@ El proyecto anterior contiene granja, casa, mercado, personaje, teclado/mouse/ga
 
 ## 8. Próximo paso exacto
 
-1. Cerrar Unity.
+1. Detener Play Mode y cerrar Unity.
 2. En GitHub Desktop, permanecer en `feature/lab-spatial-calibration`.
 3. Ejecutar **Fetch origin** y **Pull origin**.
 4. Abrir Unity `6000.3.21f1` y esperar compilación.
-5. Revisar consola.
+5. Limpiar la consola antes de volver a probar.
 6. Ejecutar EditMode: resultado esperado **3/3**.
 7. Ejecutar PlayMode: resultado esperado **2/2**.
-8. Abrir `Assets/_Project/Scenes/Bootstrap.unity` y pulsar Play.
-9. Enviar captura de la pestaña Game y de Test Runner.
-10. Tras validar la vista cenital, decidir resolución base, relación de aspecto y Pixels Per Unit antes de implementar movimiento.
+8. Confirmar que ya no aparece el mensaje `Can't add component 'BoxCollider2D'...`.
+9. Abrir `Assets/_Project/Scenes/Bootstrap.unity`, pulsar Play y enviar captura de la pestaña Game.
+10. Tras validar la corrección, cambiar `BUG-0001` a **VERIFICADO** y continuar con resolución base, relación de aspecto y Pixels Per Unit.
 
 ---
 
