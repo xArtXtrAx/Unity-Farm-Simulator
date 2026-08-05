@@ -24,12 +24,18 @@ Registro histórico de errores detectados, investigados y corregidos durante el 
 
 ## Bugs activos
 
+No hay bugs activos.
+
+---
+
+## Bugs corregidos y verificados
+
 ## BUG-0005 — La Fase 5 abre Unity con errores de compilación y solicita Safe Mode
 
-- **Estado:** CORREGIDO
+- **Estado:** VERIFICADO
 - **Severidad:** S0 — Bloqueante
 - **Detectado:** 2026-08-05
-- **Corrección implementada:** 2026-08-05
+- **Corregido/verificado:** 2026-08-05
 - **Versión de Unity:** `6000.3.21f1`
 - **Sistema:** prefab reutilizable y orden visual por profundidad
 - **Rama afectada:** `feature/player-prefab-depth-sorting`
@@ -72,24 +78,23 @@ global::UnityEngine.Application.isPlaying
 
 La corrección está limitada a `PlayerSpriteAnimator.Initialize` y no cambia el comportamiento de animación, prefab, input ni movimiento.
 
-### Prueba de regresión
+### Verificación
 
-La propia compilación de `FarmSimulator.Presentation` cubre esta regresión: cualquier retorno a la referencia ambigua vuelve a producir `CS0234` antes de ejecutar tests. Tras sincronizar, se debe validar además:
+Arturo confirmó el 2026-08-05, después de sincronizar `a9a3fe2`:
 
-- salida correcta de Safe Mode;
-- consola sin errores de compilación;
-- EditMode **36/36**;
-- PlayMode **6/6**;
-- generación del prefab y sorting layers;
-- movimiento, animación y profundidad sin regresiones.
+- Unity abrió normalmente fuera de Safe Mode;
+- la consola quedó en **0 errores y 0 advertencias**;
+- desapareció `CS0234`;
+- el pipeline informó `Generated reusable Player prefab and top-down sorting layers`;
+- el prefab reutilizable y las sorting layers fueron generados correctamente.
 
-### Pendiente para pasar a VERIFICADO
+La validación funcional completa de la Fase 5 continúa por separado con EditMode, PlayMode y pruebas manuales.
 
-Arturo debe hacer pull del commit `a9a3fe2`, permitir que Unity recompile y confirmar que Safe Mode puede cerrarse sin errores. Después debe completar la validación de la Fase 5.
+### Nota de regresión
+
+Dentro de namespaces que puedan colisionar con tipos comunes de Unity, usar referencias inequívocas cuando el compilador pueda resolver primero un namespace del proyecto, por ejemplo `global::UnityEngine.Application`.
 
 ---
-
-## Bugs corregidos y verificados
 
 ## BUG-0004 — El pipeline descarga un spritesheet ilegible y entra en un ciclo de reimportación
 
@@ -195,4 +200,5 @@ El marcador lateral se calculaba alrededor del pivote de los pies. Se reposicion
 - Se verificaron `BUG-0001`, `BUG-0002`, `BUG-0003` y `BUG-0004`.
 - Se añadió `BUG-0005` como bloqueo de compilación de la Fase 5.
 - Se confirmó la causa raíz de `BUG-0005`: colisión entre `FarmSimulator.Application` y `UnityEngine.Application`.
-- Se implementó la corrección `a9a3fe2`; queda pendiente la validación local para marcarla VERIFICADA.
+- Se implementó la corrección `a9a3fe2`.
+- Arturo verificó que Unity abre normalmente, la consola queda limpia y el prefab/sorting layers se generan; `BUG-0005` pasó a VERIFICADO.
