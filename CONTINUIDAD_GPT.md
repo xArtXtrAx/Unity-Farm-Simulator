@@ -12,20 +12,29 @@ Este archivo es el **punto de entrada permanente** para retomar el desarrollo si
 - **Rama estable:** `main`
 - **Rama activa:** `feature/player-prefab-depth-sorting`
 - **Fase actual:** Fase 5 — Prefab reutilizable y profundidad visual
-- **Estado:** implementación remota terminada; error de compilación corregido remotamente; validación local pendiente
-- **Cabeza remota registrada de la rama activa:** `3dd947fc25a5b46fbd33a52e67c26e3842bdc5f6`
-- **Bug activo:** `BUG-0005` — colisión entre `FarmSimulator.Application` y `UnityEngine.Application`; estado CORREGIDO, pendiente de validación
+- **Estado:** implementación compila y genera recursos; validación automatizada y manual pendiente
+- **Cabeza remota registrada de la rama activa:** `4bcc9dc50ce97bf6444716751237c40204c5d7f7`
+- **Bugs activos:** ninguno
+- **Último bug verificado:** `BUG-0005` — colisión entre `FarmSimulator.Application` y `UnityEngine.Application`
 - **Corrección funcional:** `a9a3fe23e214f5d98ba8f9ac8c5677d131b0f036`
 - **Unity:** `6000.3.21f1`
 - **Ruta local habitual:** `D:\Git\Unity-Farm-Simulator`
 
+### Validación confirmada
+
+- Unity abre normalmente fuera de Safe Mode.
+- Consola: **0 errores y 0 advertencias**.
+- Player prefab reutilizable generado.
+- Sorting layers cenitales generadas.
+
 ### Validación pendiente
 
-- Cerrar Unity en Safe Mode, hacer pull de la rama activa y reabrir.
-- Confirmar que desaparece `CS0234` en `PlayerSpriteAnimator.cs`.
 - EditMode esperado: **36/36**.
 - PlayMode esperado: **6/6**.
-- Consola esperada: **0 errores y 0 advertencias**.
+- Movimiento y animación con teclado y DualSense.
+- Límites visuales.
+- Cambio de `sortingOrder` según la Y de los pies.
+- Revisión de cambios locales generados antes de commit.
 
 ---
 
