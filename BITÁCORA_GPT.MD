@@ -104,7 +104,7 @@ Bugs verificados acumulados: `BUG-0001` a `BUG-0006`.
 
 ---
 
-## 4. Fase 6 — Catálogo de objetos e inventario de dominio: PREPARADA; IMPLEMENTACIÓN PENDIENTE
+## 4. Fase 6 — Catálogo de objetos e inventario de dominio: EN IMPLEMENTACIÓN; CATÁLOGO COMPLETADO
 
 Rama:
 
@@ -112,27 +112,34 @@ Rama:
 feature/domain-item-inventory-foundation
 ```
 
-Objetivo: iniciar el núcleo de dominio puro recomendado por la migración. Este bloque no debe añadir todavía hotbar visual, ScriptableObjects, almacenamiento ni interacción en escenas.
+Objetivo: iniciar el núcleo de dominio puro recomendado por la migración. Este bloque no añade hotbar visual, ScriptableObjects, almacenamiento ni interacción en escenas.
 
-### Fuente congelada identificada
+### Fuente congelada estudiada
 
-- `src/game/data/items.ts`
-- `src/game/inventory/InventoryState.ts`
-- `src/game/inventory/InventoryManager.ts`
-- pruebas fuente relacionadas con catálogo e inventario, todavía por localizar y estudiar
+Commit `dd32056c9f8142a2322bc2c1d41f0b05b002598f` de `xArtXtrAx/farming-game-A`:
+
+- `src/game/data/items.ts`;
+- `src/game/inventory/InventoryState.ts`;
+- `src/game/inventory/InventoryManager.ts`;
+- `tests/unit/data/catalogs.test.ts`;
+- `tests/unit/inventory/InventoryState.test.ts`;
+- `src/game/core/GameState.ts`;
+- `tests/integration/core/GameState.integration.test.ts`.
+
+No existe una prueba unitaria dedicada a `InventoryManager`; su responsabilidad de presentación no se migra en este bloque.
 
 ### Datos confirmados de la fuente
 
 Ocho IDs iniciales:
 
-- `hoe`
-- `watering-can`
-- `turnip-seeds`
-- `turnip`
-- `carrot-seeds`
-- `carrot`
-- `cabbage-seeds`
-- `cabbage`
+- `hoe`;
+- `watering-can`;
+- `turnip-seeds`;
+- `turnip`;
+- `carrot-seeds`;
+- `carrot`;
+- `cabbage-seeds`;
+- `cabbage`.
 
 Categorías conocidas: herramienta, semilla, cultivo, material, comida y regalo.
 
@@ -142,9 +149,9 @@ Reglas de catálogo:
 - semillas y cosechas actuales: stack máximo 99;
 - semillas comprables: nabo 30, zanahoria 50, col 75;
 - cosechas vendibles: nabo 60, zanahoria 100, col 150;
-- IDs desconocidos deben rechazarse de forma explícita.
+- IDs desconocidos se rechazan de forma explícita.
 
-Reglas observadas de inventario:
+Reglas de inventario:
 
 - ocho slots por defecto;
 - índice seleccionado inicial 0;
@@ -169,53 +176,94 @@ slots 3–7: vacíos
 selección: slot 0
 ```
 
-### Diseño objetivo del bloque
+### Tabla de paridad aprobada
+
+| Regla fuente | Tipo o método C# | Cobertura EditMode prevista |
+|---|---|---|
+| Ocho IDs estables y ordinales | `ItemId` | IDs exactos, parseo y rechazo de desconocidos |
+| Categorías, nombres, etiquetas, stacks y precios | `ItemCategory`, `ItemDefinition`, `ItemCatalog` | ocho definiciones exactas y validación de invariantes |
+| Comprable/vendible solo con precio válido | `ItemDefinition.IsPurchasable`, `IsSellable` | conjuntos exactos de semillas y cosechas |
+| Ocho slots, selección y wrap-around | `InventoryState` | construcción, índices, selección repetida y ciclos |
+| Capacidad y stacking deterministas | `GetItemCapacity`, `CanAddItem`, `AddItem` | stacks parciales, slots vacíos, orden y distribución |
+| Adición completamente atómica | `AddItemResult`, prevalidación de capacidad | inventario idéntico cuando no cabe todo |
+| Consumo y limpieza | `ConsumeSelected`, `ConsumeFromSlot`, `ClearSlot` | parcial, exacto, insuficiente e índices inválidos |
+| Snapshot serializable y defensivo | `InventorySlotSnapshot`, `InventorySnapshot` | colección inmutable y ausencia de referencias compartidas |
+| Restauración validada | `RestoreSlots`, `Restore` | clamp de selección, slots omitidos y rollback local ante datos inválidos |
+| Estado inicial | `CreateInitialPlayerInventory` | paridad exacta de los ocho slots y selección |
+
+### Implementación 6A — Catálogo puro completado
+
+Archivos añadidos en la rama activa:
+
+- `Assets/_Project/Scripts/Domain/ItemCatalog.cs`;
+- `Assets/_Project/Scripts/Domain/ItemCatalog.cs.meta`.
+
+Contenido:
+
+- `ItemId` como value object ordinal y case-sensitive con los ocho IDs registrados;
+- `ItemCategory` con las seis categorías conocidas;
+- `ItemDefinition` inmutable con validación de ID, textos, categoría, stack y precios;
+- `ItemCatalog` de solo lectura con búsquedas tipadas y por cadena;
+- propiedades y consultas de comprable/vendible;
+- rechazo explícito de IDs nulos, vacíos o desconocidos.
+
+Commits correctos en `feature/domain-item-inventory-foundation`:
+
+- `deb03849826a5bfb5ecc07e303440e9277de70b3` — `feat(domain): add pure item catalog`;
+- `1264f1996ec462f802316b916471197cfb1fcfc0` — `chore(unity): track item catalog asset`.
+
+### Incidencia transaccional corregida — parámetro de rama del conector
+
+El primer intento usó el nombre antiguo `branch_name`; el conector actual lo ignoró y creó temporalmente los dos archivos en `main`.
+
+Acciones correctivas realizadas de inmediato:
+
+- creación accidental en `main`: `a43bc0209de7b9c5e18aedc4f7ec2c02727af908` y `63698bebad19755e07e5eb8c6a15b98f400679c3`;
+- eliminación del meta accidental: `59edfe528f42c238d71491d950dcd71680597f82`;
+- eliminación del código accidental: `7ab7d97f76b8eae5be81bcfdb5b64bae343a6db6`;
+- verificación posterior: `ItemCatalog.cs` existe en la rama activa y devuelve 404 en `main`.
+
+Regla operativa añadida: para todas las escrituras GitHub posteriores se usará exclusivamente el parámetro `branch` y se verificará la rama después de publicar.
+
+### Comprobación estática realizada
+
+- el archivo funcional se ubica únicamente en `FarmSimulator.Domain` de la rama activa;
+- no importa ni menciona `UnityEngine`;
+- no cambia asmdefs, escenas, UI, ScriptableObjects ni capas superiores;
+- llaves y estructura básica revisadas fuera de Unity;
+- no existe compilador C# ni Unity en el entorno remoto, por lo que la compilación continúa pendiente de Arturo.
+
+### Diseño objetivo restante
 
 Dominio puro, sin `UnityEngine`:
 
-- identificador estable de objeto;
-- categoría de objeto;
-- definición inmutable;
-- catálogo con búsquedas y validación;
 - slot de inventario;
 - resultado de adición;
-- snapshot de inventario;
+- DTO de slot para snapshot;
+- snapshot inmutable;
 - `InventoryState` con ocho slots por defecto;
-- fábrica o método para crear el estado inicial.
+- fábrica para crear el estado inicial.
 
 No decidir todavía el formato de ScriptableObjects. El dominio debe poder probarse y serializarse sin referencias Unity.
 
-### Casos mínimos de prueba EditMode
+### Casos EditMode planificados
 
-- catálogo contiene exactamente los ocho objetos iniciales;
-- IDs, nombres, etiquetas, categorías, stacks y precios correctos;
-- sellable/comprable solo cuando corresponde;
-- constructor rechaza cero slots;
-- índices inválidos se rechazan;
-- cantidades inválidas se rechazan;
-- selección repetida no reporta cambio;
-- ciclo positivo y negativo envuelve correctamente;
-- capacidad incluye espacio parcial y slots vacíos;
-- add completa stacks existentes antes de abrir otro;
-- add distribuye entre múltiples slots;
-- add sin capacidad suficiente no cambia el inventario;
-- herramientas no se apilan;
-- consumo insuficiente no cambia el inventario;
-- consumo exacto vacía el slot;
-- snapshots no permiten mutación externa del estado;
-- restauración recupera slots y selección;
-- estado inicial coincide con la fuente.
+Se prepararon **25 casos de catálogo** y **63 casos de inventario**, para **88 casos nuevos**. Sumados a los 36 existentes, el conteo EditMode esperado será **124**, sujeto a compilación y descubrimiento reales en Unity.
 
 ### Puerta de salida
 
-El catálogo y el inventario pasan pruebas EditMode exhaustivas sin abrir una escena. No se requiere nueva prueba PlayMode en este bloque salvo que aparezca una integración Unity inevitable, lo cual debe justificarse.
+El catálogo y el inventario deben compilar y pasar pruebas EditMode exhaustivas sin abrir una escena. No se requiere nueva prueba PlayMode porque este bloque no integra Unity.
 
 ### Estado de validación
 
-- Implementación remota: **pendiente**.
+- Investigación fuente: **completada**.
+- Tabla de paridad: **completada**.
+- Catálogo remoto: **implementado en rama activa; no validado aún en Unity**.
+- Inventario remoto: **pendiente**.
+- Pruebas EditMode nuevas: **pendientes de publicar**.
 - Compilación local Unity: **pendiente**.
-- Pruebas EditMode nuevas: **pendientes**.
-- Conteo final esperado: debe calcularse después de implementar y documentarse antes de pedir validación.
+- Conteo EditMode esperado al terminar: **124**.
+- PlayMode esperado sin cambios: **6**.
 
 ---
 
@@ -240,22 +288,17 @@ Los cambios exclusivamente locales siguen siendo el único estado que GitHub no 
 
 ## 6. Próximo paso exacto
 
-1. Leer `CONTINUIDAD_GPT.md` desde `main` y confirmar esta rama activa.
-2. Revisar `BUGS.MD` y `MIGRACION_DESDE_FARMING_GAME_A.MD`.
-3. Estudiar completos, desde el commit fuente congelado:
-   - `src/game/data/items.ts`;
-   - `src/game/inventory/InventoryState.ts`;
-   - `src/game/inventory/InventoryManager.ts`.
-4. Localizar y leer las pruebas fuente que cubren catálogo e inventario.
-5. Redactar una tabla de paridad: regla fuente → tipo/método C# → prueba EditMode.
-6. Implementar tipos y catálogo puros en `FarmSimulator.Domain`.
-7. Implementar `InventoryState`, resultados y snapshots en `FarmSimulator.Domain`.
-8. Añadir pruebas EditMode exhaustivas en `FarmSimulator.Tests.EditMode`.
-9. No crear UI, ScriptableObjects, almacenamiento ni modificar escenas.
-10. Revisar estáticamente dependencias y asegurar que Domain no usa `UnityEngine`.
-11. Actualizar esta bitácora con archivos, commits, pruebas añadidas, conteo esperado y validación local pendiente.
-12. Solo entonces pedir a Arturo sincronizar y validar en Unity.
-13. No afirmar que Unity compila o que las pruebas pasan hasta que Arturo lo confirme.
+1. Implementar `InventoryState`, slots, resultado de adición y snapshots en `FarmSimulator.Domain`.
+2. Preservar stacking determinista, adición atómica, consumo, selección y restauración validada.
+3. Verificar que los archivos existen en `feature/domain-item-inventory-foundation` y no en `main`.
+4. Actualizar esta bitácora inmediatamente después de publicar el inventario.
+5. Añadir los 25 casos EditMode de catálogo y los 63 de inventario.
+6. No crear UI, ScriptableObjects, almacenamiento ni modificar escenas.
+7. Revisar estáticamente dependencias y asegurar que Domain no usa `UnityEngine`.
+8. Actualizar esta bitácora con archivos, commits, pruebas añadidas, conteo esperado y validación local pendiente.
+9. Sincronizar `CONTINUIDAD_GPT.md` en `main` cuando quede cerrado el estado remoto de la fase.
+10. Solo entonces pedir a Arturo sincronizar y validar en Unity.
+11. No afirmar que Unity compila o que las pruebas pasan hasta que Arturo lo confirme.
 
 ---
 
@@ -267,4 +310,4 @@ Hotbar visual, almacenamiento, economía, tiempo, agricultura, herramientas, tre
 
 ## 8. Protocolo para chat nuevo
 
-> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`; después sigue el orden de lectura y el “Próximo paso exacto”. La Fase 5 está integrada mediante el PR #5. La rama activa es `feature/domain-item-inventory-foundation` y la Fase 6 debe implementar catálogo e inventario puros de dominio, sin UI ni escenas.
+> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`; después sigue el orden de lectura y el “Próximo paso exacto”. La Fase 5 está integrada mediante el PR #5. La rama activa es `feature/domain-item-inventory-foundation`. La Fase 6 tiene el catálogo puro implementado y debe continuar con inventario y pruebas EditMode, sin UI ni escenas.
