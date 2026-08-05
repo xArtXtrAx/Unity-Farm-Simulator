@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FarmSimulator.Application.Spatial;
 using FarmSimulator.Presentation.Calibration;
 using FarmSimulator.Presentation.Player;
 using UnityEditor;
@@ -84,12 +85,10 @@ namespace FarmSimulator.Editor
                 return;
             }
 
-            if (IsSceneCurrent())
+            if (!IsSceneCurrent())
             {
-                return;
+                CreateOrReplaceScene();
             }
-
-            CreateOrReplaceScene();
         }
 
         private static bool IsSceneCurrent()
@@ -242,12 +241,12 @@ namespace FarmSimulator.Editor
             var root = new GameObject(RootObjectName);
             SceneManager.MoveGameObjectToScene(root, scene);
 
-            CreateTiledSprite(
+            CreateTilePatch(
                 "Grass Backdrop",
                 assets["cozy_grass"],
                 root.transform,
                 Vector2.zero,
-                new Vector2(20f, 11f),
+                new Vector2Int(15, 9),
                 TopDownSortingLayers.Ground,
                 -100);
 
@@ -263,11 +262,11 @@ namespace FarmSimulator.Editor
             SceneManager.MoveGameObjectToScene(cameraObject, scene);
             cameraObject.tag = "MainCamera";
             cameraObject.transform.position =
-                new Vector3(0f, 0f, -10f);
+                new Vector3(0f, 0f, SpatialModel.CameraDepth);
 
             Camera camera = cameraObject.AddComponent<Camera>();
-            camera.orthographic = true;
-            camera.orthographicSize = 5.625f;
+            camera.orthographic = SpatialModel.UsesOrthographicCamera;
+            camera.orthographicSize = SpatialModel.CameraOrthographicSize;
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor =
                 new Color32(25, 34, 37, 255);
@@ -288,10 +287,10 @@ namespace FarmSimulator.Editor
 
             Vector2[] positions =
             {
-                new Vector2(5.1f, 3.2f),
-                new Vector2(8f, 3.2f),
-                new Vector2(5.1f, 0.35f),
-                new Vector2(8f, 0.35f)
+                new Vector2(4.6f, 2.8f),
+                new Vector2(6.3f, 2.8f),
+                new Vector2(4.6f, 1.1f),
+                new Vector2(6.3f, 1.1f)
             };
 
             for (int index = 0;
@@ -299,12 +298,12 @@ namespace FarmSimulator.Editor
                  index++)
             {
                 string name = TerrainNames[index];
-                CreateTiledSprite(
+                CreateTilePatch(
                     name,
                     assets[name],
                     group,
                     positions[index],
-                    new Vector2(2.5f, 2.25f),
+                    new Vector2Int(2, 2),
                     TopDownSortingLayers.World,
                     0);
             }
@@ -322,12 +321,12 @@ namespace FarmSimulator.Editor
 
             for (int index = 0; index < ItemNames.Length; index++)
             {
-                float x = -7.6f + (index * 1.7f);
+                float x = -6.1f + (index * 1.5f);
                 CreateSprite(
                     ItemNames[index],
                     assets[ItemNames[index]],
                     items,
-                    new Vector2(x, 3.55f),
+                    new Vector2(x, 3.25f),
                     TopDownSortingLayers.Actors,
                     100);
 
@@ -348,7 +347,7 @@ namespace FarmSimulator.Editor
             Transform group = CreateGroup(
                 CropGroupName,
                 parent);
-            float[] rowY = { 0.45f, -1.25f, -2.95f };
+            float[] rowY = { 0.55f, -0.95f, -2.45f };
 
             for (int cropIndex = 0;
                  cropIndex < CropNames.Length;
@@ -361,7 +360,7 @@ namespace FarmSimulator.Editor
 
                 for (int stage = 0; stage < 6; stage++)
                 {
-                    float x = -8f + (stage * 1.35f);
+                    float x = -6.2f + (stage * 1.05f);
                     string spriteName =
                         $"cozy_{cropName}_stage_{stage}";
 
@@ -389,12 +388,12 @@ namespace FarmSimulator.Editor
             Transform parent,
             ShowcaseAssets assets)
         {
-            CreateTiledSprite(
+            CreateTilePatch(
                 "Hero Scale Reference",
                 assets["cozy_dirt"],
                 parent,
-                new Vector2(3f, -3.15f),
-                new Vector2(3f, 2.5f),
+                new Vector2(5.25f, -2.75f),
+                new Vector2Int(3, 2),
                 TopDownSortingLayers.World,
                 0);
 
@@ -412,7 +411,7 @@ namespace FarmSimulator.Editor
             hero.name = HeroObjectName;
             hero.transform.SetParent(parent, worldPositionStays: true);
             hero.transform.position =
-                new Vector3(3f, -3.65f, 0f);
+                new Vector3(5.25f, -3.15f, 0f);
         }
 
         private static Transform CreateGroup(
@@ -447,25 +446,37 @@ namespace FarmSimulator.Editor
             return renderer;
         }
 
-        private static SpriteRenderer CreateTiledSprite(
+        private static Transform CreateTilePatch(
             string objectName,
             Sprite sprite,
             Transform parent,
-            Vector2 position,
-            Vector2 size,
+            Vector2 center,
+            Vector2Int tileCount,
             string sortingLayer,
             int sortingOrder)
         {
-            SpriteRenderer renderer = CreateSprite(
-                objectName,
-                sprite,
-                parent,
-                position,
-                sortingLayer,
-                sortingOrder);
-            renderer.drawMode = SpriteDrawMode.Tiled;
-            renderer.size = size;
-            return renderer;
+            Transform patch = CreateGroup(objectName, parent);
+            patch.localPosition =
+                new Vector3(center.x, center.y, 0f);
+
+            float startX = -(tileCount.x - 1) * 0.5f;
+            float startY = -(tileCount.y - 1) * 0.5f;
+
+            for (int y = 0; y < tileCount.y; y++)
+            {
+                for (int x = 0; x < tileCount.x; x++)
+                {
+                    CreateSprite(
+                        $"{objectName} Tile {x}-{y}",
+                        sprite,
+                        patch,
+                        new Vector2(startX + x, startY + y),
+                        sortingLayer,
+                        sortingOrder);
+                }
+            }
+
+            return patch;
         }
 
         private sealed class ShowcaseAssets
