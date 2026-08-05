@@ -85,7 +85,7 @@ Bugs verificados: `BUG-0001` a `BUG-0004`.
 
 ---
 
-## 4. Fase 5 — Prefab reutilizable y profundidad visual: IMPLEMENTADA REMOTAMENTE, BLOQUEADA EN COMPILACIÓN LOCAL
+## 4. Fase 5 — Prefab reutilizable y profundidad visual: IMPLEMENTADA, CORRECCIÓN DE COMPILACIÓN PENDIENTE DE VALIDACIÓN
 
 Rama: `feature/player-prefab-depth-sorting`.
 
@@ -93,6 +93,7 @@ Commits funcionales:
 
 - `9e09fdb` — implementación inicial del prefab y orden visual.
 - `489851d` — endurece el ciclo de generación del prefab y sorting layers.
+- `a9a3fe2` — corrige la colisión de namespace en `PlayerSpriteAnimator`.
 
 ### Implementación
 
@@ -126,7 +127,7 @@ PlayMode, una prueba nueva:
 
 - `Lab` instancia el prefab reutilizable y cambia el orden visual al modificar la Y del jugador.
 
-Resultado total previsto después de corregir la compilación:
+Resultado total previsto:
 
 - EditMode: **36/36**.
 - PlayMode: **6/6**.
@@ -138,6 +139,7 @@ Resultado total previsto después de corregir la compilación:
 - `Assets/_Project/Scripts/Editor/PlayerPrefabAssetPipeline.cs`
 - `Assets/_Project/Scripts/Presentation/Player/PlayerPrefabAssetCatalog.cs`
 - `Assets/_Project/Scripts/Presentation/Player/PlayerPrefabIdentity.cs`
+- `Assets/_Project/Scripts/Presentation/Player/PlayerSpriteAnimator.cs`
 - `Assets/_Project/Scripts/Presentation/Player/TopDownSortingLayers.cs`
 - `Assets/_Project/Scripts/Presentation/Player/TopDownSpriteSorting.cs`
 - `Assets/_Project/Tests/EditMode/PlayerPrefabAssetPipelineTests.cs`
@@ -152,17 +154,27 @@ Resultado total previsto después de corregir la compilación:
 
 No hacer commit local antes de revisar la lista completa de cambios.
 
-### Validación local observada — 2026-08-05
+### BUG-0005 — error de compilación al abrir la Fase 5
 
-Al abrir la rama, Unity mostró que el proyecto contiene errores de compilación y ofreció entrar a **Safe Mode**. La Fase 5 todavía no puede validarse.
+Evidencia local de Arturo — 2026-08-05:
 
-Se registró:
+```text
+Assets/_Project/Scripts/Presentation/Player/PlayerSpriteAnimator.cs(51,17):
+error CS0234: The type or namespace name 'isPlaying' does not exist in the namespace 'FarmSimulator.Application'
+```
 
-- `BUG-0005` — bloqueo de compilación al abrir la Fase 5.
-- Estado: **INVESTIGANDO**.
-- Severidad: **S0 — Bloqueante**.
+Causa raíz confirmada:
 
-Todavía no se conoce la causa raíz. Se requiere leer los primeros errores completos de la consola, con archivo y línea, antes de modificar código.
+- `Application.isPlaying` se resolvía como el namespace hermano `FarmSimulator.Application`.
+- La intención era consultar `UnityEngine.Application.isPlaying`.
+
+Corrección:
+
+```csharp
+global::UnityEngine.Application.isPlaying
+```
+
+Estado de `BUG-0005`: **CORREGIDO**, pendiente de validación local. La corrección es acotada y no modifica movimiento, input, animación ni sorting.
 
 ---
 
@@ -181,26 +193,25 @@ README.md en main
   → “Próximo paso exacto”
 ```
 
-Reglas:
-
-- `CONTINUIDAD_GPT.md` es el puntero breve y siempre vive en `main`.
-- Esta bitácora conserva el detalle técnico y vive actualizada en la rama activa.
-- Cuando cambie la rama activa, la fase, el estado de validación o el commit remoto de referencia, debe actualizarse `CONTINUIDAD_GPT.md`.
-- Los cambios locales sin commit/push siguen siendo el único estado que GitHub no puede proteger; deben comunicarse antes de cambiar de chat.
+Los cambios exclusivamente locales siguen siendo el único estado que GitHub no puede proteger; deben comunicarse antes de cambiar de chat.
 
 ---
 
 ## 6. Próximo paso exacto
 
-1. En el diálogo de Unity pulsar **Enter Safe Mode**.
-2. Esperar a que abra el Editor.
-3. Abrir la pestaña **Console**.
-4. No borrar todavía los mensajes.
-5. Capturar los primeros errores completos, incluyendo código, archivo, número de línea y mensaje.
-6. Enviar una captura donde se vean todos los errores distintos; si el texto se corta, seleccionar el primer error para mostrar su detalle inferior.
-7. No pulsar **Ignore**, no ejecutar Play, no correr pruebas y no hacer cambios locales todavía.
-8. Con la evidencia, identificar la causa raíz de `BUG-0005` y corregirla de forma acotada.
-9. Después sincronizar y repetir compilación, EditMode 36/36, PlayMode 6/6 y validación visual.
+1. Cerrar Unity mientras permanece en Safe Mode.
+2. En GitHub Desktop, manteniéndose en `feature/player-prefab-depth-sorting`, ejecutar **Fetch origin** y **Pull origin**.
+3. Confirmar que se recibió el commit funcional `a9a3fe2` y los commits documentales posteriores.
+4. Abrir Unity nuevamente.
+5. Esperar a que compile por completo; no pulsar Play durante la importación.
+6. Si Unity abre aún en Safe Mode pero la consola queda sin errores, pulsar **Exit Safe Mode**.
+7. Limpiar la consola y confirmar **0 errores y 0 advertencias**.
+8. Ejecutar EditMode: esperado **36/36**.
+9. Ejecutar PlayMode: esperado **6/6**.
+10. Ejecutar `Bootstrap → Lab` y comprobar movimiento/animación con teclado y DualSense.
+11. Mover al personaje por encima y por debajo de referencias visuales para evaluar el orden de profundidad.
+12. Enviar capturas de Test Runner, consola, Game y lista completa de cambios locales en GitHub Desktop.
+13. No hacer commit local todavía.
 
 ---
 
