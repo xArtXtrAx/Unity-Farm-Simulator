@@ -295,22 +295,20 @@ El objetivo no es producir contenido abundante, sino validar el flujo completo U
 - [x] Creación de `.gitattributes` y endurecimiento de `.gitignore`.
 - [x] Retiro de `.vscode/launch.json` y `.vscode/settings.json` del repositorio.
 - [x] Creación de `Assets/_Project` y assemblies iniciales de runtime, editor y pruebas.
+- [x] Validación local de la cimentación arquitectónica: Unity importó las assemblies con consola en `0` errores, `0` advertencias y `0` mensajes.
 
 ### En curso
 
-- [ ] Validación local en Unity del commit de arquitectura `3aa30f0` después de sincronizar la rama.
 - [ ] Revisión y depuración de paquetes instalados por la plantilla.
 - [ ] Creación de las escenas `Bootstrap` y `Lab`.
 - [ ] Confirmación de los módulos instalados junto al editor.
 
 ### Próximo paso inmediato
 
-1. Arturo cierra Unity si estuviera abierto.
-2. En GitHub Desktop, ejecutar **Fetch origin** y **Pull origin** sobre `chore/unity-project-foundation`.
-3. Abrir el proyecto con Unity `6000.3.21f1` y esperar la importación/compilación de las assemblies.
-4. Revisar la consola y confirmar que permanece en cero errores; reportar cualquier mensaje antes de modificar paquetes.
-5. Después de la validación local, revisar `Packages/manifest.json` y retirar únicamente paquetes de plantilla que no aporten valor al proyecto.
-6. Crear `Bootstrap` y `Lab` para completar la Fase 1.
+1. Revisar `Packages/manifest.json` y retirar únicamente paquetes de plantilla que no aporten valor al proyecto.
+2. Sincronizar y validar localmente cualquier cambio de paquetes antes de continuar.
+3. Crear las escenas `Bootstrap` y `Lab` y registrarlas en Build Profiles.
+4. Añadir una comprobación mínima de arranque para cerrar la Fase 1.
 
 ---
 
@@ -378,7 +376,15 @@ El objetivo no es producir contenido abundante, sino validar el flujo completo U
 - Se añadieron assemblies para Domain, Application, Infrastructure, Presentation, Editor, EditMode y PlayMode, junto con sus archivos `.meta` y GUID estables.
 - No se modificaron aún `Packages/manifest.json`, escenas ni contenido funcional.
 - Validación remota realizada: árbol Git creado y referencia de la rama actualizada correctamente.
-- Validación pendiente: Unity local debe importar las assemblies y confirmar que no hay errores de compilación. No se afirma que las pruebas ni el Editor estén en verde hasta recibir esa comprobación de Arturo.
+
+### 2026-08-05 — Cimentación arquitectónica validada localmente
+
+- Arturo sincronizó la rama y abrió el proyecto con Unity `6000.3.21f1`.
+- Unity terminó la importación y compilación de las assemblies nuevas.
+- La captura de la consola confirmó `0` errores, `0` advertencias y `0` mensajes.
+- La validación pendiente registrada para `3aa30f0` queda cerrada satisfactoriamente.
+- No se detectaron bugs y no fue necesario añadir entradas a `BUGS.MD`.
+- El siguiente bloque será la auditoría de paquetes de plantilla, seguida por la creación de `Bootstrap` y `Lab`.
 
 ---
 
