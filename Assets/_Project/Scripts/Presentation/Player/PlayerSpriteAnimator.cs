@@ -10,7 +10,10 @@ namespace FarmSimulator.Presentation.Player
         private const string BaseLayerPrefix = "Base Layer.";
 
         private TopDownPlayerMotor motor;
+
+        [SerializeField]
         private Animator animator;
+
         private int currentStateHash;
 
         public PlayerAnimationState CurrentState { get; private set; } =
@@ -19,9 +22,20 @@ namespace FarmSimulator.Presentation.Player
         public string CurrentStateName =>
             PlayerAnimationModel.StateName(CurrentState);
 
+        public Animator Animator => animator;
+
         private void Awake()
         {
             motor = GetComponent<TopDownPlayerMotor>();
+            if (animator == null)
+            {
+                animator = GetComponentInChildren<Animator>(includeInactive: true);
+            }
+        }
+
+        private void Start()
+        {
+            Refresh();
         }
 
         private void LateUpdate()
@@ -38,6 +52,16 @@ namespace FarmSimulator.Presentation.Player
 
         public void Refresh()
         {
+            if (motor == null)
+            {
+                motor = GetComponent<TopDownPlayerMotor>();
+            }
+
+            if (animator == null)
+            {
+                animator = GetComponentInChildren<Animator>(includeInactive: true);
+            }
+
             if (motor == null || animator == null ||
                 animator.runtimeAnimatorController == null)
             {

@@ -4,6 +4,7 @@
   "references": [
     "FarmSimulator.Domain",
     "FarmSimulator.Application",
+    "FarmSimulator.Presentation",
     "FarmSimulator.Editor"
   ],
   "includePlatforms": [
