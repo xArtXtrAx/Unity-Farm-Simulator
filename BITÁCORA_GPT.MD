@@ -22,6 +22,7 @@ Documento maestro de continuidad del proyecto. Su objetivo es conservar el conte
 - **Inicio formal de la bitácora:** 5 de agosto de 2026
 - **Proyecto fuente:** `xArtXtrAx/farming-game-A`
 - **Línea base de migración:** `main` en `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
+- **Rama activa de cimentación:** `chore/unity-project-foundation`
 
 ---
 
@@ -75,10 +76,10 @@ Desarrollar un simulador de granja 2.5D con una arquitectura limpia, escalable y
 
 ### 3.4 Control de versiones en Unity
 
-Al crear el proyecto se configurará:
+Configuración confirmada:
 
-- `Version Control Mode`: **Visible Meta Files**
-- `Asset Serialization`: **Force Text**
+- `Version Control Mode`: **Visible Meta Files**.
+- `Asset Serialization`: **Force Text**.
 - Incluir en Git:
   - `Assets/`
   - `Packages/`
@@ -90,16 +91,28 @@ Al crear el proyecto se configurará:
   - `Logs/`
   - `Build/` y `Builds/`
   - `UserSettings/`
+  - `.vscode/`
+  - soluciones y proyectos generados por el IDE, incluidos `.sln`, `.slnx` y `.csproj`.
+- Los archivos `.meta` deben conservarse siempre porque contienen los GUID que mantienen referencias entre assets.
+- El repositorio contiene `.gitattributes` para normalizar a LF los archivos de texto y YAML de Unity sin modificar formatos binarios.
 - Evaluar Git LFS únicamente para archivos binarios pesados que realmente lo necesiten.
-- El repositorio incluye un `.gitignore` inicial específico para Unity desde el commit `04f6c91`.
 
-### 3.5 Arquitectura prevista
+### 3.5 Arquitectura inicial
 
 - Las reglas críticas vivirán en C# puro, preferentemente sin dependencia de `UnityEngine`.
 - Los `ScriptableObject` contendrán definiciones de objetos, cultivos y contenido, no el progreso mutable de la partida.
 - El estado de partida se guardará mediante DTO e identificadores de texto estables.
 - `MonoBehaviour`, escenas, prefabs, animación y UI serán la capa de presentación.
 - Las pruebas Edit Mode protegerán reglas; las Play Mode protegerán integración con Unity.
+- Se definieron las assemblies iniciales:
+  - `FarmSimulator.Domain`: reglas puras, sin `UnityEngine`.
+  - `FarmSimulator.Application`: casos de uso; depende solo de Domain y tampoco usa `UnityEngine`.
+  - `FarmSimulator.Infrastructure`: persistencia y adaptadores; depende de Domain y Application.
+  - `FarmSimulator.Presentation`: componentes, escenas, UI e input; depende de Domain y Application.
+  - `FarmSimulator.Editor`: herramientas exclusivas del Editor; puede consultar las cuatro capas anteriores.
+  - `FarmSimulator.Tests.EditMode`: pruebas de Domain y Application.
+  - `FarmSimulator.Tests.PlayMode`: pruebas de integración de todas las capas de runtime.
+- No colocar código nuevo en la assembly global `Assembly-CSharp`.
 
 ### 3.6 Bitácora transaccional obligatoria
 
@@ -203,6 +216,8 @@ Assets/_Project/
     └── PlayMode/
 ```
 
+Actualmente ya existen físicamente `Scripts` y `Tests` con sus assemblies. Las carpetas de arte, audio, datos, prefabs y escenas se crearán cuando exista su primer contenido real para evitar marcadores vacíos innecesarios.
+
 GPT podrá preparar scripts de importación, slicing, convenciones de nombres, animaciones, prefabs y ScriptableObjects. Arturo realizará la validación visual final dentro de Unity.
 
 Todo recurso externo debe registrar su licencia y confirmar que permite el uso previsto, especialmente si el juego se comercializa.
@@ -273,21 +288,29 @@ El objetivo no es producir contenido abundante, sino validar el flujo completo U
 - [x] Materialización del proyecto Universal 3D / URP dentro de la raíz clonada.
 - [x] Apertura del proyecto desde `D:\Git\Unity-Farm-Simulator` con Unity `6000.3.21f1`.
 - [x] Finalización de la importación inicial sin errores visibles: consola en `0` errores, `0` advertencias y `0` mensajes.
+- [x] Configuración de `Visible Meta Files` y `Force Text`.
+- [x] Eliminación de los recursos tutoriales `TutorialInfo` y `Readme` de la plantilla.
+- [x] Creación y publicación de la rama `chore/unity-project-foundation`.
+- [x] Commit inicial del proyecto Unity: `ecf6eb3` — `chore: initialize Unity 6.3 URP project`.
+- [x] Creación de `.gitattributes` y endurecimiento de `.gitignore`.
+- [x] Retiro de `.vscode/launch.json` y `.vscode/settings.json` del repositorio.
+- [x] Creación de `Assets/_Project` y assemblies iniciales de runtime, editor y pruebas.
 
 ### En curso
 
-- [ ] Configuración de `Visible Meta Files` y `Force Text`.
-- [ ] Limpieza de recursos tutoriales de la plantilla URP.
-- [ ] Revisión de paquetes, estructura `_Project` y assemblies iniciales.
+- [ ] Validación local en Unity del commit de arquitectura `3aa30f0` después de sincronizar la rama.
+- [ ] Revisión y depuración de paquetes instalados por la plantilla.
+- [ ] Creación de las escenas `Bootstrap` y `Lab`.
 - [ ] Confirmación de los módulos instalados junto al editor.
 
 ### Próximo paso inmediato
 
-1. Crear en GitHub Desktop la rama `chore/unity-project-foundation`, conservando en ella los cambios locales generados por Unity.
-2. Configurar `Version Control Mode: Visible Meta Files` y `Asset Serialization Mode: Force Text`.
-3. Retirar los recursos tutoriales de la plantilla mediante `Remove Readme Assets`.
-4. Revisar los cambios locales en GitHub Desktop sin hacer commit todavía.
-5. Preparar la estructura inicial, paquetes y assemblies para completar la **Fase 1**.
+1. Arturo cierra Unity si estuviera abierto.
+2. En GitHub Desktop, ejecutar **Fetch origin** y **Pull origin** sobre `chore/unity-project-foundation`.
+3. Abrir el proyecto con Unity `6000.3.21f1` y esperar la importación/compilación de las assemblies.
+4. Revisar la consola y confirmar que permanece en cero errores; reportar cualquier mensaje antes de modificar paquetes.
+5. Después de la validación local, revisar `Packages/manifest.json` y retirar únicamente paquetes de plantilla que no aporten valor al proyecto.
+6. Crear `Bootstrap` y `Lab` para completar la Fase 1.
 
 ---
 
@@ -334,9 +357,28 @@ El objetivo no es producir contenido abundante, sino validar el flujo completo U
 - Unity Hub abrió la raíz correcta con Unity 6.3 LTS `6000.3.21f1`.
 - URP cargó correctamente y terminó la importación inicial.
 - La consola fue revisada visualmente y mostró `0` errores, `0` advertencias y `0` mensajes.
-- Esta validación confirma que la base generada por la plantilla puede continuar hacia la configuración formal de la Fase 1.
 - No se ejecutaron todavía pruebas automatizadas ni build de Windows; aún no existe implementación funcional del juego.
-- Próxima acción requerida de Arturo: crear la rama local `chore/unity-project-foundation` desde GitHub Desktop antes de seguir modificando configuraciones y assets.
+
+### 2026-08-05 — Proyecto base publicado
+
+- Arturo creó y publicó `chore/unity-project-foundation`.
+- Se verificó en GitHub el commit `ecf6eb3477489b0308b908624347b966f3578e95` con el mensaje `chore: initialize Unity 6.3 URP project`.
+- La rama quedó un commit por delante de `main` y sin divergencia previa.
+- `ProjectVersion.txt` fija el editor en `6000.3.21f1`.
+- `EditorSettings.asset` contiene `m_SerializationMode: 2`, correspondiente a Force Text.
+- `VersionControlSettings.asset` contiene `m_Mode: Visible Meta Files`.
+- La plantilla conserva URP, Input System y Unity Test Framework como bases útiles.
+
+### 2026-08-05 — Cimentación arquitectónica creada por GPT
+
+- En la rama `chore/unity-project-foundation`, GPT creó el commit `3aa30f03089921b11e63010d8e6f576e4eb8646e` con el mensaje `chore: add Unity project architecture foundation`.
+- Se añadió `.gitattributes` para normalizar archivos de texto y proteger binarios.
+- `.gitignore` pasó a excluir `.vscode/` y archivos `.slnx`; se eliminaron los dos archivos locales de VS Code que habían entrado en el primer commit.
+- Se creó `Assets/_Project/README.md` con las reglas de ubicación y dependencia del código.
+- Se añadieron assemblies para Domain, Application, Infrastructure, Presentation, Editor, EditMode y PlayMode, junto con sus archivos `.meta` y GUID estables.
+- No se modificaron aún `Packages/manifest.json`, escenas ni contenido funcional.
+- Validación remota realizada: árbol Git creado y referencia de la rama actualizada correctamente.
+- Validación pendiente: Unity local debe importar las assemblies y confirmar que no hay errores de compilación. No se afirma que las pruebas ni el Editor estén en verde hasta recibir esa comprobación de Arturo.
 
 ---
 
@@ -384,5 +426,4 @@ La bitácora debe poder indicar por sí misma cuál fue la última implementaci�
 - Escala visual, tamaño de tiles y Pixels Per Unit.
 - Dirección artística definitiva.
 - Primer pack de sprites o recursos de prueba.
-- Convenciones definitivas de namespaces y assemblies.
 - Estrategia final de CI para Edit Mode, Play Mode y build de Windows.
