@@ -16,6 +16,14 @@ namespace FarmSimulator.Presentation.Player
         private TopDownPlayerMotor motor;
         private Transform marker;
 
+        public static float HorizontalVisualExtent =>
+            SpatialModel.ReferenceCharacterWidth * 0.5f + MarkerSize + MarkerGap;
+
+        public static float TopVisualExtent =>
+            SpatialModel.ReferenceCharacterHeight + MarkerSize + MarkerGap;
+
+        public static float BottomVisualExtent => MarkerSize + MarkerGap;
+
         private void Awake()
         {
             motor = GetComponent<TopDownPlayerMotor>();
