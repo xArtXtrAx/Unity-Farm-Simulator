@@ -11,7 +11,7 @@ Este archivo complementa `BITÁCORA_GPT.MD`: la bitácora conserva el contexto g
 - **ABIERTO:** confirmado y pendiente de corrección.
 - **INVESTIGANDO:** se está buscando la causa raíz.
 - **BLOQUEADO:** no puede continuar hasta disponer de información, recurso o dependencia.
-- **CORREGIDO:** existe una solución implementada.
+- **CORREGIDO:** existe una solución implementada, pendiente de validación local.
 - **VERIFICADO:** la solución fue probada satisfactoriamente.
 - **NO REPRODUCIBLE:** no pudo reproducirse con la información disponible.
 - **DESCARTADO:** no es un bug, es comportamiento esperado o no se corregirá por una razón documentada.
@@ -74,13 +74,72 @@ Qué debe comprobarse en futuras versiones para evitar que reaparezca.
 
 ## 4. Bugs activos
 
-No hay bugs registrados todavía. El proyecto Unity aún no ha sido creado o sincronizado con este repositorio.
+## BUG-0001 — Conflicto entre BoxCollider 3D y BoxCollider2D en el suelo de Lab
+
+- **Estado:** CORREGIDO
+- **Severidad:** S3 — Media
+- **Detectado:** 2026-08-05
+- **Verificado/cerrado:** —
+- **Versión de Unity:** `6000.3.21f1`
+- **Escena o sistema:** `Lab` / calibración espacial cenital
+- **Rama/commit afectado:** `feature/lab-spatial-calibration` en `5b3dbda`
+- **Corrección:** `cdb6cdd`
+- **Prueba de regresión:** `c8342a2`
+- **Reportado por:** Arturo y prueba PlayMode
+
+### Descripción
+
+La prueba `LabBuildsFrontFacingOrthographicXYCalibration` fallaba porque el objeto `Calibration Ground` no lograba recibir su `BoxCollider2D`. La consola registraba mensajes de conflicto entre componentes de colisión 3D y 2D.
+
+### Pasos para reproducir
+
+1. Sincronizar la rama en el estado `5b3dbda`.
+2. Abrir Unity y ejecutar `Test Runner → PlayMode → Run All`.
+3. Observar resultado **1/2** y el mensaje de conflicto en la consola.
+
+### Resultado esperado
+
+El suelo lógico debe contener un `BoxCollider2D`, no debe conservar un `Collider` 3D y las dos pruebas PlayMode deben aprobarse.
+
+### Evidencia
+
+Mensaje observado:
+
+```text
+Can't add component 'BoxCollider2D' to Calibration Ground because it conflicts with the existing 'BoxCollider'-derived component!
+```
+
+EditMode terminó correctamente en **3/3**; PlayMode terminó en **1/2**.
+
+### Causa raíz
+
+`GameObject.CreatePrimitive(PrimitiveType.Cube)` agrega automáticamente un `BoxCollider` 3D. El código llamaba `Destroy` sobre ese collider, pero `Destroy` se procesa al final del frame. Antes de que desapareciera, `BuildGround` intentaba añadir un `BoxCollider2D` al mismo objeto, y Unity rechazaba esa combinación.
+
+### Solución aplicada
+
+- `Calibration Ground` ahora es un `GameObject` lógico sin primitiva ni collider 3D.
+- Ese objeto recibe directamente el `BoxCollider2D` y conserva las dimensiones del mapa.
+- La representación verde se crea como un objeto visual separado llamado `Calibration Ground Visual`.
+- Los colliders 3D automáticos de las primitivas visuales continúan eliminándose.
+- La prueba PlayMode verifica además que las referencias visuales generadas no conserven ningún `Collider` 3D.
+
+### Verificación
+
+Pendiente de validación local. Resultado esperado después de sincronizar:
+
+- EditMode: **3/3**.
+- PlayMode: **2/2**.
+- Consola: sin el mensaje de conflicto.
+
+### Notas de regresión
+
+No añadir colliders 2D a un objeto creado mediante `GameObject.CreatePrimitive` durante el mismo frame. Separar siempre la representación visual 3D del objeto lógico que contiene componentes Physics 2D, o usar una representación 2D nativa.
 
 ---
 
 ## 5. Bugs corregidos y verificados
 
-No hay entradas todavía.
+No hay bugs verificados todavía.
 
 ---
 
@@ -100,6 +159,5 @@ No hay entradas todavía.
 
 ### 2026-08-05
 
-- Se creó el registro de bugs.
-- Se definieron estados, niveles de severidad y plantilla estándar.
-- Estado inicial: sin bugs, porque todavía no existe implementación Unity dentro del repositorio.
+- Se creó el registro de bugs y se definieron estados y severidades.
+- Se añadió `BUG-0001` por el conflicto de colliders detectado en la calibración cenital.
