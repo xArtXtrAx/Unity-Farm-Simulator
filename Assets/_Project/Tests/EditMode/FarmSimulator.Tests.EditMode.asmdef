@@ -3,7 +3,8 @@
   "rootNamespace": "FarmSimulator.Tests.EditMode",
   "references": [
     "FarmSimulator.Domain",
-    "FarmSimulator.Application"
+    "FarmSimulator.Application",
+    "FarmSimulator.Editor"
   ],
   "includePlatforms": [
     "Editor"
