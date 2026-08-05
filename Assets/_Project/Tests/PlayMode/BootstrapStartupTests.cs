@@ -70,13 +70,22 @@ namespace FarmSimulator.Tests.PlayMode
             GameObject ground = GameObject.Find(LabSpatialCalibration.GroundObjectName);
             Assert.That(ground, Is.Not.Null);
             Assert.That(ground.GetComponent<BoxCollider2D>(), Is.Not.Null);
-            Assert.That(ground.GetComponent<BoxCollider>(), Is.Null);
+            Assert.That(ground.GetComponent<Collider>(), Is.Null);
             Assert.That(
                 ground.transform.localScale.x,
                 Is.EqualTo(SpatialModel.GridColumns * SpatialModel.GridCellSize).Within(0.001f));
             Assert.That(
                 ground.transform.localScale.y,
                 Is.EqualTo(SpatialModel.GridRows * SpatialModel.GridCellSize).Within(0.001f));
+
+            GameObject groundVisual = GameObject.Find(
+                LabSpatialCalibration.GroundVisualObjectName);
+            Assert.That(groundVisual, Is.Not.Null);
+
+            Assert.That(
+                calibration.GetComponentsInChildren<Collider>(includeInactive: true),
+                Is.Empty,
+                "Generated calibration visuals must not retain 3D colliders.");
 
             GameObject spriteProxy = GameObject.Find(LabSpatialCalibration.SpriteProxyObjectName);
             Assert.That(spriteProxy, Is.Not.Null);
