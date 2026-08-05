@@ -18,7 +18,7 @@ Documento maestro de continuidad. Debe permitir retomar el proyecto en un chat n
 - **Plataforma inicial:** Windows PC
 - **Control prioritario:** DualSense, además de teclado y mouse
 - **Ruta local de Arturo:** `D:\Git\Unity-Farm-Simulator`
-- **Rama de cimentación:** `chore/unity-project-foundation`
+- **Rama de cimentación concluida:** `chore/unity-project-foundation`
 - **Proyecto fuente de migración:** `xArtXtrAx/farming-game-A`
 - **Commit fuente congelado:** `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
 - **Identidad definitiva de Unity:**
@@ -120,44 +120,43 @@ La primera versión jugable será pequeña y deberá incluir:
 
 ## 6. Estado actual
 
-### Completado y validado localmente
+### Fase 1 — Cimentación del proyecto: COMPLETADA Y VALIDADA
 
 - [x] Proyecto Unity 6.3 LTS Universal 3D / URP creado en el repositorio.
-- [x] Importación inicial con consola limpia.
 - [x] `Visible Meta Files`, `Force Text`, `.gitignore` y `.gitattributes` configurados.
 - [x] Recursos tutoriales eliminados.
 - [x] Assemblies Domain, Application, Infrastructure, Presentation, Editor, EditMode y PlayMode creadas.
-- [x] Assemblies validadas con `0` errores, `0` advertencias y `0` mensajes.
-- [x] `Bootstrap` y `Lab` creadas.
-- [x] `Bootstrap` registrada como escena 0 y `Lab` como escena 1.
+- [x] `Bootstrap` y `Lab` creadas y registradas en Build Settings.
 - [x] Salto automático `Bootstrap → Lab` implementado.
 - [x] Retirados Unity Version Control, Rider, Multiplayer Center y Visual Scripting.
-- [x] Manifest resuelto localmente por Unity.
-- [x] `Packages/packages-lock.json` regenerado y versionado en `214e0fc`.
-- [x] `ProjectSettings/SceneTemplateSettings.json` generado y versionado.
-- [x] Prueba EditMode: **1/1 aprobada**.
-- [x] Prueba PlayMode: **1/1 aprobada**.
-- [x] Consola posterior a pruebas: **0 errores y 0 advertencias**.
-- [x] Commit local y documentación remota reconciliados mediante merge `fad8692`.
+- [x] `Packages/packages-lock.json` regenerado por Unity y versionado.
+- [x] `ProjectSettings/SceneTemplateSettings.json` versionado.
+- [x] Identidad definitiva aplicada y protegida mediante configurador y prueba automática.
+- [x] EditMode: **2/2 pruebas aprobadas**.
+- [x] PlayMode: **1/1 prueba aprobada**.
+- [x] Consola final: **0 errores y 0 advertencias**.
+- [x] Ruta de resultados confirmada bajo `jarturoga/Unity Farm Simulator`.
+- [x] `ProjectSettings/ProjectSettings.asset` versionado en `bd17f89`.
+- [x] No se detectaron bugs que requirieran entrada en `BUGS.MD`.
 
-### Implementado remotamente; pendiente de validación local
+### Estado de integración
 
-- [x] `ProjectIdentity.cs` centraliza Company Name, Product Name e identificador Standalone.
-- [x] `ProjectIdentityConfigurator.cs` aplica automáticamente esa identidad al abrir/importar el proyecto.
-- [x] Menú manual añadido: `Tools → Farm Simulator → Validate Project Identity`.
-- [x] Segunda prueba EditMode añadida para verificar los tres valores.
-- [ ] Unity debe compilar el commit `ba6b62f` localmente.
-- [ ] Al abrir el proyecto, `ProjectSettings/ProjectSettings.asset` debe actualizarse automáticamente.
-- [ ] EditMode debe mostrar **2/2 pruebas aprobadas**.
-- [ ] PlayMode debe conservar **1/1 prueba aprobada**.
-- [ ] La consola debe permanecer sin errores ni advertencias.
-- [ ] Los cambios locales de `ProjectSettings.asset` deben versionarse antes de fusionar.
+- [x] Rama `chore/unity-project-foundation` lista para integrarse en `main`.
+- [ ] Abrir y fusionar el pull request de cimentación.
+- [ ] Sincronizar `main` localmente después de la fusión.
 
-### Después de cerrar la Fase 1
+### Próxima fase
 
-- [ ] Definir modelo espacial 2.5D, cámara y escala.
-- [ ] Crear calibración visual de `Lab`.
-- [ ] Implementar movimiento con teclado y DualSense.
+**Fase 2 — Calibración visual, modelo espacial, cámara y movimiento base.**
+
+Objetivos inmediatos:
+
+- decidir mundo XZ con física 3D o XY con física 2D;
+- decidir cámara ortográfica o perspectiva controlada;
+- definir escala, resolución base y relación de aspecto;
+- preparar `Lab` con suelo y referencias visuales;
+- implementar movimiento con teclado y DualSense;
+- validar zona muerta, velocidad, cámara y sensación de control.
 
 ---
 
@@ -193,35 +192,26 @@ La primera versión jugable será pequeña y deberá incluir:
 ### 2026-08-05 — Escenas, arranque y paquetes
 
 - Commit `d46b08c`: `Bootstrap`, `Lab`, arranque automático y pruebas.
-- Commit `8dc4676`: registro documental del bloque.
-- EditMode y PlayMode fueron ejecutados y aprobados.
 - Commit `214e0fc`: lock de paquetes y configuración de plantillas resueltos localmente.
 - Merge `fad8692`: reconciliación del commit local con la documentación remota.
 
-### 2026-08-05 — Identidad definitiva automatizada
+### 2026-08-05 — Identidad definitiva
 
 - Commit `ba6b62f`: identidad centralizada y configurador automático del Editor.
-- Se evitó editar manualmente el YAML completo de `ProjectSettings.asset` para reducir riesgo de corrupción o pérdida de campos.
-- La identidad se aplicará mediante API nativa de Unity en la próxima apertura.
-- La prueba EditMode ahora debe descubrir dos pruebas: Build Settings e identidad.
-- Validación remota realizada: árbol, commit y referencia de rama actualizados correctamente.
-- Validación local pendiente; no afirmar que compila ni que la identidad quedó persistida hasta recibir la comprobación de Arturo.
-- No se añadió entrada en `BUGS.MD`, porque no se observó un fallo: los nombres temporales eran configuración heredada de la plantilla.
+- Commit `bd17f89`: persistencia final de `ProjectSettings.asset` con la identidad correcta.
+- EditMode terminó en **2/2**, PlayMode en **1/1** y la consola en **0 errores / 0 advertencias**.
+- La Fase 1 se considera cerrada con evidencia visual y archivos versionados.
 
 ---
 
 ## 9. Próximo paso exacto
 
-1. Cerrar Unity antes de sincronizar.
-2. En GitHub Desktop, sobre `chore/unity-project-foundation`, ejecutar **Fetch origin** y **Pull origin**.
-3. Abrir el proyecto con Unity `6000.3.21f1` y esperar compilación/importación.
-4. Revisar consola: debe mostrar `0` errores y `0` advertencias.
-5. Abrir `Window → General → Test Runner`.
-6. Ejecutar EditMode: resultado esperado **2/2**.
-7. Ejecutar PlayMode: resultado esperado **1/1**.
-8. Revisar GitHub Desktop. Se espera una modificación en `ProjectSettings/ProjectSettings.asset` con los nombres definitivos.
-9. No hacer commit todavía; enviar capturas de pruebas y cambios para revisión.
-10. Tras versionar `ProjectSettings.asset`, cerrar formalmente la Fase 1 y fusionar `chore/unity-project-foundation` en `main`.
+1. Abrir un pull request de `chore/unity-project-foundation` hacia `main`.
+2. Revisar el diff y fusionar sin borrar todavía la rama remota hasta confirmar sincronización local.
+3. En GitHub Desktop, cambiar a `main` y ejecutar **Fetch origin / Pull origin**.
+4. Abrir Unity desde `main` y confirmar una última vez que la consola permanezca limpia.
+5. Crear la siguiente rama: `feature/lab-spatial-calibration`.
+6. Documentar y decidir el modelo espacial 2.5D, cámara, escala y resolución antes de implementar movimiento.
 
 ---
 
