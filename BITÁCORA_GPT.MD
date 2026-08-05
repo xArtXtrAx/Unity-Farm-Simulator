@@ -18,23 +18,26 @@ Documento maestro de continuidad. Debe permitir retomar el proyecto sin depender
 - **Control prioritario:** DualSense, además de teclado y mouse
 - **Ruta local:** `D:\Git\Unity-Farm-Simulator`
 - **Rama estable:** `main`
-- **Rama activa siguiente:** `feature/player-prefab-depth-sorting`
+- **Rama activa:** `feature/player-prefab-depth-sorting`
 - **Proyecto fuente:** `xArtXtrAx/farming-game-A`
 - **Commit fuente congelado:** `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
 - **Identidad Unity:** `jarturoga` / `Unity Farm Simulator` / `com.jarturoga.unityfarmsimulator`
 
 ---
 
-## 2. Principios rectores
+## 2. Contrato técnico vigente
 
-- Migrar comportamientos, reglas, datos e identificadores; no traducir Phaser/TypeScript línea por línea.
-- `main` debe permanecer estable.
-- Arturo usa principalmente GitHub Desktop.
-- Todo código propio vive bajo `Assets/_Project` y fuera de `Assembly-CSharp`.
-- Reglas importantes permanecen fuera de `MonoBehaviour` cuando sea razonable.
-- Cada implementación o corrección de GPT actualiza esta bitácora en el mismo bloque.
+- Vista cenital y plano lógico XY.
+- Physics 2D.
+- Cámara ortográfica frontal.
+- Resolución lógica 960 × 540, 16:9.
+- 64 Pixels Per Unit.
+- Frame del jugador: 64 × 72 px.
+- Pivote cercano a los pies: X 0.5 / Y 0.12.
+- Teclado y DualSense.
+- Orden visual basado en la coordenada Y de los pies.
 
-Arquitectura vigente:
+Arquitectura:
 
 - `FarmSimulator.Domain`
 - `FarmSimulator.Application`
@@ -46,128 +49,162 @@ Arquitectura vigente:
 
 ---
 
-## 3. Dirección visual y contrato espacial
-
-- Vista cenital basada en sprites y Tilemaps 2D.
-- Plano lógico: **XY**.
-- Profundidad visual: **Z** y sorting order.
-- Cámara: **ortográfica frontal**.
-- Física: **Physics 2D**.
-- Resolución lógica: **960 × 540**, relación **16:9**.
-- Pixels Per Unit: **64**.
-- Celda: **64 × 64 px = 1 × 1 unidad**.
-- Campo visible: **15 × 8.4375 unidades**.
-- Tamaño ortográfico: **4.21875**.
-- Frame del personaje: **64 × 72 px = 1 × 1.125 unidades**.
-- Pivote del sprite: **X 0.5 / Y 0.12**, cerca de los pies.
-- Letterbox o pillarbox fuera de 16:9.
-- Se permiten partículas, luces, trayectorias y objetos 3D cuando aporten valor.
-
----
-
-## 4. Fases completadas e integradas
+## 3. Fases completadas e integradas
 
 ### Fase 1 — Cimentación
 
-Proyecto Unity/URP, assemblies, `Bootstrap`, `Lab`, transición automática e identidad. PR #1, merge `ece618c`.
+Proyecto Unity/URP, assemblies, `Bootstrap`, `Lab`, transición e identidad. PR #1.
 
 ### Fase 2 — Calibración visual y espacial
 
-Vista cenital XY, Physics 2D, 960 × 540, 64 PPU y cámara 16:9. Validación: EditMode **4/4**, PlayMode **2/2**, consola limpia. PR #2, merge `7ac3f91`.
+Vista cenital XY, Physics 2D, 960 × 540, 64 PPU y cámara 16:9. Validación: EditMode 4/4, PlayMode 2/2, consola limpia. PR #2.
 
 ### Fase 3 — Movimiento del jugador
 
-Physics 2D, WASD, flechas, stick izquierdo, D-pad, zona muerta radial, magnitud analógica, diagonales normalizadas, cuatro orientaciones, collider de pies y límites visuales. Validación: EditMode **11/11**, PlayMode **4/4**, consola limpia. PR #3, merge `32186f1`.
+WASD, flechas, stick, D-pad, zona muerta, diagonales, orientación, collider de pies y límites. Validación: EditMode 11/11, PlayMode 4/4, consola limpia. PR #3.
 
-### Fase 4 — Sprite y animación del jugador
+### Fase 4 — Sprite y animación
 
-Fuente congelada:
+Spritesheet congelado `src/assets/hero_hd.png`, 192 × 288 px, frames 64 × 72, idle y walk en cuatro direcciones a 8 FPS. PNG, ocho clips y Animator versionados.
 
-- `xArtXtrAx/farming-game-A`
-- commit `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
-- archivo `src/assets/hero_hd.png`
-- PNG **192 × 288 px**, 3 columnas × 4 filas
-- frames **64 × 72 px**
-- filas: abajo, izquierda, derecha, arriba
-- idle: frame central
-- caminata a 8 FPS: `[0,1,2,1]` por fila
+Validación local de Arturo:
 
-Implementado:
-
-- `PlayerAnimationModel` puro.
-- Idle y walk en cuatro direcciones.
-- `PlayerSpriteAnimator` conectado al motor validado.
-- `PlayerSpriteRuntimeInstaller` con `SpriteRenderer + Animator`.
-- Pipeline de Editor para importación Multiple Sprite, 64 PPU, Point, sin mipmaps ni compresión.
-- Validación de firma PNG y dimensiones.
-- Ocho clips `.anim` y `FarmerAnimator.controller` versionados.
-- El rectángulo rojo queda oculto; Rigidbody2D, collider, límites y controles no cambiaron.
-- El marcador amarillo continúa temporalmente como depuración.
-
-Validación local de Arturo — 2026-08-05:
-
-- EditMode: **27/27 aprobadas**.
-- PlayMode: **5/5 aprobadas**.
+- EditMode: **27/27**.
+- PlayMode: **5/5**.
 - Consola: **0 errores y 0 advertencias**.
-- Idle y caminata funcionan en las cuatro direcciones.
-- Teclado y DualSense siguen funcionando.
-- Pixel art nítido y pivote estable.
-- Sprite y marcador contenidos en los cuatro extremos.
+- Teclado y DualSense aprobados.
+- Sprite, animación, pivote y límites aprobados.
 
 Integración:
 
-- Commit de recursos locales: `d3c65b0` — `feat: add generated farmer animation assets`.
-- Cabeza final de rama: `365953d`.
 - PR #4: `Add animated farmer sprite and import pipeline`.
 - Merge en `main`: `d04a35934df167db1c6366ee59846c36a0228470`.
-- Registro posterior en `main`: este commit documental.
+- Registro de integración: `8ee1e35d689f7ea71a528da5d6f8fdec7ae45d42`.
 
-Bugs verificados: `BUG-0001`, `BUG-0002`, `BUG-0003`, `BUG-0004`.
-
----
-
-## 5. Próxima fase — Prefab reutilizable y profundidad visual
-
-Objetivo: dejar de depender de que `LabSpatialCalibration` y un instalador temporal construyan la representación del jugador en ejecución.
-
-Alcance previsto:
-
-1. Crear un **Player prefab** reutilizable con:
-   - `Rigidbody2D`;
-   - `CapsuleCollider2D` de pies;
-   - input unificado;
-   - motor de movimiento;
-   - `SpriteRenderer`;
-   - `Animator`;
-   - controlador de animación;
-   - marcador de depuración desactivable.
-2. Hacer que `Lab` instancie el prefab, sin recrear manualmente sus componentes.
-3. Establecer orden visual dinámico basado en la coordenada Y de los pies.
-4. Preparar sorting layers estables para suelo, objetos, actores, efectos y UI.
-5. Añadir pruebas de composición del prefab, spawn e intercambio de profundidad.
-6. Mantener intactos controles, velocidad, collider, animación y límites ya validados.
-
-Después de esta fase podrá comenzar el primer mapa real basado en Tilemap.
+Bugs verificados: `BUG-0001` a `BUG-0004`.
 
 ---
 
-## 6. Próximo paso exacto
+## 4. Fase 5 — Prefab reutilizable y profundidad visual: IMPLEMENTADA REMOTAMENTE, PENDIENTE DE VALIDACIÓN
+
+Rama: `feature/player-prefab-depth-sorting`.
+
+Commits funcionales:
+
+- `9e09fdb` — implementación inicial del prefab y orden visual.
+- `489851d` — endurece el ciclo de generación del prefab y sorting layers.
+
+### Implementación
+
+- [x] `TopDownSortingModel` puro en Application.
+- [x] Los pies más abajo en pantalla reciben un `sortingOrder` mayor y se renderizan delante.
+- [x] Cuantización determinista de profundidad.
+- [x] Sorting layers requeridas para suelo, objetos, actores, efectos y UI.
+- [x] `TopDownSpriteSorting` actualiza el orden del `SpriteRenderer` desde la Y de los pies.
+- [x] `PlayerPrefabIdentity` identifica el prefab generado.
+- [x] `PlayerPrefabAssetCatalog` centraliza rutas, nombres y firma de generación.
+- [x] `PlayerPrefabAssetPipeline` genera un Player prefab reutilizable.
+- [x] El prefab conserva:
+  - `Rigidbody2D`;
+  - `CapsuleCollider2D` de pies;
+  - `UnifiedMovementInput`;
+  - `TopDownPlayerMotor`;
+  - `SpriteRenderer`;
+  - `Animator`;
+  - `PlayerSpriteAnimator`;
+  - `TopDownSpriteSorting`;
+  - marcador de orientación y `PlayerProxyFacingView`.
+- [x] `PlayerSpriteRuntimeInstaller` pasa a instanciar el prefab en lugar de construir cada componente manualmente.
+- [x] El pipeline espera una recarga de AssetDatabase después de modificar sorting layers antes de generar el prefab.
+- [x] `PlayerSpriteAnimator` evita intentar reproducir estados durante la generación fuera de Play Mode.
+- [x] La firma del prefab permite regenerarlo cuando cambie su composición.
+
+### Pruebas añadidas
+
+EditMode:
+
+- sorting layers requeridas;
+- composición completa del prefab;
+- firma vigente del prefab;
+- orden inferior delante del superior;
+- orden base en Y = 0;
+- tres casos de cuantización;
+- rechazo de precisión inválida.
+
+Total nuevo EditMode: **9 pruebas**.
+
+PlayMode:
+
+- `Lab` instancia el prefab reutilizable y cambia el orden visual al modificar la Y del jugador.
+
+Total nuevo PlayMode: **1 prueba**.
+
+### Archivos principales
+
+- `Assets/_Project/Scripts/Application/Spatial/TopDownSortingModel.cs`
+- `Assets/_Project/Scripts/Editor/PlayerPrefabAssetPipeline.cs`
+- `Assets/_Project/Scripts/Presentation/Player/PlayerPrefabAssetCatalog.cs`
+- `Assets/_Project/Scripts/Presentation/Player/PlayerPrefabIdentity.cs`
+- `Assets/_Project/Scripts/Presentation/Player/TopDownSortingLayers.cs`
+- `Assets/_Project/Scripts/Presentation/Player/TopDownSpriteSorting.cs`
+- `Assets/_Project/Tests/EditMode/PlayerPrefabAssetPipelineTests.cs`
+- `Assets/_Project/Tests/EditMode/TopDownSortingModelTests.cs`
+- `Assets/_Project/Tests/PlayMode/PlayerPrefabSortingTests.cs`
+
+### Recursos que Unity debe generar localmente
+
+Al abrir la rama, Unity debe modificar o crear:
+
+- `ProjectSettings/TagManager.asset` con las sorting layers requeridas;
+- el Player prefab bajo la ruta definida en `PlayerPrefabAssetCatalog`;
+- `.meta` correspondientes si todavía no existen.
+
+No hacer commit local antes de revisar la lista completa de cambios.
+
+### Estado de validación
+
+La rama está **2 commits por delante de `main` y 0 por detrás**. La implementación se revisó estructuralmente en GitHub, pero todavía no se ha compilado ni ejecutado en el Unity local de Arturo.
+
+Resultado esperado:
+
+- EditMode: **36/36**.
+- PlayMode: **6/6**.
+- Consola: **0 errores y 0 advertencias**.
+- El jugador se mueve y anima igual que antes.
+- Lab contiene una instancia del prefab generado.
+- Al mover al personaje verticalmente cambia su `sortingOrder`.
+- Teclado, DualSense, collider, límites y animaciones no presentan regresiones.
+
+No existe un bug nuevo confirmado. Cualquier fallo observado debe añadirse a `BUGS.MD` antes de corregirse.
+
+---
+
+## 5. Próximo paso exacto
 
 1. Cerrar Unity.
 2. En GitHub Desktop cambiar a `main`.
-3. Ejecutar **Fetch origin** y **Pull origin** para recibir el PR #4 y este registro.
+3. Ejecutar **Fetch origin** y **Pull origin**.
 4. Ejecutar nuevamente **Fetch origin**.
-5. Cambiar a `feature/player-prefab-depth-sorting` cuando aparezca publicada.
-6. Abrir Unity y confirmar que `main` integrado sigue con consola limpia antes de validar la nueva implementación.
+5. Cambiar a `feature/player-prefab-depth-sorting`.
+6. Ejecutar **Pull origin** si aparece.
+7. Abrir Unity y esperar compilación, actualización de sorting layers, recarga y generación del prefab.
+8. Esperar a que Unity termine por completo antes de pulsar Play.
+9. Limpiar la consola y comprobar cero errores/advertencias.
+10. Ejecutar EditMode: esperado **36/36**.
+11. Ejecutar PlayMode: esperado **6/6**.
+12. Ejecutar `Bootstrap → Lab` y comprobar movimiento/animación con teclado y DualSense.
+13. Mover al personaje por encima y por debajo de referencias visuales para evaluar el orden de profundidad.
+14. Enviar capturas de Test Runner, consola, Game y lista completa de cambios locales en GitHub Desktop.
+15. No hacer commit local todavía.
 
 ---
 
-## 7. Línea base pendiente de migrar
+## 6. Línea base pendiente de migrar
 
 Granja, casa, mercado, hotbar, inventario, almacenamiento, doce parcelas, herramientas, tres cultivos, tienda, economía, envíos, reloj, estaciones, sueño, fin de día y guardado JSON versionado. Detalle en `MIGRACION_DESDE_FARMING_GAME_A.MD`.
 
 ---
 
-## 8. Protocolo para chat nuevo
+## 7. Protocolo para chat nuevo
 
 > Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee `BITÁCORA_GPT.MD`, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, revisa ramas y commits, resume el estado y continúa desde el próximo paso documentado.
