@@ -48,7 +48,7 @@ namespace FarmSimulator.Presentation.Player
             animator = targetAnimator;
             currentStateHash = 0;
 
-            if (Application.isPlaying)
+            if (global::UnityEngine.Application.isPlaying)
             {
                 Refresh();
             }
