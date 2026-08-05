@@ -3,12 +3,13 @@
 ## Estado actual
 
 - Rama: `chore/cozy-farm-art-intake`.
-- Head funcional A3 corregido: `0a05af5a50538e31acdd849d7eb603d4a6096c76`.
+- Head funcional A3.1: `39abe438bb6068b21438fb836b5eea01295f0db3`.
 - El héroe actual se conserva sin cambios.
 - El paquete completo `full version.zip` permanece fuera del repositorio.
 - A1, recepción de cinco hojas fuente: **VALIDADA LOCALMENTE**.
 - A2, slicing curado y pruebas automáticas: **VALIDADO LOCALMENTE**.
-- A3, escena artística de exhibición: **GENERADOR IMPLEMENTADO; GENERACIÓN LOCAL Y VALIDACIÓN PENDIENTES**.
+- A3, primera exhibición: **VALIDADA TÉCNICAMENTE; COMPOSICIÓN VISUAL RECHAZADA POR DESPROPORCIÓN**.
+- A3.1, exhibición reequilibrada: **IMPLEMENTADA REMOTAMENTE; REGENERACIÓN Y VALIDACIÓN LOCAL PENDIENTES**.
 
 ## A1 — Fuente piloto validada
 
@@ -61,12 +62,14 @@ Los cultivos usan pivote inferior central para futura colocación sobre la parce
 
 ### Terreno
 
-`tiles.png` expone solo cuatro tiles piloto:
+`tiles.png` expone solo cuatro muestras piloto:
 
 - `cozy_grass`;
 - `cozy_dirt`;
 - `cozy_water`;
 - `cozy_tilled_soil`.
+
+`cozy_tilled_soil` se conserva como muestra aislada provisional. A3.1 deja de repetirla bajo cada cultivo porque su silueta circular dominaba la lectura visual de la exhibición.
 
 ### Validación local A2 — 2026-08-05
 
@@ -94,15 +97,9 @@ El paquete denomina **radish** al recurso usado provisionalmente para el ID de d
 
 `tools.png` contiene máquinas de procesamiento y mobiliario, no iconos adecuados de azada y regadera. Permanece en modo Single y sin slicing. No se asignaron sustitutos falsos a `hoe` o `watering-can`.
 
-## A3 — Escena artística de exhibición
+## A3 — Primera escena artística de exhibición
 
-Se añadió un generador Editor reproducible:
-
-```text
-Assets/_Project/Scripts/Editor/CozyFarmShowcaseScenePipeline.cs
-```
-
-Al terminar de compilar/importar, genera automáticamente:
+El generador Editor reproducible crea:
 
 ```text
 Assets/_Project/Scenes/CozyFarmShowcase.unity
@@ -114,32 +111,66 @@ También puede regenerarse desde:
 Tools > Farm Simulator > Rebuild Cozy Farm Showcase
 ```
 
-La escena es independiente de `Lab` y contiene:
+La escena es independiente de `Lab`. La cámara usa `SpatialModel.CameraOrthographicSize` (**4.21875**) y `ReferenceAspectCamera`.
 
-- cámara ortográfica basada en `SpatialModel.CameraOrthographicSize` (**4.21875**) y `ReferenceAspectCamera`;
-- fondo de césped;
-- cuatro muestras de terreno;
-- tres objetos cosechados;
-- tres bolsas de semillas;
-- dieciocho etapas de cultivo distribuidas en tres filas;
-- una instancia conectada al prefab actual del héroe, colocada sobre una referencia de tierra para comparar escala.
+### Validación local A3 — 2026-08-05
 
-Los fondos y muestras se construyen con parches de sprites individuales. No se usa `SpriteDrawMode.Tiled`, evitando depender de una malla Full Rect o producir advertencias con sprites Tight.
+Arturo confirmó:
 
-No se añadieron Tilemaps, paletas, UI, hotbar, integración de inventario ni lógica de juego.
+- EditMode: **134/134**;
+- PlayMode: **6/6**;
+- errores: **0**.
 
-### Pruebas A3
+La implementación técnica quedó aprobada, pero la captura visual mostró una composición desproporcionada:
 
-`CozyFarmShowcaseSceneTests.cs` añade cuatro casos EditMode para comprobar:
+- objetos y semillas tratados como sprites físicos de mundo;
+- bases circulares repetidas bajo las 18 etapas;
+- muestras de terreno 2×2 demasiado grandes;
+- exceso de espacio vacío;
+- comparación de escala poco clara.
 
-- generación y firma de la escena;
-- presencia de grupos y sprites curados;
-- uso del prefab vigente del héroe sin reemplazarlo;
-- cámara ortográfica conforme al contrato central de `SpatialModel` y presencia de `ReferenceAspectCamera`.
+A3 queda registrada como validada técnicamente, pero no aceptada visualmente.
+
+## A3.1 — Exhibición reequilibrada
+
+Archivos modificados:
+
+```text
+Assets/_Project/Scripts/Editor/CozyFarmShowcaseScenePipeline.cs
+Assets/_Project/Tests/EditMode/CozyFarmShowcaseSceneTests.cs
+```
+
+Cambios:
+
+- firma de escena elevada a `cozy-farm-showcase-scene-v2` para forzar regeneración;
+- objetos y semillas colocados sobre una referencia de 3×2 slots y escalados a **0.55**;
+- cultivos conservados a escala de mundo **1.0**;
+- eliminación de los 18 marcadores `soil_for_*`;
+- las 18 etapas se colocan sobre una cama compartida de tierra de **6×3 tiles**;
+- las cuatro muestras de terreno pasan de bloques 2×2 a tiles individuales alineados;
+- el héroe conserva escala **1.0** y se compara sobre una referencia de tierra de **2×2 tiles**;
+- distribución compactada dentro del contrato visible 960×540;
+- si la escena antigua está abierta durante la recompilación, el pipeline no la sobrescribe: solicita cerrarla y ejecutar el comando de reconstrucción.
+
+No se modificaron:
+
+- `tiles.png.meta` ni los slices A2;
+- PNG del paquete;
+- `Lab`;
+- prefab, spritesheet o animaciones del héroe;
+- Domain, inventario, Input System o runtime de juego;
+- Tilemaps, paletas, hotbar o UI funcional.
+
+### Pruebas A3.1
+
+`CozyFarmShowcaseSceneTests.cs` pasa de cuatro a **seis** casos. Los dos casos nuevos verifican:
+
+- separación explícita entre iconos de interfaz a escala 0.55 y sprites de mundo a escala 1.0;
+- panel compartido, cama de cultivo compartida, ausencia de objetos `soil_for_*`, muestras de un solo tile y referencia 2×2 del héroe.
 
 Resultado esperado, todavía no confirmado localmente:
 
-- EditMode: **134/134**;
+- EditMode: **136/136**;
 - PlayMode: **6/6**.
 
 ## Exclusiones vigentes
@@ -148,12 +179,18 @@ No incluir ZIP, GIF, `global.png`, `item_carry.png`, personajes adicionales, ani
 
 ## Próximo paso local
 
-1. Hacer Fetch/Pull de `chore/cozy-farm-art-intake`.
-2. Abrir Unity y esperar compilación e importación completas.
-3. Confirmar que se genere `Assets/_Project/Scenes/CozyFarmShowcase.unity`.
-4. Abrir esa escena y pulsar Play.
-5. Comprobar que `Lab` permanece intacta y que la escena muestra héroe, terreno, objetos, semillas y las 18 etapas.
-6. Ejecutar EditMode completo; esperado **134/134**.
-7. Ejecutar PlayMode completo; esperado **6/6**.
-8. Reportar apariencia, conteos y cualquier error o advertencia.
-9. No hacer commit todavía de la escena generada ni avanzar a Tilemaps/hotbar hasta revisar el resultado visual.
+1. Cerrar `CozyFarmShowcase` en Unity antes de actualizar la rama.
+2. En GitHub Desktop, hacer Fetch/Pull de `chore/cozy-farm-art-intake`.
+3. Abrir Unity y esperar compilación e importación completas.
+4. La firma `v2` debe regenerar `Assets/_Project/Scenes/CozyFarmShowcase.unity` automáticamente.
+5. Si Unity avisa que la escena antigua estaba abierta, cerrarla y ejecutar `Tools > Farm Simulator > Rebuild Cozy Farm Showcase`.
+6. Abrir la escena nueva y pulsar Play.
+7. Confirmar visualmente:
+   - iconos notablemente menores que el héroe;
+   - tres filas compactas de crecimiento sin círculos repetidos;
+   - cuatro muestras de un solo tile;
+   - héroe intacto sobre referencia 2×2.
+8. Ejecutar EditMode completo; esperado **136/136**.
+9. Ejecutar PlayMode completo; esperado **6/6**.
+10. Reportar captura, conteos y cualquier error o advertencia.
+11. No hacer commit todavía de la escena generada ni avanzar a Tilemaps/hotbar hasta revisar el resultado visual.
