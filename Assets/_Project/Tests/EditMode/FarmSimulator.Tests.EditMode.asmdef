@@ -1,0 +1,23 @@
+{
+  "name": "FarmSimulator.Tests.EditMode",
+  "rootNamespace": "FarmSimulator.Tests.EditMode",
+  "references": [
+    "FarmSimulator.Domain",
+    "FarmSimulator.Application",
+    "FarmSimulator.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

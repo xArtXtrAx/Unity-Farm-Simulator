@@ -1,0 +1,21 @@
+{
+  "name": "FarmSimulator.Editor",
+  "rootNamespace": "FarmSimulator.Editor",
+  "references": [
+    "FarmSimulator.Domain",
+    "FarmSimulator.Application",
+    "FarmSimulator.Infrastructure",
+    "FarmSimulator.Presentation"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

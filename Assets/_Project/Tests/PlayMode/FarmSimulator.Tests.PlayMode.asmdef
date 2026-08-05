@@ -1,0 +1,22 @@
+{
+  "name": "FarmSimulator.Tests.PlayMode",
+  "rootNamespace": "FarmSimulator.Tests.PlayMode",
+  "references": [
+    "FarmSimulator.Domain",
+    "FarmSimulator.Application",
+    "FarmSimulator.Infrastructure",
+    "FarmSimulator.Presentation"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

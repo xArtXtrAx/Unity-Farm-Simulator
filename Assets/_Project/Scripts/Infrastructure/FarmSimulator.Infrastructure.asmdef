@@ -1,0 +1,17 @@
+{
+  "name": "FarmSimulator.Infrastructure",
+  "rootNamespace": "FarmSimulator.Infrastructure",
+  "references": [
+    "FarmSimulator.Domain",
+    "FarmSimulator.Application"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
