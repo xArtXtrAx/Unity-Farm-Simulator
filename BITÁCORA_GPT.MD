@@ -1,6 +1,6 @@
 # BITÁCORA GPT — Unity Farm Simulator
 
-Documento maestro de continuidad. Debe permitir reanudar el proyecto sin depender de la memoria del chat.
+Documento maestro de continuidad. Debe permitir retomar el proyecto sin depender de la memoria del chat.
 
 > **Regla de continuidad:** antes de modificar el repositorio, leer `CONTINUIDAD_GPT.md` desde `main`; después leer este archivo, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, ramas y commits recientes.
 
@@ -67,7 +67,7 @@ WASD, flechas, stick, D-pad, zona muerta, diagonales, orientación, collider de 
 
 Spritesheet congelado `src/assets/hero_hd.png`, 192 × 288 px, frames 64 × 72, idle y walk en cuatro direcciones a 8 FPS. PNG, ocho clips y Animator versionados.
 
-Validación local de Arturo:
+Validación local:
 
 - EditMode: **27/27**.
 - PlayMode: **5/5**.
@@ -85,100 +85,118 @@ Bugs verificados: `BUG-0001` a `BUG-0005`.
 
 ---
 
-## 4. Fase 5 — Prefab reutilizable y profundidad visual: COMPILA; PROFUNDIDAD DINÁMICA VERIFICADA; PRUEBAS PENDIENTES
+## 4. Fase 5 — Prefab reutilizable y profundidad visual: IMPLEMENTADA; CORRECCIÓN VISUAL PENDIENTE DE VALIDACIÓN
 
 Rama: `feature/player-prefab-depth-sorting`.
 
-Commits funcionales:
+### Commits funcionales
 
 - `9e09fdb` — implementación inicial del prefab y orden visual.
 - `489851d` — endurece el ciclo de generación del prefab y sorting layers.
 - `a9a3fe2` — corrige la colisión de namespace en `PlayerSpriteAnimator`.
+- `19147bd` — añade referencia visual 2D de profundidad.
+- `b2e746a` — instala la referencia dentro de la calibración del laboratorio.
+- `e93efe9` — prueba ambas relaciones delante/detrás del jugador.
 
-### Implementación
+### Implementación principal
 
 - [x] `TopDownSortingModel` puro en Application.
-- [x] Los pies más abajo en pantalla reciben un `sortingOrder` mayor y se renderizan delante.
-- [x] Cuantización determinista de profundidad.
-- [x] Sorting layers requeridas para suelo, objetos, actores, efectos y UI.
-- [x] `TopDownSpriteSorting` actualiza el orden del `SpriteRenderer` desde la Y de los pies.
+- [x] Los pies más abajo reciben un `sortingOrder` mayor y se renderizan delante.
+- [x] Cuantización determinista: base 10000 y 100 órdenes por unidad.
+- [x] Sorting layers para suelo, objetos, actores, efectos y UI.
+- [x] `TopDownSpriteSorting` actualiza el `SpriteRenderer` desde la Y de los pies.
 - [x] `PlayerPrefabIdentity` identifica el prefab generado.
-- [x] `PlayerPrefabAssetCatalog` centraliza rutas, nombres y firma de generación.
-- [x] `PlayerPrefabAssetPipeline` genera un Player prefab reutilizable.
-- [x] El prefab conserva `Rigidbody2D`, `CapsuleCollider2D`, input, motor, sprite, Animator, controlador de animación, sorting dinámico y marcador de depuración.
-- [x] `PlayerSpriteRuntimeInstaller` pasa a instanciar el prefab en lugar de construir cada componente manualmente.
-- [x] El pipeline espera una recarga de AssetDatabase después de modificar sorting layers antes de generar el prefab.
-- [x] `PlayerSpriteAnimator` evita intentar reproducir estados durante la generación fuera de Play Mode.
-- [x] La firma del prefab permite regenerarlo cuando cambie su composición.
+- [x] `PlayerPrefabAssetCatalog` centraliza rutas, nombres y firma.
+- [x] `PlayerPrefabAssetPipeline` genera el Player prefab reutilizable.
+- [x] El prefab conserva Rigidbody2D, collider de pies, input, motor, sprite, Animator, animación, sorting y marcador.
+- [x] `PlayerSpriteRuntimeInstaller` instancia el prefab en lugar de construir el jugador manualmente.
+- [x] El pipeline espera la recarga de AssetDatabase después de modificar sorting layers.
+- [x] La firma del prefab permite regenerarlo cuando cambia su composición.
 
-### Pruebas añadidas
+### BUG-0005 — compilación
 
-EditMode, nueve pruebas nuevas:
+Unity abrió inicialmente en Safe Mode por la resolución ambigua de `Application.isPlaying`. Se corrigió con `global::UnityEngine.Application.isPlaying`.
 
-- sorting layers requeridas;
-- composición completa del prefab;
-- firma vigente del prefab;
-- orden inferior delante del superior;
-- orden base en Y = 0;
-- tres casos de cuantización;
-- rechazo de precisión inválida.
+Validación de Arturo:
 
-PlayMode, una prueba nueva:
-
-- `Lab` instancia el prefab reutilizable y cambia el orden visual al modificar la Y del jugador.
-
-Resultado total esperado:
-
-- EditMode: **36/36**.
-- PlayMode: **6/6**.
+- Unity abrió fuera de Safe Mode.
 - Consola: **0 errores y 0 advertencias**.
+- Prefab reutilizable y sorting layers generados.
+- `BUG-0005`: **VERIFICADO**.
 
-### Archivos principales
+### Profundidad numérica confirmada
 
-- `Assets/_Project/Scripts/Application/Spatial/TopDownSortingModel.cs`
-- `Assets/_Project/Scripts/Editor/PlayerPrefabAssetPipeline.cs`
-- `Assets/_Project/Scripts/Presentation/Player/PlayerPrefabAssetCatalog.cs`
-- `Assets/_Project/Scripts/Presentation/Player/PlayerPrefabIdentity.cs`
-- `Assets/_Project/Scripts/Presentation/Player/PlayerSpriteAnimator.cs`
-- `Assets/_Project/Scripts/Presentation/Player/TopDownSortingLayers.cs`
-- `Assets/_Project/Scripts/Presentation/Player/TopDownSpriteSorting.cs`
-- `Assets/_Project/Tests/EditMode/PlayerPrefabAssetPipelineTests.cs`
-- `Assets/_Project/Tests/EditMode/TopDownSortingModelTests.cs`
-- `Assets/_Project/Tests/PlayMode/PlayerPrefabSortingTests.cs`
+Durante Play Mode, Arturo localizó:
+
+```text
+Generated Calibration
+└── Playable Player
+    └── Playable Player Sprite
+```
+
+`Order in Layer` varió aproximadamente entre **9600 y 10400** al recorrer el laboratorio. Esto coincide con:
+
+```text
+order = 10000 - round(feetY × 100)
+```
+
+Quedó confirmado que bajar aumenta el orden y subir lo disminuye.
+
+### BUG-0006 — no existía una referencia visual compatible
+
+Arturo observó que el jugador seguía siempre por encima de todos los objetos visibles. La causa no estaba en el cálculo del jugador:
+
+- el jugador usa `SpriteRenderer` y sorting por Y;
+- las referencias del laboratorio usan `MeshRenderer` y materiales opacos;
+- los renderers opacos se dibujan antes que los sprites transparentes, por lo que no pueden intercalarse mediante `sortingOrder`.
+
+Corrección implementada:
+
+- nuevo `LabDepthSortingReference`;
+- rectángulo morado 2D de **1.5 × 2.25 unidades**;
+- pivote inferior como punto de pies;
+- pies en `(0, 0.65)`;
+- sin collider para poder atravesarlo;
+- `SpriteRenderer`, sorting layer `Actors` y `TopDownSpriteSorting`, iguales al jugador;
+- recreación automática si la calibración reconstruye `Generated Calibration`;
+- prueba PlayMode que exige jugador detrás con pies más arriba y delante con pies más abajo.
+
+Estado de `BUG-0006`: **CORREGIDO**, pendiente de compilación y validación visual local.
+
+### Pruebas previstas
+
+EditMode: nueve pruebas nuevas de esta fase; total esperado **36/36**.
+
+PlayMode: la prueba existente fue ampliada con la regresión visual lógica; total esperado **6/6**.
+
+La prueba comprueba:
+
+- instancia del prefab reutilizable;
+- referencias técnicas transferidas;
+- proxy rojo oculto;
+- misma sorting layer entre jugador y referencia;
+- orden correcto de ambos;
+- jugador detrás con pies más arriba;
+- jugador delante con pies más abajo;
+- instalación idempotente.
 
 ### Recursos generados localmente
 
-Unity confirmó la generación de:
+Unity ya confirmó la generación de:
 
-- sorting layers cenitales en `ProjectSettings/TagManager.asset`;
-- Player prefab reutilizable bajo la ruta definida en `PlayerPrefabAssetCatalog`;
+- `ProjectSettings/TagManager.asset` con las sorting layers;
+- Player prefab bajo la ruta definida en `PlayerPrefabAssetCatalog`;
 - metadatos asociados.
 
 No hacer commit local antes de revisar la lista completa de cambios.
-
-### Validación local observada — 2026-08-05
-
-Después de sincronizar `a9a3fe2`:
-
-- Unity abrió normalmente fuera de Safe Mode;
-- la consola mostró **0 errores y 0 advertencias**;
-- desapareció `CS0234`;
-- el Editor informó `Generated reusable Player prefab and top-down sorting layers`;
-- `BUG-0005` quedó **VERIFICADO**;
-- durante Play Mode, Arturo localizó `Playable Player/Playable Player Sprite` dentro de `Generated Calibration`;
-- `SpriteRenderer.Order in Layer` cambió aproximadamente entre **9600 y 10400** al mover al jugador verticalmente;
-- el rango coincide con `TopDownSortingModel`: orden base **10000**, **100 órdenes por unidad**, y cálculo `baseOrder - round(feetY × 100)`;
-- queda verificado que bajar por el mapa aumenta el orden y subir lo disminuye.
-
-Aún faltan las suites automatizadas, la validación manual completa de teclado/DualSense, límites y la comprobación visual de solapamiento delante/detrás de referencias.
 
 ---
 
 ## 5. Protocolo permanente de continuidad
 
-Existe en `main` el archivo estable `CONTINUIDAD_GPT.md` y el `README.md` apunta a él.
+Existe en `main` `CONTINUIDAD_GPT.md` y el README apunta a él.
 
-Cadena de recuperación obligatoria:
+Cadena de recuperación:
 
 ```text
 README.md en main
@@ -186,24 +204,34 @@ README.md en main
   → BITÁCORA_GPT.MD en la rama activa
   → BUGS.MD + MIGRACION_DESDE_FARMING_GAME_A.MD
   → comparación main/rama y commits recientes
-  → “Próximo paso exacto”
+  → Próximo paso exacto
 ```
 
-Los cambios exclusivamente locales siguen siendo el único estado que GitHub no puede proteger; deben comunicarse antes de cambiar de chat.
+Los cambios exclusivamente locales siguen siendo el único estado que GitHub no protege.
 
 ---
 
 ## 6. Próximo paso exacto
 
-1. Abrir **Window → General → Test Runner**.
-2. Ejecutar todas las pruebas **EditMode**; esperado **36/36**.
-3. Ejecutar todas las pruebas **PlayMode**; esperado **6/6**.
-4. Volver a la consola, limpiarla y confirmar **0 errores y 0 advertencias** después de ambas suites.
-5. En `Bootstrap → Lab`, probar movimiento y animación en cuatro direcciones con teclado y DualSense.
-6. Confirmar límites del terreno y ausencia del rectángulo rojo.
-7. Mover al personaje por encima y por debajo de referencias visuales y comprobar que queda detrás cuando sus pies están más arriba y delante cuando están más abajo.
-8. Enviar capturas de Test Runner, consola, Game y lista completa de cambios locales en GitHub Desktop.
-9. No hacer commit local todavía.
+1. Detener Play Mode y cerrar Unity.
+2. En GitHub Desktop permanecer en `feature/player-prefab-depth-sorting`.
+3. Pulsar **Fetch origin** y **Pull origin**.
+4. Abrir Unity y esperar a que compile e importe por completo.
+5. Confirmar consola en **0 errores y 0 advertencias**.
+6. Abrir `Assets/_Project/Scenes/Bootstrap.unity` y pulsar Play.
+7. Esperar la transición a `Lab`.
+8. Localizar el rectángulo morado central `Depth Sorting Reference`.
+9. Caminar recto hacia arriba atravesándolo:
+   - antes de cruzar su línea de pies, el jugador debe verse delante;
+   - después de cruzarla, debe verse detrás.
+10. Caminar de regreso hacia abajo y confirmar la transición inversa.
+11. Probar movimiento y animación en cuatro direcciones con teclado y DualSense.
+12. Confirmar límites del terreno y ausencia del rectángulo rojo.
+13. Ejecutar EditMode: esperado **36/36**.
+14. Ejecutar PlayMode: esperado **6/6**.
+15. Limpiar la consola y confirmar **0 errores y 0 advertencias** después de las suites.
+16. Enviar capturas de Test Runner, consola, Game y lista completa de cambios locales en GitHub Desktop.
+17. No hacer commit local todavía.
 
 ---
 
