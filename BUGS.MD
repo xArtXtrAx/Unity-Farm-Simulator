@@ -74,12 +74,18 @@ Qué debe comprobarse en futuras versiones para evitar que reaparezca.
 
 ## 4. Bugs activos
 
+No hay bugs activos.
+
+---
+
+## 5. Bugs corregidos y verificados
+
 ## BUG-0003 — El límite físico permite que el personaje se recorte en los bordes
 
-- **Estado:** CORREGIDO
+- **Estado:** VERIFICADO
 - **Severidad:** S3 — Media
 - **Detectado:** 2026-08-05
-- **Verificado/cerrado:** —
+- **Verificado/cerrado:** 2026-08-05
 - **Versión de Unity:** `6000.3.21f1`
 - **Escena o sistema:** `Lab` / límites de movimiento del jugador
 - **Rama/commit afectado:** `feature/player-movement-foundation` en `e3f5430`
@@ -103,7 +109,7 @@ El límite debe detener el pivote de los pies con suficiente anticipación para 
 
 ### Evidencia
 
-Cuatro capturas enviadas por Arturo muestran el personaje en los extremos derecho, izquierdo, inferior y superior. El collider funcionaba, pero el volumen visual no se consideraba.
+Cuatro capturas iniciales enviadas por Arturo mostraron el personaje recortado. Después de la corrección, cuatro capturas nuevas mostraron el cuerpo rojo y el marcador amarillo completamente contenidos en arriba, abajo, izquierda y derecha.
 
 ### Causa raíz
 
@@ -124,20 +130,19 @@ El perímetro se colocaba casi exactamente sobre los bordes del mapa. Physics 2D
 
 ### Verificación
 
-Pendiente de validación local. Resultado esperado:
+Validación local de Arturo el 2026-08-05:
 
-- EditMode: **11/11**.
-- PlayMode: **4/4**.
-- Consola limpia.
-- Cuerpo y marcador completamente visibles en los cuatro extremos.
+- EditMode: **11/11 aprobadas**.
+- PlayMode: **4/4 aprobadas**.
+- Consola: sin errores.
+- Cuerpo y marcador permanecen completamente visibles en los cuatro extremos.
+- La separación vertical asimétrica se comporta correctamente debido al pivote situado en los pies.
 
 ### Notas de regresión
 
 No usar únicamente el collider de los pies para decidir límites visuales. Al sustituir el rectángulo por el sprite definitivo, conservar el pivote en los pies y recalcular el volumen visual desde las dimensiones reales del sprite o su configuración de presentación.
 
 ---
-
-## 5. Bugs corregidos y verificados
 
 ## BUG-0002 — Marcador de orientación descentrado respecto al personaje provisional
 
@@ -277,4 +282,4 @@ No añadir colliders 2D a un objeto creado mediante `GameObject.CreatePrimitive`
 - Se creó el registro de bugs y se definieron estados y severidades.
 - Se añadió y verificó `BUG-0001` por el conflicto de colliders.
 - Se añadió y verificó `BUG-0002` por el marcador de orientación descentrado.
-- Se añadió `BUG-0003` por el recorte visual del jugador en los límites del laboratorio.
+- Se añadió y verificó `BUG-0003` por el recorte visual del jugador en los límites del laboratorio.
