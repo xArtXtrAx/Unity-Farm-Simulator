@@ -109,7 +109,7 @@ Integración:
 
 ---
 
-## 7. Fase 3 — Movimiento del jugador
+## 7. Fase 3 — Base de movimiento del jugador: VALIDADA, PENDIENTE DE INTEGRACIÓN
 
 ### Base funcional implementada
 
@@ -134,9 +134,9 @@ Incluye:
 - [x] Pruebas puras de zona muerta, fuerza analógica, diagonal y orientación.
 - [x] Pruebas PlayMode de composición Physics 2D y desplazamiento normalizado.
 
-### Validación local confirmada
+### Validación local final confirmada por Arturo
 
-Arturo validó en Unity `6000.3.21f1`:
+Unity `6000.3.21f1`:
 
 - [x] EditMode: **11/11 aprobadas**.
 - [x] PlayMode: **4/4 aprobadas**.
@@ -144,33 +144,19 @@ Arturo validó en Unity `6000.3.21f1`:
 - [x] WASD y flechas funcionan.
 - [x] Stick izquierdo y D-pad del DualSense funcionan.
 - [x] Movimiento diagonal normalizado.
-- [x] El personaje no atraviesa el perímetro.
+- [x] El jugador no atraviesa el perímetro.
+- [x] El cuerpo rojo y el marcador permanecen completamente visibles en los cuatro extremos.
 
-### BUG-0002 — VERIFICADO
+### Bugs de la fase
 
-El marcador amarillo estaba descentrado porque el pivote lógico está en los pies. La corrección calcula izquierda/derecha desde el centro real del cuerpo y arriba/abajo desde sus bordes. Arturo confirmó pruebas **11/11** y **4/4**; el registro completo está en `BUGS.MD`.
+- `BUG-0002`: marcador de orientación descentrado — **VERIFICADO**.
+- `BUG-0003`: límites físicos permitían recorte visual — **VERIFICADO**.
 
-### BUG-0003 — CORREGIDO, PENDIENTE DE VALIDACIÓN
+La corrección de límites considera el volumen visual completo, el pivote situado en los pies, el marcador, el tamaño del `CapsuleCollider2D` y su offset. La prueba PlayMode protege matemáticamente los cuatro extremos.
 
-Las capturas de los cuatro extremos mostraron que el límite contenía el collider de los pies, pero permitía recortar el rectángulo rojo y el marcador fuera del área visible, sobre todo arriba y en los lados.
+### Estado de cierre
 
-Corrección publicada:
-
-- `66b3acd` — expone las extensiones visuales completas del jugador y marcador.
-- `9b55ade` — recalcula el perímetro de Lab considerando volumen visual, pivote y collider físico.
-- `6c96d10` — amplía la prueba PlayMode para proteger los cuatro extremos.
-- `8215bd0` — registra `BUG-0003` y verifica `BUG-0002`.
-
-Detalles técnicos:
-
-- El límite ahora es asimétrico verticalmente porque el pivote permanece en los pies.
-- Se consideran ancho del cuerpo, altura completa, marcador amarillo, tamaño del `CapsuleCollider2D` y su offset.
-- El indicador también debe permanecer visible en los extremos.
-- La cantidad de pruebas no cambia: EditMode **11/11**, PlayMode **4/4**.
-
-No afirmar que `BUG-0003` está verificado hasta volver a ejecutar Unity localmente y revisar los cuatro bordes.
-
-El sprite real y Animator permanecen pendientes. No importarlos hasta cerrar `BUG-0003`.
+La base de movimiento está lista para PR e integración en `main`. El rectángulo y el marcador son referencias técnicas; el siguiente bloque sustituirá esa representación por el sprite real y su Animator, sin alterar el motor validado.
 
 ---
 
@@ -189,17 +175,16 @@ Datos relevantes:
 
 ## 9. Próximo paso exacto
 
-1. Detener Play Mode y cerrar Unity.
-2. Permanecer en `feature/player-movement-foundation`.
-3. Ejecutar **Fetch origin** y **Pull origin** en GitHub Desktop.
-4. Abrir Unity `6000.3.21f1` y esperar la compilación.
-5. Limpiar la consola.
-6. Ejecutar EditMode: esperado **11/11**.
-7. Ejecutar PlayMode: esperado **4/4**.
-8. Abrir `Bootstrap.unity`, pulsar Play y mover al personaje hasta los cuatro extremos.
-9. Confirmar que el cuerpo rojo y el marcador amarillo permanecen completamente dentro del área verde en izquierda, derecha, arriba y abajo.
-10. Enviar una captura de los extremos o confirmar el resultado.
-11. Tras verificar `BUG-0003`, cerrar la base de movimiento e importar el sprite real de 64 × 72 px con Animator de cuatro direcciones.
+1. Crear y fusionar el PR de `feature/player-movement-foundation` hacia `main`.
+2. Registrar el merge en la bitácora de `main`.
+3. Crear una rama nueva desde `main` para la representación animada del jugador.
+4. Localizar y copiar el spritesheet congelado del personaje desde `xArtXtrAx/farming-game-A`.
+5. Importarlo con textura Sprite, filtro Point, sin compresión y 64 PPU.
+6. Cortar frames de 64 × 72 px conservando el pivote en los pies.
+7. Crear animaciones idle/caminar para abajo, arriba, izquierda y derecha.
+8. Conectar Animator con velocidad y orientación del motor ya validado.
+9. Sustituir el rectángulo rojo; mantener temporalmente el marcador como herramienta de depuración desactivable.
+10. Añadir pruebas de importación/configuración y validar visualmente en `Bootstrap → Lab`.
 
 ---
 
