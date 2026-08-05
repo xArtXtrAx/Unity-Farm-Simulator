@@ -10,12 +10,12 @@ Este archivo es el **punto de entrada permanente** para retomar el desarrollo si
 
 - **Repositorio:** `xArtXtrAx/Unity-Farm-Simulator`
 - **Rama estable:** `main`
-- **Rama activa:** `feature/domain-item-inventory-foundation`
-- **Fase actual:** Fase 6 — Catálogo de objetos e inventario de dominio
-- **Estado:** implementación y validación local completas; integración mediante PR pendiente
-- **Cabeza remota registrada de la rama activa:** `c91b3063f9c06fb949842d64d730694a84d4f416`
-- **Última integración:** PR #5, merge `341051f097d9d70796e69b9cddc9277ba3902ed0`
-- **Registro de integración en main:** `8a85534526ad1e491cb0687d817f2924acee2d4d`
+- **Rama activa:** ninguna todavía
+- **Última fase:** Fase 6 — Catálogo de objetos e inventario de dominio
+- **Estado:** implementada, validada e integrada
+- **PR de integración:** #6 — `Add domain item catalog and inventory foundation`
+- **Squash commit de integración:** `4abce7561215a28e7a37e082cbaacf3825021e92`
+- **Registro técnico posterior:** `945ae3d8a86346e45b8b83d3da2d8e614c52d259`
 - **Bugs activos:** ninguno
 - **Bugs verificados:** `BUG-0001` a `BUG-0006`
 - **Unity:** `6000.3.21f1`
@@ -23,17 +23,20 @@ Este archivo es el **punto de entrada permanente** para retomar el desarrollo si
 
 ### Línea base integrada
 
-- Fase 5 integrada en `main`.
-- EditMode previo: **36/36**.
-- PlayMode previo: **6/6**.
-- Consola de la Fase 5: **0 errores y 0 advertencias**.
+- Fases 1 a 6 integradas en `main`.
+- EditMode: **124/124**.
+- Casos nuevos de la Fase 6: **88/88**.
+- Fallos reportados: **0**.
+- PlayMode conserva la última regresión confirmada de **6/6**.
 - Player prefab, sorting layers, profundidad y oclusión aprobados.
+- Catálogo puro e inventario de dominio integrados.
+- `FarmSimulator.Domain` permanece independiente de `UnityEngine`.
 
-### Fase 6 implementada
+### Fase 6 integrada
 
-En `feature/domain-item-inventory-foundation` existen:
+`main` contiene ahora:
 
-- catálogo puro con los ocho IDs, categorías, stacks y precios aprobados;
+- catálogo puro con ocho IDs estables, categorías, stacks y precios;
 - `ItemId`, `ItemCategory`, `ItemDefinition` e `ItemCatalog`;
 - inventario puro de ocho slots;
 - selección y ciclo con wrap-around;
@@ -42,50 +45,52 @@ En `feature/domain-item-inventory-foundation` existen:
 - consumo y limpieza de slots;
 - snapshots defensivos y restauración prevalidada;
 - estado inicial con azada, regadera y veinte semillas de nabo;
-- **25 casos EditMode de catálogo**;
-- **63 casos EditMode de inventario**.
+- 25 casos EditMode de catálogo;
+- 63 casos EditMode de inventario.
 
-No se añadieron UI, ScriptableObjects, almacenamiento, cambios de escenas ni referencias `UnityEngine` en Domain.
+No se añadieron escenas, UI, ScriptableObjects, almacenamiento, cambios de Input System ni recursos externos.
 
-### Validación local — 2026-08-05
+### Decisión artística vigente
 
-Arturo confirmó que todas las pruebas del bloque pasaron sin errores:
+Arturo proporcionó el paquete completo Cozy Farm para evaluación.
 
-- EditMode: **124/124**.
-- Fallos: **0**.
-- Pruebas nuevas aprobadas: **88/88**.
-- Unity ejecutó el conjunto sin errores de compilación reportados.
-- PlayMode no fue requisito nuevo; se conserva la regresión previa confirmada de **6/6**.
-
-La puerta de salida de la Fase 6 está cumplida. La implementación todavía no está integrada en `main`.
+- El héroe actual se conserva: `Assets/_Project/Resources/Characters/Farmer/farmer-spritesheet.png`.
+- No cambiar el prefab, animaciones, pivote, collider ni profundidad del jugador salvo decisión visual explícita posterior.
+- Cozy Farm es candidato para mundo, agricultura, objetos, edificios, animales y UI.
+- No subir el ZIP completo ni GIF de referencia.
+- Cualquier incorporación debe realizarse en una rama artística independiente mediante un piloto mínimo.
+- Rama sugerida: `chore/cozy-farm-art-intake`.
 
 ### Próxima acción
 
-Revisar la diferencia final, crear el PR de la Fase 6 hacia `main` y fusionarlo después de confirmar que solo incluye Domain, pruebas EditMode, metas y documentación. No añadir más funcionalidad a esta rama validada.
+1. Sincronizar `main` localmente mediante GitHub Desktop.
+2. No continuar sobre `feature/domain-item-inventory-foundation`; la rama está cerrada.
+3. Leer `MIGRACION_DESDE_FARMING_GAME_A.MD` antes de elegir el siguiente bloque funcional.
+4. Para Cozy Farm, crear una rama independiente y probar solo iconos de objetos, semillas, herramientas, un cultivo y una pequeña muestra de terreno, sin reemplazar al héroe.
 
 ---
 
 ## Orden obligatorio de lectura
 
 1. Leer este archivo desde `main`.
-2. Cambiar conceptualmente a `feature/domain-item-inventory-foundation`.
-3. Leer `BITÁCORA_GPT.MD` desde esa rama.
-4. Leer `BUGS.MD` desde esa rama.
-5. Leer `MIGRACION_DESDE_FARMING_GAME_A.MD`.
-6. Comparar `main` con la rama activa y revisar commits recientes.
-7. Continuar desde **“Próximo paso exacto”** en la bitácora.
+2. Leer `BITÁCORA_GPT.MD` desde `main`.
+3. Leer `BUGS.MD`.
+4. Leer `MIGRACION_DESDE_FARMING_GAME_A.MD`.
+5. Revisar ramas y commits recientes.
+6. Continuar desde **“Próximo paso exacto”** en la bitácora.
 
 ---
 
 ## Reglas críticas
 
-- La Fase 6 está implementada y validada localmente, pero aún no integrada en `main`.
-- No añadir más funcionalidad a `feature/domain-item-inventory-foundation` antes del merge.
+- La Fase 6 ya está integrada; no reabrir su rama para añadir funcionalidad.
 - `FarmSimulator.Domain` no debe depender de `UnityEngine`.
 - No traducir TypeScript línea por línea; conservar comportamientos, IDs y atomicidad.
-- `main` debe mantenerse estable y todavía no contiene la implementación funcional de la Fase 6.
-- Después de cada implementación o corrección realizada por GPT, actualizar `BITÁCORA_GPT.MD` en el mismo bloque.
-- Cada vez que cambie la rama activa, la fase, la integración o el estado de validación, actualizar este archivo en `main`.
+- El héroe actual se mantiene durante el desarrollo.
+- Cozy Farm debe permanecer separado de las fases funcionales y entrar mediante un piloto controlado.
+- Después de cada implementación, corrección o integración realizada por GPT, actualizar `BITÁCORA_GPT.MD` en el mismo bloque.
+- Cada vez que cambie la rama activa, fase, integración o estado de validación, actualizar este archivo en `main`.
+- No afirmar que Unity compila o que pruebas pasan sin una validación ejecutada y reportada.
 
 ---
 
@@ -95,11 +100,11 @@ Revisar la diferencia final, crear el PR de la Fase 6 hacia `main` y fusionarlo 
 Continúa trabajando en mi repositorio:
 https://github.com/xArtXtrAx/Unity-Farm-Simulator
 
-Lee primero CONTINUIDAD_GPT.md desde main y sigue exactamente su orden de lectura y el “Próximo paso exacto” de la bitácora en la rama activa. La rama activa es feature/domain-item-inventory-foundation. La Fase 6 está implementada y validada localmente con 124/124 EditMode y cero fallos, pero todavía no está integrada en main. No añadas más funcionalidad a esta rama; revisa el alcance y prepara su PR. Tras cada implementación o corrección, actualiza BITÁCORA_GPT.MD y mantén CONTINUIDAD_GPT.md sincronizado.
+Lee primero CONTINUIDAD_GPT.md y BITÁCORA_GPT.MD desde main; después sigue exactamente su orden de lectura y el “Próximo paso exacto”. La Fase 6 está integrada mediante PR #6 y squash commit 4abce7561215a28e7a37e082cbaacf3825021e92, validada con 124/124 EditMode y cero fallos. No existe todavía una nueva rama activa. Conserva el héroe actual. Cozy Farm solo debe incorporarse en una rama artística separada y mediante un piloto mínimo; no subas el ZIP completo ni los GIF de referencia. Tras cada implementación, corrección o integración, actualiza BITÁCORA_GPT.MD y mantén CONTINUIDAD_GPT.md sincronizado.
 ```
 
 ---
 
 ## Mantenimiento de este archivo
 
-Mantener breve. Actualizar únicamente rama activa, fase, estado, commit remoto, pruebas, cambios locales y cualquier advertencia necesaria para reanudar sin ambigüedad.
+Mantener breve. Actualizar únicamente rama activa, fase, estado, commits, pruebas, cambios locales y cualquier advertencia necesaria para reanudar sin ambigüedad.
