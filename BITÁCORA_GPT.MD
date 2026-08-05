@@ -585,3 +585,83 @@ No se modificaron PNG, `.meta` artísticos, `Lab`, prefab/spritesheet/animacione
 ### Prompt vigente para chat nuevo
 
 > Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee `CONTINUIDAD_GPT.md` desde `main`; después `BITÁCORA_GPT.MD` y `COZY_FARM_INTAKE.md` desde `chore/cozy-farm-art-intake`. A1 y A2 están validados. A3 pasó 134/134 EditMode y 6/6 PlayMode sin errores, pero su primera composición fue rechazada por desproporción. A3.1 está implementado hasta `39abe438bb6068b21438fb836b5eea01295f0db3`: iconos a 0.55, cultivos y héroe a 1.0, cama compartida 6×3, muestras individuales y dos pruebas nuevas. El esperado es 136/136 EditMode y 6/6 PlayMode. Conserva el héroe y no avances a Tilemaps o hotbar antes de la validación visual de Arturo.
+
+---
+
+## 11. Actualización posterior — A3.1 validado y A3.2 implementado
+
+> **Esta sección sustituye operativamente el próximo paso y el prompt de la sección 10. Las conclusiones anteriores que descartaban cambiar la escala del héroe quedan corregidas por evidencia visual posterior más directa.**
+
+### A3.1 — Validación final y corrección del diagnóstico
+
+Arturo confirmó el 5 de agosto de 2026:
+
+- EditMode: **136/136**;
+- PlayMode: **6/6**;
+- errores: **0**.
+
+La composición compacta funcionó técnicamente, pero Arturo movió al héroe junto a cada región y aportó cinco capturas comparativas. Estas comparaciones demostraron que el héroe sigue demasiado pequeño frente a:
+
+- un tile de terreno;
+- los cultivos jóvenes e intermedios;
+- los cultivos maduros;
+- la cama de cultivo completa.
+
+La interpretación anterior de que la geometría era suficiente queda anulada. El diagnóstico correcto es:
+
+- héroe 64 × 72 a 64 PPU = **1 × 1.125 unidades**;
+- tile Cozy Farm 16 × 16 a 16 PPU = **1 × 1 unidad**;
+- el héroe queda prácticamente de un tile de alto, insuficiente para la lectura humana cenital buscada;
+- reducir tiles rompería continuidad de grid;
+- escalar la raíz del jugador alteraría collider y referencias técnicas.
+
+A3.1 queda **VALIDADA TÉCNICAMENTE**, pero su relación héroe/mundo permanece **RECHAZADA VISUALMENTE**.
+
+### A3.2 — Calibración visual del héroe a 1.5×
+
+Estado: **IMPLEMENTADO REMOTAMENTE; REGENERACIÓN, INSPECCIÓN Y PRUEBAS LOCALES PENDIENTES**.
+
+Commits funcionales:
+
+- `8c48c55ed5bcc9d6d836f3e83bcc79cc5d7e0200` — firma `v3` y escala del visual del héroe;
+- `d4d3757640aa5b4f232bbd35f28d9e924bb328b7` — prueba adicional de escala visual y collider intacto.
+
+Documentación operativa:
+
+- `3b8e057b2f2746fa9732a063e8e4872ffd95dd1d` — actualización de `COZY_FARM_INTAKE.md`.
+
+Cambios:
+
+- firma elevada a `cozy-farm-showcase-scene-v3`;
+- nueva constante `HeroVisualScale = 1.5f`;
+- raíz `Current Hero` en escala **1.0**;
+- hijo `Playable Player Sprite` en escala **1.5**;
+- collider, Rigidbody2D, motor, feet sorting, pivote lógico y prefab fuente sin cambios;
+- tiles y cultivos conservados en escala **1.0**;
+- tamaño visual esperado del héroe: aproximadamente **1.5 × 1.6875 unidades**.
+
+La escala es compatible con la cuadrícula visual: el héroe usa bloques lógicos 4×4 y 1.5× los convierte en bloques 6×6 en la resolución de referencia, sin escalado fraccional de esos bloques.
+
+Pruebas A3.2:
+
+- `CozyFarmShowcaseSceneTests.cs` pasa de **6 a 7 casos**;
+- el caso nuevo verifica raíz 1.0, visual 1.5 y collider con ancho, alto y offset originales.
+
+A3.2 solo modifica la instancia de la exhibición. El prefab real no se cambiará antes de la aprobación visual de Arturo.
+
+### Próximo paso exacto vigente
+
+1. Cerrar `CozyFarmShowcase` antes de hacer Pull.
+2. Hacer **Fetch origin / Pull origin** en `chore/cozy-farm-art-intake`.
+3. Abrir Unity y esperar compilación/importación.
+4. La firma `v3` debe regenerar la escena.
+5. Si aparece el aviso de escena abierta, cerrarla y ejecutar `Tools > Farm Simulator > Rebuild Cozy Farm Showcase`.
+6. Colocar al héroe junto a un tile, un cultivo joven y uno maduro.
+7. Compartir una captura para decidir entre 1.5× y una posible prueba 1.25×.
+8. Ejecutar EditMode; esperado **137/137**.
+9. Ejecutar PlayMode; esperado **6/6**.
+10. No hacer commit de la escena generada ni modificar el prefab real antes de aprobar la comparación.
+
+### Prompt vigente para chat nuevo
+
+> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee `CONTINUIDAD_GPT.md` desde `main`; después `BITÁCORA_GPT.MD` y `COZY_FARM_INTAKE.md` desde `chore/cozy-farm-art-intake`. A1 y A2 están validados. A3.1 pasó 136/136 EditMode y 6/6 PlayMode sin errores, pero cinco comparaciones directas demostraron que el héroe a escala 1.0 sigue demasiado pequeño frente a tiles y cultivos. A3.2 está implementado hasta `d4d3757640aa5b4f232bbd35f28d9e924bb328b7`: firma v3, raíz/collider 1.0 y solo el hijo visual del héroe a 1.5. El esperado es 137/137 EditMode y 6/6 PlayMode. No cambies todavía el prefab real ni avances a Tilemaps/hotbar antes de la aprobación visual de Arturo.
