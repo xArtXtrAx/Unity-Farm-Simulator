@@ -74,7 +74,54 @@ Qué debe comprobarse en futuras versiones para evitar que reaparezca.
 
 ## 4. Bugs activos
 
-No hay bugs activos.
+## BUG-0002 — Marcador de orientación descentrado respecto al personaje provisional
+
+- **Estado:** CORREGIDO
+- **Severidad:** S4 — Baja
+- **Detectado:** 2026-08-05
+- **Verificado/cerrado:** —
+- **Versión de Unity:** `6000.3.21f1`
+- **Escena o sistema:** `Lab` / referencia visual del jugador
+- **Rama/commit afectado:** `feature/player-movement-foundation` en `724152e`
+- **Corrección:** `dd7357c`
+- **Reportado por:** Arturo
+
+### Descripción
+
+El cuadrado amarillo que indica la orientación del jugador cambiaba correctamente de lado, pero en izquierda y derecha quedaba alineado con el pivote de los pies en lugar de quedar centrado verticalmente respecto al rectángulo rojo.
+
+### Pasos para reproducir
+
+1. Ejecutar `Bootstrap → Lab` en el estado `724152e`.
+2. Mover el personaje hacia la izquierda o derecha.
+3. Observar que el marcador lateral aparece demasiado abajo respecto al cuerpo rojo.
+
+### Resultado esperado
+
+Los marcadores laterales deben estar centrados verticalmente respecto al cuerpo; el marcador superior debe quedar sobre la cabeza y el inferior bajo los pies.
+
+### Evidencia
+
+Observación visual reportada por Arturo después de validar teclado y DualSense.
+
+### Causa raíz
+
+El jugador usa los pies como pivote lógico. `PlayerProxyFacingView` calculaba todas las posiciones del marcador alrededor de ese pivote, sin considerar que el centro visual del cuerpo se encuentra a la mitad de su altura sobre los pies.
+
+### Solución aplicada
+
+- `PlayerProxyFacingView` calcula las posiciones desde `SpatialModel.ReferenceCharacterWidth` y `ReferenceCharacterHeight`.
+- Izquierda y derecha usan el centro vertical real del cuerpo.
+- Arriba se coloca después del borde superior y abajo después del borde inferior.
+- La prueba PlayMode existente comprueba que ambos marcadores laterales coincidan con el centro vertical del objeto visual.
+
+### Verificación
+
+Pendiente de validación local en Unity. Resultado esperado: EditMode **11/11**, PlayMode **4/4**, consola limpia y marcador visualmente centrado en las cuatro direcciones.
+
+### Notas de regresión
+
+Mantener el pivote lógico del jugador en los pies. Cualquier indicador o sprite hijo que dependa del centro del cuerpo debe derivar su posición de las dimensiones visuales, no asumir que el pivote coincide con el centro.
 
 ---
 
@@ -162,3 +209,5 @@ No añadir colliders 2D a un objeto creado mediante `GameObject.CreatePrimitive`
 - Se creó el registro de bugs y se definieron estados y severidades.
 - Se añadió `BUG-0001` por el conflicto de colliders detectado en la calibración cenital.
 - `BUG-0001` quedó verificado con PlayMode **2/2** y consola limpia.
+- Se añadió `BUG-0002` por la desalineación del marcador provisional de orientación.
+- `BUG-0002` quedó corregido en `dd7357c`, pendiente de validación local.
