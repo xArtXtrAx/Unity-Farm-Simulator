@@ -9,9 +9,11 @@ Punto de entrada permanente para retomar el desarrollo sin depender de la memori
 - **Repositorio:** `xArtXtrAx/Unity-Farm-Simulator`
 - **Rama estable:** `main`
 - **Rama activa:** `chore/cozy-farm-art-intake`
-- **Head remoto registrado:** `d2845f676ea33260292d0f27f10a6bb578dcd3d5`
+- **Head remoto registrado:** `b3056947ce708b9bc53e092e8204a5bcd3765020`
 - **Bloque actual:** A1 — recepción piloto de Cozy Farm
 - **Estado:** rama y documentación creadas; bundle local preparado; copia de assets, commit local y validación Unity pendientes
+- **Commit inicial del bloque:** `d2845f676ea33260292d0f27f10a6bb578dcd3d5`
+- **Corrección documental:** `b3056947ce708b9bc53e092e8204a5bcd3765020`, conserva íntegro el historial de Fases 1–6
 - **Última fase funcional:** Fase 6, integrada mediante PR #6
 - **Squash commit Fase 6:** `4abce7561215a28e7a37e082cbaacf3825021e92`
 - **Bugs activos:** ninguno
@@ -71,5 +73,5 @@ Punto de entrada permanente para retomar el desarrollo sin depender de la memori
 ## Prompt mínimo para un chat nuevo
 
 ```text
-Continúa xArtXtrAx/Unity-Farm-Simulator. Lee CONTINUIDAD_GPT.md desde main y después BITÁCORA_GPT.MD y COZY_FARM_INTAKE.md desde chore/cozy-farm-art-intake. La Fase 6 está integrada y validada con 124/124 EditMode. La rama artística está en d2845f676ea33260292d0f27f10a6bb578dcd3d5; existe un bundle local con cinco PNG Cozy Farm, metas y documentación, pero su copia, commit y validación Unity siguen pendientes. Conserva el héroe actual y no avances a slicing masivo hasta la validación de Arturo.
+Continúa xArtXtrAx/Unity-Farm-Simulator. Lee CONTINUIDAD_GPT.md desde main y después BITÁCORA_GPT.MD y COZY_FARM_INTAKE.md desde chore/cozy-farm-art-intake. La Fase 6 está integrada y validada con 124/124 EditMode. La rama artística está en b3056947ce708b9bc53e092e8204a5bcd3765020; existe un bundle local con cinco PNG Cozy Farm, metas y documentación, pero su copia, commit y validación Unity siguen pendientes. Conserva el héroe actual y no avances a slicing masivo hasta la validación de Arturo.
 ```
