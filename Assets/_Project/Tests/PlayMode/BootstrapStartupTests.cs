@@ -1,5 +1,7 @@
 using System.Collections;
 using FarmSimulator.Application.Scenes;
+using FarmSimulator.Application.Spatial;
+using FarmSimulator.Presentation.Calibration;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -33,6 +35,45 @@ namespace FarmSimulator.Tests.PlayMode
             Assert.Fail(
                 $"Bootstrap did not transition to '{ProjectSceneNames.Lab}' " +
                 $"within {maximumFrames} frames.");
+        }
+
+        [UnityTest]
+        public IEnumerator LabBuildsOrthographicXZCalibration()
+        {
+            AsyncOperation loadOperation = SceneManager.LoadSceneAsync(
+                ProjectSceneNames.Lab,
+                LoadSceneMode.Single);
+
+            Assert.That(loadOperation, Is.Not.Null);
+            yield return loadOperation;
+            yield return null;
+
+            LabSpatialCalibration calibration =
+                Object.FindFirstObjectByType<LabSpatialCalibration>();
+            Assert.That(calibration, Is.Not.Null);
+
+            Camera sceneCamera = Camera.main;
+            Assert.That(sceneCamera, Is.Not.Null);
+            Assert.That(sceneCamera.orthographic, Is.True);
+            Assert.That(
+                sceneCamera.orthographicSize,
+                Is.EqualTo(SpatialModel.CameraOrthographicSize).Within(0.001f));
+
+            GameObject ground = GameObject.Find(LabSpatialCalibration.GroundObjectName);
+            Assert.That(ground, Is.Not.Null);
+            Assert.That(ground.GetComponent<BoxCollider>(), Is.Not.Null);
+            Assert.That(
+                ground.transform.localScale.x,
+                Is.EqualTo(SpatialModel.GridColumns * SpatialModel.GridCellSize).Within(0.001f));
+            Assert.That(
+                ground.transform.localScale.z,
+                Is.EqualTo(SpatialModel.GridRows * SpatialModel.GridCellSize).Within(0.001f));
+
+            GameObject spriteProxy = GameObject.Find(LabSpatialCalibration.SpriteProxyObjectName);
+            Assert.That(spriteProxy, Is.Not.Null);
+            Assert.That(
+                spriteProxy.transform.localScale.y,
+                Is.EqualTo(SpatialModel.ReferenceCharacterHeight).Within(0.001f));
         }
     }
 }

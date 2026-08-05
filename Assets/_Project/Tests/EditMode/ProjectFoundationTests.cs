@@ -1,6 +1,7 @@
 using System.Linq;
 using FarmSimulator.Application;
 using FarmSimulator.Application.Scenes;
+using FarmSimulator.Application.Spatial;
 using FarmSimulator.Editor;
 using NUnit.Framework;
 using UnityEditor;
@@ -33,6 +34,17 @@ namespace FarmSimulator.Tests.EditMode
             Assert.That(
                 PlayerSettings.GetApplicationIdentifier(NamedBuildTarget.Standalone),
                 Is.EqualTo(ProjectIdentity.StandaloneApplicationIdentifier));
+        }
+
+        [Test]
+        public void SpatialModelUsesXZGroundAndYHeight()
+        {
+            Assert.That(SpatialModel.GroundPlane, Is.EqualTo("XZ"));
+            Assert.That(SpatialModel.HeightAxis, Is.EqualTo("Y"));
+            Assert.That(SpatialModel.UsesThreeDimensionalPhysics, Is.True);
+            Assert.That(SpatialModel.UsesOrthographicCamera, Is.True);
+            Assert.That(SpatialModel.GridCellSize, Is.EqualTo(1f));
+            Assert.That(SpatialModel.ReferenceCharacterHeight, Is.EqualTo(1.8f));
         }
     }
 }
