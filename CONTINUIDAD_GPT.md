@@ -9,7 +9,7 @@ Punto de entrada permanente para retomar el desarrollo sin depender de la memori
 - **Repositorio:** `xArtXtrAx/Unity-Farm-Simulator`
 - **Rama estable:** `main`
 - **Rama activa:** `chore/cozy-farm-art-intake`
-- **Head remoto registrado:** `c30fa64fe3295ed1816536dd5cb16e2d80eb3b89`
+- **Head remoto registrado:** `d88eeacb38ff50963b31d1d8a0f2c91b4297bf49`
 - **Bloque actual:** A2 — slicing curado de Cozy Farm
 - **Estado:** implementado remotamente; reimportación y validación local pendientes
 - **Commit de assets fuente publicado por Arturo:** `e4540b42d275b650f726bad41d4546787ae544e9`
@@ -51,6 +51,7 @@ Decisiones:
 - `cabbage` usa provisionalmente el gráfico denominado `lettuce`.
 - Los IDs de dominio no cambian.
 - `tools.png` contiene máquinas, no iconos apropiados de azada o regadera; queda sin slicing.
+- La prueba de `tools.png` fue endurecida en `d88eeacb38ff50963b31d1d8a0f2c91b4297bf49` para comprobar que no existan aliases falsos, sin depender de cómo Unity represente internamente un Sprite Single.
 - No se crean todavía Tilemaps, paletas, prefabs, escenas, hotbar ni conexiones funcionales.
 
 ## Próxima acción
@@ -60,7 +61,7 @@ Decisiones:
 3. Confirmar visualmente 3 sprites de objetos, 3 de semillas, 18 de cultivos y 4 de terreno.
 4. Ejecutar EditMode completo; esperado **130/130**.
 5. Ejecutar PlayMode completo; esperado **6/6**.
-6. Confirmar que los cultivos usan pivote inferior central y evaluar los alias visuales provisionales.
+6. Confirmar que los cultivos usan pivote inferior central y evaluar los aliases visuales provisionales.
 7. Reportar resultados antes de crear Tilemaps, UI o integración con inventario.
 
 ---
@@ -87,5 +88,5 @@ Decisiones:
 ## Prompt mínimo para un chat nuevo
 
 ```text
-Continúa xArtXtrAx/Unity-Farm-Simulator. Lee CONTINUIDAD_GPT.md desde main y después BITÁCORA_GPT.MD y COZY_FARM_INTAKE.md desde chore/cozy-farm-art-intake. La Fase 6 está integrada. A1 de Cozy Farm fue validado con la línea base 124/124 EditMode y 6/6 PlayMode. A2 está implementado en c30fa64fe3295ed1816536dd5cb16e2d80eb3b89: slices de 3 objetos, 3 semillas, 18 etapas de cultivo y 4 tiles, más 6 pruebas EditMode. La validación esperada es 130/130 EditMode y 6/6 PlayMode. Conserva el héroe y no avances a Tilemaps o UI antes del reporte de Arturo.
+Continúa xArtXtrAx/Unity-Farm-Simulator. Lee CONTINUIDAD_GPT.md desde main y después BITÁCORA_GPT.MD y COZY_FARM_INTAKE.md desde chore/cozy-farm-art-intake. La Fase 6 está integrada. A1 de Cozy Farm fue validado con la línea base 124/124 EditMode y 6/6 PlayMode. A2 está implementado en d88eeacb38ff50963b31d1d8a0f2c91b4297bf49: slices de 3 objetos, 3 semillas, 18 etapas de cultivo y 4 tiles, más 6 pruebas EditMode. La validación esperada es 130/130 EditMode y 6/6 PlayMode. Conserva el héroe y no avances a Tilemaps o UI antes del reporte de Arturo.
 ```
