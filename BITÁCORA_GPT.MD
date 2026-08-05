@@ -19,7 +19,7 @@ Documento maestro de continuidad. Debe permitir retomar el proyecto sin depender
 - **Ruta local:** `D:\Git\Unity-Farm-Simulator`
 - **Rama estable:** `main`
 - **Rama activa:** `feature/lab-spatial-calibration`
-- **Proyecto fuente de migración:** `xArtXtrAx/farming-game-A`
+- **Proyecto fuente:** `xArtXtrAx/farming-game-A`
 - **Commit fuente congelado:** `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
 - **Identidad Unity:**
   - Company Name: `jarturoga`
@@ -30,12 +30,13 @@ Documento maestro de continuidad. Debe permitir retomar el proyecto sin depender
 
 ## 2. Principios rectores
 
-- Unity debe resolver jerarquía, inspector, escenas, prefabs, sprites, Tilemaps, snapping, colisiones, animación, física y depuración.
+- Unity resuelve jerarquía, inspector, escenas, prefabs, sprites, Tilemaps, snapping, colisiones, animación, física y depuración.
 - Migrar comportamientos, reglas, datos e identificadores; no traducir Phaser/TypeScript línea por línea.
 - `main` debe permanecer estable.
 - Arturo usa principalmente GitHub Desktop.
 - Todo código propio vive bajo `Assets/_Project` y fuera de `Assembly-CSharp`.
 - Los `ScriptableObject` contendrán definiciones estáticas; el progreso mutable usará DTO e identificadores de texto estables.
+- Cada implementación o corrección de GPT debe actualizar esta bitácora en el mismo bloque.
 
 ---
 
@@ -64,23 +65,36 @@ Control de versiones confirmado:
 
 La dirección artística objetivo es una vista cenital de sprites y Tilemaps 2D, inspirada en la legibilidad de juegos como Harvest Moon de SNES y Stardew Valley, sin copiar recursos ni mapas.
 
-### Contrato espacial vigente
+### Contrato espacial
 
 - Plano lógico principal: **XY**.
 - Profundidad y orden visual: **Z** y orden de renderizado.
 - Cámara: **ortográfica frontal**, sin inclinación ni rotación isométrica.
-- Física principal del mapa, jugador e interacciones: **Physics 2D**.
+- Física principal: **Physics 2D**.
 - Arte principal: sprites y Tilemaps 2D.
 - Se permiten partículas, luces, objetos, trayectorias y efectos 3D cuando aporten valor.
 - Los saltos y arcos pueden representarse mediante desplazamientos visuales, animación o efectos 3D sin convertir el mapa base en XZ.
-- Celda provisional: `1` unidad de Unity.
-- Referencia provisional de personaje: `1.8` unidades de alto y `0.8` de ancho.
-- Cámara provisional: tamaño ortográfico `6.75`, posición Z `-10`.
-- Pixels Per Unit, resolución base y relación de aspecto siguen pendientes de calibración artística.
+
+### Contrato de pantalla y escala de pixel art
+
+Se conserva la escala lógica demostrada por el prototipo anterior:
+
+- Resolución lógica de referencia: **960 × 540**.
+- Relación de aspecto objetivo: **16:9**.
+- Pixels Per Unit inicial: **64**.
+- Una celda de 64 × 64 px equivale a **1 × 1 unidad** de Unity.
+- Campo visible lógico: **15 × 8.4375 unidades**.
+- Tamaño ortográfico de cámara: **4.21875**.
+- Frame de personaje fuente: **64 × 72 px**.
+- Referencia de personaje en Unity: **1 × 1.125 unidades**.
+- Profundidad de cámara: Z `-10`.
+- En salidas 4:3 o ultrawide, la cámara preservará 16:9 mediante letterbox o pillarbox.
+
+Esta decisión evita reescalar destructivamente `hero_hd.png` y mantiene compatibilidad conceptual con el mundo lógico de 960 × 540 del prototipo.
 
 ### Decisión descartada
 
-La primera calibración usó mundo XZ, física 3D y cámara ortográfica inclinada. Produjo una vista isométrica en rombo que no coincide con la dirección artística. Se conserva solo como aprendizaje histórico; ya no es el contrato del proyecto.
+La primera calibración usó mundo XZ, física 3D y cámara ortográfica inclinada. Produjo una vista isométrica en rombo que no coincide con la dirección artística. Se conserva solo como aprendizaje histórico.
 
 ---
 
@@ -101,67 +115,53 @@ La primera calibración usó mundo XZ, física 3D y cámara ortográfica inclina
 
 ## 6. Fase 2 — Calibración visual y espacial
 
-### Primer intento isométrico
+### Calibración cenital validada
 
-- Commit `8ce5c5e`: laboratorio XZ con cámara inclinada, cuadrícula, referencias y pruebas.
-- Commit `6078d67`: documentación del intento.
-- Validación visual local: funcionó técnicamente, pero la vista resultó isométrica y no adecuada para el objetivo artístico.
-
-### Corrección cenital 2D
-
-- Commit funcional inicial: `edd6846` — `fix: switch calibration to top-down 2D`.
+- Commit inicial isométrico: `8ce5c5e`.
+- Corrección a vista cenital XY: `edd6846`.
 - Estado remoto reconciliado: `48adb0f`.
-- Documentación alineada: `5b3dbda`.
+- Corrección de colliders: `cdb6cdd`.
+- Prueba de regresión de colliders: `c8342a2`.
+- Validación visual documentada: `f0e5df6`.
 
-Cambios implementados:
+Validación local confirmada por Arturo:
 
-- [x] `SpatialModel` fija plano `XY`, profundidad `Z`, Physics 2D y cámara ortográfica frontal.
-- [x] Se mantiene explícitamente la libertad de integrar efectos tridimensionales.
-- [x] Cámara en `(0, 0, -10)` con rotación identidad.
-- [x] Cuadrícula rectangular paralela a la pantalla.
-- [x] Referencias cenitales simples: caminos, estanque, parcelas, árboles, sprites, pila de profundidad y trayectoria en arco.
-- [x] Materiales planos y sin sombras.
-- [x] EditMode protege el contrato espacial XY/Physics 2D.
-- [x] PlayMode protege la cámara frontal, dimensiones, profundidad visual y collider del suelo.
+- [x] EditMode previo: **3/3 aprobadas**.
+- [x] PlayMode final de la corrección: **2/2 aprobadas**.
+- [x] Consola sin errores.
+- [x] `Bootstrap → Lab` funciona.
+- [x] Cuadrícula rectangular alineada a pantalla.
+- [x] Caminos, parcelas, estanque, árboles, sprites, profundidad y arco visual se representan sin perspectiva isométrica.
+- [x] La dirección visual cenital queda aceptada.
 
-### Validación local del estado `5b3dbda`
+### BUG-0001 — VERIFICADO
 
-- [x] EditMode: **3/3 aprobadas**.
-- [x] Se identificó la prueba PlayMode fallida: `LabBuildsFrontFacingOrthographicXYCalibration`.
-- [x] Consola mostró conflicto entre `BoxCollider` 3D y `BoxCollider2D`.
-- [x] Incidente registrado como `BUG-0001` en `BUGS.MD`.
+El conflicto entre `BoxCollider` 3D y `BoxCollider2D` quedó resuelto y verificado localmente. El registro completo permanece en `BUGS.MD`.
 
-### BUG-0001 — Corrección aplicada
+### Calibración de resolución y PPU implementada remotamente
 
-Causa raíz:
+Commit funcional: `0b26b2e` — `feat: calibrate pixel-art display scale`.
 
-- `GameObject.CreatePrimitive(PrimitiveType.Cube)` agrega un `BoxCollider` 3D.
-- `Destroy(collider)` no lo elimina hasta el final del frame.
-- El código intentaba agregar `BoxCollider2D` al mismo objeto antes de que el collider 3D desapareciera.
+Implementado:
 
-Corrección aplicada:
+- [x] `PixelArtDisplayModel.cs` fija resolución 960 × 540, 16:9, 64 PPU, campo visible, cámara y tamaño del personaje.
+- [x] Política pura de viewport para 16:9, 4:3 y ultrawide.
+- [x] `ReferenceAspectCamera.cs` aplica letterbox/pillarbox y responde a cambios de tamaño de ventana.
+- [x] `SpatialModel` adopta 15 columnas × 8 filas de referencia y escala 64 px = 1 unidad.
+- [x] `LabSpatialCalibration` se reencuadra para el campo visible de 960 × 540.
+- [x] Personajes de referencia pasan a 1 × 1.125 unidades, equivalentes a 64 × 72 px.
+- [x] EditMode añade validación de resolución, PPU, cámara y viewports.
+- [x] PlayMode valida componente de aspecto, `Camera.rect`, dimensiones y tamaño de personaje.
+- [x] `BUGS.MD` marca `BUG-0001` como verificado en `9592532`.
 
-- Commit `cdb6cdd`: separa el objeto lógico `Calibration Ground` de su representación `Calibration Ground Visual`.
-- `Calibration Ground` se crea como `GameObject` limpio y recibe directamente `BoxCollider2D`.
-- La primitiva verde queda en un objeto visual separado y sus colliders 3D se eliminan normalmente.
-- Commit `c8342a2`: refuerza PlayMode para verificar que no queden colliders 3D en los objetos visuales generados.
-- Commit `a791641`: registra `BUG-0001` con causa, evidencia y solución.
-- Estado del bug: **CORREGIDO**, pendiente de evidencia explícita del resultado automatizado final para marcarlo **VERIFICADO**.
+Pendiente de validación local del nuevo commit:
 
-### Validación visual posterior a la corrección
-
-- [x] Arturo sincronizó la corrección y ejecutó `Bootstrap → Lab` correctamente.
-- [x] La pestaña Game muestra una cuadrícula rectangular alineada a pantalla.
-- [x] El mapa técnico cenital muestra caminos, parcelas, estanque, árboles y referencias de sprites sin perspectiva isométrica.
-- [x] La dirección visual coincide con el objetivo de una base tipo Harvest Moon/Stardew Valley.
-- [x] La aplicación entra en Play Mode y construye la calibración sin bloquearse.
-
-Pendiente:
-
-- [ ] Confirmar mediante Test Runner que PlayMode termina en **2/2**.
-- [ ] Confirmar consola final sin errores ni advertencias relacionadas con colliders.
-- [ ] Tras esa evidencia, cambiar `BUG-0001` a **VERIFICADO**.
-- [ ] Decidir resolución base, relación de aspecto y Pixels Per Unit.
+- [ ] Unity debe compilar `0b26b2e` sin errores.
+- [ ] EditMode esperado: **4/4**.
+- [ ] PlayMode esperado: **2/2**.
+- [ ] Consola esperada: **0 errores y 0 advertencias**.
+- [ ] `Lab` debe verse más acercado, mostrando una referencia de 15 × 8 celdas con pequeño margen vertical.
+- [ ] La ventana Game debe conservar 16:9 y mostrar barras en relaciones distintas.
 - [ ] No fusionar todavía esta rama.
 
 ---
@@ -170,16 +170,29 @@ Pendiente:
 
 El proyecto anterior contiene granja, casa, mercado, personaje, teclado/mouse/gamepad, hotbar, inventario, almacenamiento, doce parcelas, azada, regadera, semillas, nabo, zanahoria, col, tienda, economía, envíos, reloj, estaciones, sueño, fin de día y guardado JSON versionado. El detalle está en `MIGRACION_DESDE_FARMING_GAME_A.MD`.
 
+Datos visuales relevantes del prototipo:
+
+- mundo lógico de escena: 960 × 540;
+- personaje: frames de 64 × 72;
+- parcelas de referencia: 48 px con separación de 58 px;
+- colisión de jugador: radio de 12 px;
+- cámara lógica centrada en 480, 270.
+
 ---
 
 ## 8. Próximo paso exacto
 
-1. Ejecutar `Test Runner → PlayMode → Run All`.
-2. Confirmar resultado **2/2**.
-3. Revisar que la consola no muestre el conflicto `Can't add component 'BoxCollider2D'...`.
-4. Enviar captura de Test Runner y consola.
-5. Marcar `BUG-0001` como **VERIFICADO**.
-6. Continuar con la decisión de resolución base, relación de aspecto y Pixels Per Unit antes de implementar movimiento.
+1. Detener Play Mode y cerrar Unity.
+2. En GitHub Desktop, permanecer en `feature/lab-spatial-calibration`.
+3. Ejecutar **Fetch origin** y **Pull origin**.
+4. Abrir Unity `6000.3.21f1` y esperar la compilación.
+5. Limpiar la consola.
+6. Ejecutar EditMode: resultado esperado **4/4**.
+7. Ejecutar PlayMode: resultado esperado **2/2**.
+8. Abrir `Assets/_Project/Scenes/Bootstrap.unity` y pulsar Play.
+9. Revisar la pestaña Game en `Free Aspect` y, de ser posible, en una resolución 16:9.
+10. Enviar capturas del Test Runner, consola y nueva vista Game.
+11. Tras validar, cerrar la calibración espacial y comenzar movimiento con teclado y DualSense.
 
 ---
 
