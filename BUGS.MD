@@ -24,12 +24,18 @@ Registro histórico de errores detectados, investigados y corregidos durante el 
 
 ## Bugs activos
 
+No hay bugs activos.
+
+---
+
+## Bugs corregidos y verificados
+
 ## BUG-0006 — El `sortingOrder` cambia, pero ningún objeto del laboratorio puede ocultar al jugador
 
-- **Estado:** CORREGIDO
+- **Estado:** VERIFICADO
 - **Severidad:** S3 — Media
 - **Detectado:** 2026-08-05
-- **Corrección implementada:** 2026-08-05
+- **Corregido/verificado:** 2026-08-05
 - **Versión de Unity:** `6000.3.21f1`
 - **Sistema:** laboratorio de calibración / profundidad visual cenital
 - **Rama afectada:** `feature/player-prefab-depth-sorting`
@@ -57,23 +63,24 @@ Las referencias existentes se construyen con `GameObject.CreatePrimitive`, `Mesh
 - Usa `SpriteRenderer`, sorting layer `Actors` y `TopDownSpriteSorting`, igual que el jugador.
 - `LabSpatialCalibrationInstaller` la instala tanto si crea la calibración como si esta ya existe.
 - No tiene collider, para permitir atravesarla y observar el cambio visual.
-- La prueba PlayMode ahora exige:
+- La prueba PlayMode exige:
   - misma sorting layer;
   - orden correcto de la referencia;
   - jugador detrás con pies más arriba;
   - jugador delante con pies más abajo.
 
-### Pendiente para pasar a VERIFICADO
+### Verificación
 
-- Hacer pull y confirmar compilación limpia.
-- Comprobar que aparece `Depth Sorting Reference` dentro de `Generated Calibration`.
-- Caminar desde abajo hacia arriba atravesando el rectángulo morado.
-- Confirmar el cambio visual delante/detrás.
-- Ejecutar EditMode **36/36** y PlayMode **6/6**.
+Arturo confirmó el 2026-08-05:
+
+- el rectángulo morado apareció correctamente en el laboratorio;
+- al caminar hacia arriba y superar su línea de pies, el personaje quedó oculto detrás;
+- al regresar hacia abajo, el personaje volvió a renderizarse delante;
+- EditMode pasó **36/36**;
+- PlayMode pasó **6/6**;
+- no se produjeron errores durante las pruebas.
 
 ---
-
-## Bugs corregidos y verificados
 
 ## BUG-0005 — La Fase 5 abre Unity con errores de compilación y solicita Safe Mode
 
@@ -159,4 +166,5 @@ Se reposicionó el marcador desde las dimensiones visuales: laterales centrados,
 
 - Se verificaron `BUG-0001` a `BUG-0005`.
 - Se añadió `BUG-0006` por falta de una referencia visual compatible con el sorting del jugador.
-- Se implementó una referencia 2D con la misma sorting layer y cálculo por pies; queda pendiente de validación local.
+- Se implementó una referencia 2D con la misma sorting layer y cálculo por pies.
+- Arturo verificó la oclusión delante/detrás y ambas suites completas; `BUG-0006` pasó a VERIFICADO.
