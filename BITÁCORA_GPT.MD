@@ -251,11 +251,11 @@ Rama activa del bloque:
 chore/cozy-farm-art-intake
 ```
 
-La primera recepción se limita a iconos de objetos, semillas, herramientas, cultivos y terreno. No organizar todavía todos los edificios, animales, enemigos y estaciones.
+La recepción inicial se limita a iconos de objetos, semillas, cultivos y terreno. No organizar todavía todos los edificios, animales, enemigos y estaciones.
 
 ### Bloque artístico A1 — Recepción piloto de Cozy Farm
 
-Estado: **RAMA CREADA Y PAQUETE PILOTO PREPARADO; COPIA LOCAL, COMMIT DE ASSETS Y VALIDACIÓN UNITY PENDIENTES**.
+Estado: **VALIDADO LOCALMENTE**.
 
 #### Fuente y selección
 
@@ -270,7 +270,7 @@ Inventario observado:
 
 Los GIF se consideran únicamente referencia temporal y no entran en Unity.
 
-Se preparó un bundle reproducible con cinco hojas PNG originales:
+Se preparó y versionó un bundle con cinco hojas PNG originales:
 
 - `Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/items.png` — 160 × 192;
 - `Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/seeds.png` — 112 × 96;
@@ -278,13 +278,7 @@ Se preparó un bundle reproducible con cinco hojas PNG originales:
 - `Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/crops.png` — 96 × 592;
 - `Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/tiles.png` — 864 × 800.
 
-El bundle también contiene:
-
-- `.meta` deterministas para las cinco texturas y sus carpetas;
-- `Assets/_Project/Art/ThirdParty/CozyFarm/README.md` con procedencia, hashes, alcance y validación;
-- importación inicial no destructiva.
-
-No se incluyeron ZIP, GIF, `global.png`, `item_carry.png`, personajes, animales, edificios, enemigos, máquinas ni variantes estacionales completas.
+No se incluyeron ZIP, GIF, `global.png`, `item_carry.png`, personajes, animales, edificios, enemigos ni variantes estacionales completas.
 
 #### Configuración inicial
 
@@ -297,21 +291,92 @@ No se incluyeron ZIP, GIF, `global.png`, `item_carry.png`, personajes, animales,
 - Alpha Is Transparency: activado.
 - Compresión por defecto: desactivada.
 
-El modo Single es temporal y evita fijar slicing y nombres antes de comprobar cuadrículas, escala y estilo dentro de Unity.
+#### Publicación y validación
 
-#### Comprobaciones remotas
+- Commit local de assets publicado por Arturo: `e4540b42d275b650f726bad41d4546787ae544e9` — `Add Cozy Farm pilot art sources`.
+- El commit contiene exactamente 17 archivos del piloto.
+- Arturo confirmó el 5 de agosto de 2026 que la importación y todas las pruebas solicitadas quedaron OK.
+- Como A1 no añadió casos, la línea base confirmada permaneció en **124/124 EditMode** y **6/6 PlayMode**.
+- No se reportaron errores de compilación ni ciclos de reimportación.
+- El héroe, escenas, prefabs, scripts funcionales, asmdefs, Input System y Domain permanecieron sin cambios.
 
-- firmas PNG válidas;
-- dimensiones verificadas;
-- extracción directa desde las hojas especializadas del ZIP;
-- el héroe, escenas, prefabs, scripts funcionales, asmdefs, Input System y Domain no se modificaron;
-- el conector GitHub no permite adjuntar directamente estos archivos binarios locales, por lo que su copia y commit deberán realizarse con GitHub Desktop;
-- no se afirma todavía que Unity importe sin advertencias ni que las pruebas sigan pasando.
+### Bloque artístico A2 — Slicing curado de Cozy Farm
 
-Documentación de operación creada:
+Estado: **IMPLEMENTADO REMOTAMENTE; VALIDACIÓN LOCAL PENDIENTE**.
 
+Objetivo: convertir únicamente recursos con consumidor próximo o criterio de prueba en sub-sprites nombrados, conservando los PNG originales sin duplicarlos ni editarlos.
+
+#### Objetos y semillas
+
+`items.png` expone tres sprites 16 × 16:
+
+- `cozy_turnip`;
+- `cozy_carrot`;
+- `cozy_cabbage`.
+
+`seeds.png` expone tres sprites 16 × 16:
+
+- `cozy_turnip_seeds`;
+- `cozy_carrot_seeds`;
+- `cozy_cabbage_seeds`.
+
+Alias visuales provisionales:
+
+- el paquete denomina `radish` al recurso asociado provisionalmente con el ID de dominio `turnip`;
+- el paquete denomina `lettuce` al recurso asociado provisionalmente con `cabbage`;
+- los IDs de dominio no cambiaron y los alias pueden reemplazarse después sin tocar la lógica.
+
+#### Cultivos
+
+`crops.png` expone 18 sprites 16 × 16:
+
+- `cozy_turnip_stage_0` a `cozy_turnip_stage_5`;
+- `cozy_carrot_stage_0` a `cozy_carrot_stage_5`;
+- `cozy_cabbage_stage_0` a `cozy_cabbage_stage_5`.
+
+Los 18 sprites usan pivote inferior central para su colocación futura sobre parcelas.
+
+#### Terreno
+
+`tiles.png` expone cuatro sprites 16 × 16:
+
+- `cozy_grass`;
+- `cozy_dirt`;
+- `cozy_water`;
+- `cozy_tilled_soil`.
+
+#### Herramientas
+
+`tools.png` contiene máquinas de procesamiento y mobiliario, no iconos adecuados de azada o regadera. Permanece en modo Single y no se crearon aliases `cozy_hoe` ni `cozy_watering_can`.
+
+#### Pruebas A2
+
+Archivos nuevos:
+
+- `Assets/_Project/Tests/EditMode/CozyFarmPilotArtTests.cs`;
+- `Assets/_Project/Tests/EditMode/CozyFarmPilotArtTests.cs.meta`.
+
+Seis casos nuevos comprueban:
+
+- dimensiones exactas de las cinco hojas;
+- importación pixel-art a 16 PPU, Point, sin mipmaps, Clamp y sin compresión;
+- que `tools.png` siga Single y no exponga aliases falsos de herramienta;
+- los seis nombres de objetos/semillas;
+- las 18 etapas de cultivo;
+- los cuatro tiles piloto.
+
+La aserción de `tools.png` se endureció en `d88eeacb38ff50963b31d1d8a0f2c91b4297bf49` para no depender de cómo Unity represente internamente el sprite principal en modo Single.
+
+#### Alcance remoto confirmado
+
+Desde el commit validado de A1 hasta el head de A2 solo cambian:
+
+- cuatro `.meta` de texturas (`items`, `seeds`, `crops`, `tiles`);
+- la prueba A2 y su `.meta`;
 - `COZY_FARM_INTAKE.md`;
-- commit inicial de rama: `d2845f676ea33260292d0f27f10a6bb578dcd3d5`.
+- esta bitácora al cerrar la transacción documental.
+
+No se modificaron PNG, héroe, escenas, prefabs, runtime, asmdefs, Input System ni Domain.
 
 ---
 
@@ -325,6 +390,7 @@ Cadena de recuperación:
 README.md en main
   → CONTINUIDAD_GPT.md en main
   → BITÁCORA_GPT.MD en la rama activa o main
+  → COZY_FARM_INTAKE.md
   → BUGS.MD + MIGRACION_DESDE_FARMING_GAME_A.MD
   → comparación main/rama y commits recientes
   → Próximo paso exacto
@@ -336,19 +402,21 @@ Los cambios exclusivamente locales siguen siendo el único estado que GitHub no 
 
 ## 6. Próximo paso exacto
 
-1. En GitHub Desktop, cambiar a `chore/cozy-farm-art-intake` y ejecutar **Fetch origin / Pull origin**.
-2. Extraer `cozy-farm-pilot-intake.zip` en la raíz `D:\Git\Unity-Farm-Simulator`, conservando `Assets/_Project/Art/...`.
-3. Revisar en GitHub Desktop que solo aparezcan los 17 archivos del piloto Cozy Farm.
-4. Crear un único commit local, por ejemplo `Add Cozy Farm pilot art sources`, y ejecutar **Push origin**.
-5. Abrir el proyecto con Unity `6000.3.21f1` y esperar la importación completa.
-6. Confirmar que no hay errores ni ciclos de reimportación.
-7. Revisar que las cinco texturas usan Point, 16 PPU, sin mipmaps y sin compresión.
-8. Comparar héroe, objetos y terreno a escala mundial equivalente.
-9. Ejecutar EditMode completo; resultado esperado, todavía no confirmado después de la importación: **124/124**.
-10. Ejecutar PlayMode completo; resultado esperado, todavía no confirmado: **6/6**.
-11. Comunicar consola, pruebas y percepción visual antes de crear slicing, Tilemaps, paletas, prefabs o UI.
-12. No agregar más recursos a esta rama hasta cerrar la validación del piloto.
-13. Mantener `FarmSimulator.Domain` independiente de `UnityEngine`.
+1. En GitHub Desktop, permanecer en `chore/cozy-farm-art-intake` y ejecutar **Fetch origin / Pull origin**.
+2. Confirmar que el head remoto incluido es `d88eeacb38ff50963b31d1d8a0f2c91b4297bf49` o un registro documental posterior sin cambios funcionales.
+3. Abrir Unity `6000.3.21f1` y esperar la reimportación de `items.png`, `seeds.png`, `crops.png` y `tiles.png`.
+4. Confirmar en el Project Browser o Sprite Editor:
+   - 3 sprites de objetos;
+   - 3 sprites de semillas;
+   - 18 sprites de cultivos;
+   - 4 sprites de terreno.
+5. Confirmar visualmente que los cultivos tienen pivote inferior central.
+6. Ejecutar EditMode completo; resultado esperado, todavía no confirmado: **130/130**.
+7. Ejecutar PlayMode completo; resultado esperado, todavía no confirmado: **6/6**.
+8. Evaluar si `radish → turnip` y `lettuce → cabbage` son aceptables como alias visuales provisionales.
+9. Comunicar pruebas, consola y percepción visual antes de crear Tilemaps, paletas, prefabs, UI o conexión con inventario.
+10. No añadir más sprites ni funcionalidad a esta rama hasta cerrar la validación A2.
+11. Mantener `FarmSimulator.Domain` independiente de `UnityEngine`.
 
 ---
 
@@ -360,4 +428,4 @@ Hotbar visual, almacenamiento, economía, tiempo, agricultura, herramientas, tre
 
 ## 8. Protocolo para chat nuevo
 
-> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`; después `BITÁCORA_GPT.MD` y `COZY_FARM_INTAKE.md` desde `chore/cozy-farm-art-intake`, seguido de `BUGS.MD` y `MIGRACION_DESDE_FARMING_GAME_A.MD`. La Fase 6 está integrada mediante PR #6 y validada con 124/124 EditMode. La rama artística está activa en `d2845f676ea33260292d0f27f10a6bb578dcd3d5`; existe un bundle local con cinco PNG, metas y documentación, pero su copia, commit y validación Unity siguen pendientes. Conserva el héroe actual y no avances a slicing masivo hasta la validación de Arturo.
+> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`; después `BITÁCORA_GPT.MD` y `COZY_FARM_INTAKE.md` desde `chore/cozy-farm-art-intake`, seguido de `BUGS.MD` y `MIGRACION_DESDE_FARMING_GAME_A.MD`. La Fase 6 está integrada mediante PR #6. A1 de Cozy Farm fue validado con 124/124 EditMode y 6/6 PlayMode. A2 está implementado en `d88eeacb38ff50963b31d1d8a0f2c91b4297bf49`, con 3 objetos, 3 semillas, 18 etapas de cultivo, 4 tiles y 6 pruebas EditMode nuevas; su validación esperada es 130/130 EditMode y 6/6 PlayMode. Conserva el héroe actual y no avances a Tilemaps o UI antes de la validación de Arturo.
