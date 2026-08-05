@@ -14,8 +14,10 @@ Documento maestro de continuidad del proyecto. Su objetivo es conservar el conte
 - **Propietario:** Arturo García (`xArtXtrAx`)
 - **Tipo de proyecto:** simulador de granja 2.5D
 - **Motor:** Unity
+- **Versión instalada:** Unity 6.3 LTS `6000.3.21f1`
 - **Plataforma inicial:** Windows PC
 - **Control prioritario:** DualSense, sin abandonar teclado y mouse
+- **Ruta local del repositorio de Arturo:** `D:\Git\Unity-Farm-Simulator`
 - **Estado del repositorio:** público temporalmente durante el desarrollo colaborativo; posteriormente será privado
 - **Inicio formal de la bitácora:** 5 de agosto de 2026
 - **Proyecto fuente:** `xArtXtrAx/farming-game-A`
@@ -52,13 +54,12 @@ Desarrollar un simulador de granja 2.5D con una arquitectura limpia, escalable y
 - La primera meta será una **prueba vertical pequeña y completamente jugable**, no una migración masiva inmediata.
 - Después de validar el flujo Unity–GitHub, se buscará paridad funcional con las tres escenas y sistemas del commit fuente.
 
-### 3.2 Versión y plantilla previstas
+### 3.2 Versión y plantilla
 
-- **Versión objetivo:** Unity 6.3 LTS, usando el parche estable más reciente disponible dentro de la rama seleccionada al crear el proyecto.
+- **Versión instalada y fijada para el proyecto:** Unity 6.3 LTS `6000.3.21f1`.
 - **Plantilla prevista:** Universal 3D / URP.
 - La elección está orientada a combinar sprites 2D con profundidad, iluminación, cámara y elementos tridimensionales propios de un juego 2.5D.
-
-> Registrar aquí la versión exacta del editor una vez creado el proyecto, por ejemplo: `6000.3.xf1`.
+- No abrir ni actualizar el proyecto con otra versión de Unity sin documentar y aprobar previamente la migración del editor.
 
 ### 3.3 Flujo Git
 
@@ -265,20 +266,22 @@ El objetivo no es producir contenido abundante, sino validar el flujo completo U
 - [x] Confirmación de la línea base `dd32056` y del PR #43 fusionado.
 - [x] Creación de `MIGRACION_DESDE_FARMING_GAME_A.MD` con fases, contratos y criterios de cierre.
 - [x] Establecimiento de la actualización obligatoria de la bitácora después de cada implementación o corrección.
+- [x] Instalación de Unity 6.3 LTS `6000.3.21f1`.
+- [x] Clonación del repositorio en `D:\Git\Unity-Farm-Simulator`.
 
 ### En curso
 
-- [ ] Instalación de Unity Hub y Unity en la computadora de Arturo.
-- [ ] Confirmación de la versión exacta instalada.
+- [ ] Creación segura del proyecto Unity dentro del repositorio ya clonado.
+- [ ] Confirmación de los módulos instalados junto al editor.
 
 ### Próximo paso inmediato
 
-1. Confirmar la versión exacta de Unity y los módulos instalados.
-2. Crear el proyecto Unity dentro de este repositorio.
-3. Completar la **Fase 1** de `MIGRACION_DESDE_FARMING_GAME_A.MD`.
-4. Configurar `.gitignore`, serialización, archivos `.meta`, paquetes y assemblies.
-5. Crear `Bootstrap` y `Lab`.
-6. Iniciar la calibración del sprite, cámara, movimiento y DualSense.
+1. Crear un proyecto temporal con plantilla **Universal 3D** usando Unity 6.3 LTS.
+2. Cerrar el editor cuando termine la importación inicial.
+3. Copiar únicamente `Assets`, `Packages` y `ProjectSettings` desde el proyecto temporal a `D:\Git\Unity-Farm-Simulator`.
+4. Añadir la raíz clonada a Unity Hub mediante **Add/Open project from disk**.
+5. Abrirla exclusivamente con `6000.3.21f1` y comprobar que no existan errores de consola.
+6. Configurar `.gitignore`, serialización, archivos `.meta`, paquetes y assemblies para completar la **Fase 1**.
 
 ---
 
@@ -306,6 +309,13 @@ El objetivo no es producir contenido abundante, sino validar el flujo completo U
 - Se convirtió el requisito en una puerta de cierre: una implementación no se considera terminada hasta que su estado quede documentado.
 - La actualización debe permitir reconstruir el punto exacto de trabajo incluso si la memoria del chat se interrumpe sin aviso.
 - Se definieron los datos mínimos que debe contener cada registro y la obligación de distinguir entre completado, parcial, bloqueado y pendiente de validación manual.
+
+### 2026-08-05 — Entorno local preparado
+
+- Arturo instaló Unity 6.3 LTS `6000.3.21f1` mediante Unity Hub.
+- El repositorio se clonó correctamente en `D:\Git\Unity-Farm-Simulator`.
+- La raíz del repositorio todavía contiene únicamente documentación y debe convertirse en proyecto Unity sin eliminar esos archivos.
+- El siguiente paso es generar un proyecto temporal Universal 3D y trasladar a la raíz solo las carpetas nativas necesarias.
 
 ---
 
@@ -346,8 +356,7 @@ La bitácora debe poder indicar por sí misma cuál fue la última implementaci�
 
 ## 13. Datos pendientes por definir
 
-- Versión exacta de Unity instalada.
-- Ruta local definitiva del repositorio.
+- Módulos exactos instalados junto a Unity 6.3 LTS.
 - Resolución base y relación de aspecto objetivo.
 - Cámara ortográfica o perspectiva controlada.
 - Modelo espacial definitivo: mundo XZ con física 3D o XY con física 2D.
