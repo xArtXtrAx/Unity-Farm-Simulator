@@ -18,7 +18,7 @@ Documento maestro de continuidad. Debe permitir retomar el proyecto sin depender
 - **Control prioritario:** DualSense, además de teclado y mouse
 - **Ruta local:** `D:\Git\Unity-Farm-Simulator`
 - **Rama estable:** `main`
-- **Rama activa siguiente:** `feature/player-movement-foundation`
+- **Rama activa:** `feature/player-movement-foundation`
 - **Proyecto fuente:** `xArtXtrAx/farming-game-A`
 - **Commit fuente congelado:** `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
 - **Identidad Unity:** `jarturoga` / `Unity Farm Simulator` / `com.jarturoga.unityfarmsimulator`
@@ -56,7 +56,7 @@ Control de versiones confirmado: `Visible Meta Files`, `Force Text`, `.meta`, `.
 - Vista cenital basada en sprites y Tilemaps 2D.
 - Plano lógico principal: **XY**.
 - Profundidad y orden visual: **Z** y orden de renderizado.
-- Cámara: **ortográfica frontal**, sin inclinación ni rotación isométrica.
+- Cámara: **ortográfica frontal**.
 - Física principal: **Physics 2D**.
 - Se permiten partículas, luces, trayectorias y objetos 3D cuando aporten valor.
 
@@ -70,10 +70,7 @@ Control de versiones confirmado: `Visible Meta Files`, `Force Text`, `.meta`, `.
 - Tamaño ortográfico: **4.21875**.
 - Frame del personaje fuente: **64 × 72 px**.
 - Personaje en Unity: **1 × 1.125 unidades**.
-- Cámara: Z `-10`.
 - Relaciones diferentes conservan 16:9 mediante letterbox o pillarbox.
-
-La primera calibración XZ/isométrica fue descartada porque no coincide con la estética deseada.
 
 ---
 
@@ -83,7 +80,6 @@ La primera calibración XZ/isométrica fue descartada porque no coincide con la 
 - Arquitectura por assemblies.
 - Escenas `Bootstrap` y `Lab`.
 - Transición automática `Bootstrap → Lab`.
-- Paquetes innecesarios retirados.
 - Identidad definitiva aplicada y protegida.
 - Validación: EditMode **2/2**, PlayMode **1/1**, consola limpia.
 - PR #1 fusionado mediante `ece618c`.
@@ -92,57 +88,75 @@ La primera calibración XZ/isométrica fue descartada porque no coincide con la 
 
 ## 6. Fase 2 — Calibración visual, espacial y de pantalla: COMPLETADA E INTEGRADA
 
-### Implementación
-
-- Laboratorio cenital XY con cámara frontal y Physics 2D.
-- Cuadrícula rectangular, caminos, parcelas, estanque, árboles, referencias de sprites, profundidad y arco visual.
+- Vista cenital XY y Physics 2D.
 - Resolución lógica 960 × 540, 16:9 y 64 PPU.
-- `ReferenceAspectCamera` para letterbox/pillarbox.
-- Pruebas EditMode y PlayMode para contrato espacial, escala, cámara y colliders.
+- Cámara ortográfica frontal con letterbox/pillarbox.
+- Laboratorio con referencias de terreno, sprites, profundidad y efectos 3D.
+- `BUG-0001` verificado y documentado en `BUGS.MD`.
 
-### Incidente resuelto
-
-`BUG-0001` — conflicto entre `BoxCollider` 3D y `BoxCollider2D`:
-
-- causa: `GameObject.CreatePrimitive` añadía un collider 3D que `Destroy` retiraba al final del frame;
-- corrección: separar el suelo lógico Physics 2D de su representación visual;
-- estado: **VERIFICADO**;
-- registro completo: `BUGS.MD`.
-
-### Validación local final de Arturo
+Validación local final de Arturo:
 
 - EditMode: **4/4 aprobadas**.
 - PlayMode: **2/2 aprobadas**.
 - Consola: **0 errores y 0 advertencias**.
-- `Bootstrap → Lab`: aprobado.
-- Vista cenital: aprobada.
-- Escala 960 × 540 / 64 PPU: aprobada visualmente.
-- La cámara preserva el marco 16:9 en la pestaña Game.
+- Vista y escala: aprobadas.
 
-### Integración
+Integración:
 
 - PR #2: `Calibrate top-down pixel-art presentation`.
 - Merge commit: `7ac3f91ddba1f1e6bd8136e22d6ed0a70d19fce8`.
-- Fecha: 2026-08-05.
+- Registro posterior en `main`: `660c7f0`.
 
 ---
 
-## 7. Fase 3 — Movimiento del jugador: SIGUIENTE
+## 7. Fase 3 — Base de movimiento del jugador: VALIDADA, PENDIENTE DE INTEGRACIÓN
 
-Objetivo del primer bloque:
+### Base funcional implementada
 
-- personaje provisional controlable dentro de `Lab`;
-- movimiento analógico en ocho direcciones;
-- cuatro direcciones visuales;
-- teclado: WASD y flechas;
-- DualSense/gamepad: stick izquierdo y D-pad;
-- zona muerta inicial `0.18`;
-- velocidad uniforme, sin ventaja diagonal;
-- `Rigidbody2D` y collider 2D;
-- separación entre lectura de input, procesamiento y motor físico;
-- pruebas puras y PlayMode.
+Commit inicial: `e0be2afa9681e56a987725385affb8c5e96efdf7` — `feat: add keyboard and gamepad player movement foundation`.
 
-El sprite real y Animator se incorporarán después de validar el motor y los controles con la referencia provisional.
+Incluye:
+
+- [x] `PlayerMovementModel.cs` en Application, sin dependencia de UnityEngine.
+- [x] Zona muerta radial inicial `0.18`.
+- [x] Magnitud analógica remapeada después de la zona muerta.
+- [x] Normalización de entradas digitales diagonales.
+- [x] Resolución de cuatro orientaciones visuales.
+- [x] `TopDownPlayerMotor` separado de la lectura de input.
+- [x] Movimiento mediante `Rigidbody2D.MovePosition` en `FixedUpdate`.
+- [x] `CapsuleCollider2D` de pies, gravedad cero, rotación bloqueada e interpolación.
+- [x] `UnifiedMovementInput` admite WASD, flechas, stick izquierdo y D-pad.
+- [x] Selección de la fuente activa con mayor magnitud entre teclado y gamepad.
+- [x] Compatibilidad con el primer gamepad conectado aunque no sea `Gamepad.current`.
+- [x] Personaje provisional rojo y marcador amarillo de orientación.
+- [x] Perímetro Physics 2D del laboratorio.
+- [x] Presentation referencia explícitamente `Unity.InputSystem`.
+- [x] Pruebas puras de zona muerta, fuerza analógica, diagonal y orientación.
+- [x] Pruebas PlayMode de composición Physics 2D y desplazamiento normalizado.
+
+### Validación local final confirmada por Arturo
+
+Unity `6000.3.21f1`:
+
+- [x] EditMode: **11/11 aprobadas**.
+- [x] PlayMode: **4/4 aprobadas**.
+- [x] Consola: **0 errores**.
+- [x] WASD y flechas funcionan.
+- [x] Stick izquierdo y D-pad del DualSense funcionan.
+- [x] Movimiento diagonal normalizado.
+- [x] El jugador no atraviesa el perímetro.
+- [x] El cuerpo rojo y el marcador permanecen completamente visibles en los cuatro extremos.
+
+### Bugs de la fase
+
+- `BUG-0002`: marcador de orientación descentrado — **VERIFICADO**.
+- `BUG-0003`: límites físicos permitían recorte visual — **VERIFICADO**.
+
+La corrección de límites considera el volumen visual completo, el pivote situado en los pies, el marcador, el tamaño del `CapsuleCollider2D` y su offset. La prueba PlayMode protege matemáticamente los cuatro extremos.
+
+### Estado de cierre
+
+La base de movimiento está lista para PR e integración en `main`. El rectángulo y el marcador son referencias técnicas; el siguiente bloque sustituirá esa representación por el sprite real y su Animator, sin alterar el motor validado.
 
 ---
 
@@ -161,13 +175,16 @@ Datos relevantes:
 
 ## 9. Próximo paso exacto
 
-1. Crear `feature/player-movement-foundation` desde `main` después de `7ac3f91`.
-2. Implementar procesamiento analógico puro con zona muerta `0.18` y normalización diagonal.
-3. Implementar motor `Rigidbody2D` separado de la lectura de input.
-4. Admitir WASD, flechas, stick izquierdo y D-pad.
-5. Generar un personaje provisional controlable en `Lab`.
-6. Añadir pruebas EditMode y PlayMode.
-7. Validar en Unity con teclado y DualSense antes de importar el sprite definitivo.
+1. Crear y fusionar el PR de `feature/player-movement-foundation` hacia `main`.
+2. Registrar el merge en la bitácora de `main`.
+3. Crear una rama nueva desde `main` para la representación animada del jugador.
+4. Localizar y copiar el spritesheet congelado del personaje desde `xArtXtrAx/farming-game-A`.
+5. Importarlo con textura Sprite, filtro Point, sin compresión y 64 PPU.
+6. Cortar frames de 64 × 72 px conservando el pivote en los pies.
+7. Crear animaciones idle/caminar para abajo, arriba, izquierda y derecha.
+8. Conectar Animator con velocidad y orientación del motor ya validado.
+9. Sustituir el rectángulo rojo; mantener temporalmente el marcador como herramienta de depuración desactivable.
+10. Añadir pruebas de importación/configuración y validar visualmente en `Bootstrap → Lab`.
 
 ---
 
