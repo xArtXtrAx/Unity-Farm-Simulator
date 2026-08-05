@@ -1,38 +1,105 @@
-# Cozy Farm — plan de recepción piloto
+# Cozy Farm — recepción piloto
 
-## Estado
+## Estado actual
 
 - Rama: `chore/cozy-farm-art-intake`.
 - El héroe actual se conserva sin cambios.
 - El paquete completo `full version.zip` permanece fuera del repositorio.
-- Se preparó un bundle local con cinco hojas PNG, sus `.meta` y documentación.
-- Los binarios deben copiarse en el checkout local y publicarse mediante GitHub Desktop antes de abrir Unity.
+- A1, recepción de cinco hojas fuente: **VALIDADA LOCALMENTE**.
+- A2, slicing curado y pruebas automáticas: **IMPLEMENTADO REMOTAMENTE; VALIDACIÓN LOCAL PENDIENTE**.
 
-## Archivos piloto
+## A1 — Fuente piloto validada
+
+Commit local publicado por Arturo:
 
 ```text
-Assets/_Project/Art/ThirdParty/CozyFarm/
-├── README.md
-└── Pilot/
-    └── Source/
-        ├── items.png
-        ├── seeds.png
-        ├── tools.png
-        ├── crops.png
-        └── tiles.png
+e4540b42d275b650f726bad41d4546787ae544e9
 ```
 
-Configuración inicial: Sprite, modo Single temporal, 16 PPU, Point, sin mipmaps, Clamp, transparencia habilitada y sin compresión por defecto.
+Archivos fuente:
 
-## Exclusiones
+```text
+Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/
+├── items.png
+├── seeds.png
+├── tools.png
+├── crops.png
+└── tiles.png
+```
 
-No incluir ZIP, GIF, `global.png`, `item_carry.png`, personajes, animales, edificios, enemigos, máquinas ni variantes estacionales completas. No crear todavía slicing masivo, Tilemaps, paletas, prefabs, escenas o UI.
+Arturo confirmó el 5 de agosto de 2026 que la importación y todas las pruebas solicitadas quedaron OK. Como A1 no añadió pruebas, la referencia continúa siendo EditMode **124/124** y PlayMode **6/6**.
 
-## Flujo local
+## A2 — Slicing curado
 
-1. Cambiar a esta rama y hacer Fetch/Pull.
-2. Extraer el bundle en la raíz del repositorio.
-3. Comprobar el alcance en GitHub Desktop, hacer un único commit y Push origin.
-4. Abrir Unity y validar importación y escala.
-5. Ejecutar EditMode y PlayMode completos.
-6. Reportar resultados antes de continuar.
+No se duplicaron ni recortaron los PNG. Se conservaron las hojas originales y se añadieron únicamente rectángulos nombrados en sus `.meta`.
+
+### Objetos y semillas
+
+`items.png` expone:
+
+- `cozy_turnip`;
+- `cozy_carrot`;
+- `cozy_cabbage`.
+
+`seeds.png` expone:
+
+- `cozy_turnip_seeds`;
+- `cozy_carrot_seeds`;
+- `cozy_cabbage_seeds`.
+
+### Cultivos
+
+`crops.png` expone seis etapas para cada cultivo:
+
+- `cozy_turnip_stage_0` a `cozy_turnip_stage_5`;
+- `cozy_carrot_stage_0` a `cozy_carrot_stage_5`;
+- `cozy_cabbage_stage_0` a `cozy_cabbage_stage_5`.
+
+Los cultivos usan pivote inferior central para futura colocación sobre la parcela.
+
+### Terreno
+
+`tiles.png` expone solo cuatro tiles piloto:
+
+- `cozy_grass`;
+- `cozy_dirt`;
+- `cozy_water`;
+- `cozy_tilled_soil`.
+
+### Alias visuales provisionales
+
+El paquete denomina **radish** al recurso usado provisionalmente para el ID de dominio `turnip`, y **lettuce** al usado provisionalmente para `cabbage`. Los IDs de dominio no cambiaron. Estos alias son reversibles y deben revisarse antes de una decisión artística definitiva.
+
+### Herramientas
+
+`tools.png` contiene máquinas de procesamiento y mobiliario, no iconos adecuados de azada y regadera. Permanece en modo Single y sin slicing. No se asignaron sustitutos falsos a `hoe` o `watering-can`.
+
+## Pruebas añadidas
+
+`CozyFarmPilotArtTests.cs` añade seis casos EditMode que comprueban:
+
+- dimensiones de las cinco hojas;
+- configuración pixel-art;
+- permanencia de `tools.png` sin slicing;
+- nombres de objetos y semillas;
+- 18 etapas de cultivo;
+- cuatro tiles de terreno.
+
+Resultado esperado pendiente de confirmación local:
+
+- EditMode: **130/130**;
+- PlayMode: **6/6**.
+
+## Exclusiones vigentes
+
+No incluir ZIP, GIF, `global.png`, `item_carry.png`, personajes, animales, edificios, enemigos, máquinas adicionales ni variantes estacionales completas. No crear todavía Tilemaps, paletas, prefabs, escenas, UI o conexión con el inventario.
+
+## Próximo paso local
+
+1. Hacer Fetch/Pull de `chore/cozy-farm-art-intake`.
+2. Abrir Unity y esperar la reimportación de las cuatro hojas modificadas.
+3. Confirmar que aparecen 3 sprites de objetos, 3 de semillas, 18 de cultivos y 4 de terreno.
+4. Ejecutar EditMode completo; esperado **130/130**.
+5. Ejecutar PlayMode completo; esperado **6/6**.
+6. Revisar visualmente que los cultivos tengan el pivote en la base y que los alias nabo/radish y col/lettuce sean aceptables como provisionales.
+7. Reportar resultados antes de crear cualquier Tilemap, hotbar o conexión funcional.
