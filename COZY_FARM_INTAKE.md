@@ -9,7 +9,8 @@
 - A2, slicing curado: **VALIDADO**.
 - A3 y A3.1, exhibiciones iniciales: **VALIDADAS TÉCNICAMENTE; DESCARTADAS COMO PROPORCIÓN FINAL**.
 - A3.2, visual del héroe a 1.5×: **APROBADA VISUALMENTE**.
-- A3.3, iconos a 0.75× y semillas plantadas centradas: **IMPLEMENTADA REMOTAMENTE; VALIDACIÓN LOCAL PENDIENTE**.
+- A3.3, iconos a 0.75× y semillas plantadas centradas: **VALIDADA LOCALMENTE**.
+- La rama queda preparada para revisión y cierre mediante PR; todavía no se fusionó.
 
 ## A1 — Fuentes piloto
 
@@ -130,15 +131,15 @@ Implementación:
 
 Arturo confirmó el 5 de agosto de 2026 que:
 
-- todas las pruebas solicitadas pasaron sin errores;
+- EditMode: **137/137**;
+- PlayMode: **6/6**;
+- errores: **0**;
 - el héroe ya se percibe proporcional frente a las hortalizas plantadas y a los tiles;
 - la escala 1.5 es claramente mejor que 1.0.
 
-El prefab real aún no se modifica. La escala continúa aplicada únicamente a la instancia generada de exhibición hasta cerrar todo el piloto visual.
+El prefab real aún no se modifica. La escala continúa aplicada únicamente a la instancia generada de exhibición hasta decidir su traslado en una fase funcional posterior.
 
 ## A3.3 — Iconos y semillas plantadas
-
-Estado: **IMPLEMENTADA REMOTAMENTE; VALIDACIÓN LOCAL PENDIENTE**.
 
 Commits funcionales:
 
@@ -149,7 +150,7 @@ Commits funcionales:
 
 ### Iconos del catálogo
 
-Los seis iconos —tres hortalizas cosechadas y tres bolsas de semillas— cambian de:
+Los seis iconos —tres hortalizas cosechadas y tres bolsas de semillas— cambiaron de:
 
 ```text
 0.55 → 0.75
@@ -173,41 +174,66 @@ PlantedSeedStageYOffset = -0.3
 
 Solo las tres etapas `stage_0` reciben el desplazamiento. Los brotes y las demás etapas conservan sus posiciones originales.
 
-La corrección centra aproximadamente la masa visual de las semillas dentro de cada tile sin cambiar pivotes, PNG ni `.meta` artísticos.
-
 ### Firma y pruebas
 
 - firma elevada a `cozy-farm-showcase-scene-v4`;
 - `CozyFarmShowcaseSceneTests.cs` pasa de **7 a 8 casos**;
-- la prueba existente fija los iconos en 0.75;
-- la prueba nueva verifica el desplazamiento −0.3 de las tres etapas sembradas y confirma que `stage_1` no se mueve.
+- una prueba fija los iconos en 0.75;
+- una prueba verifica el desplazamiento −0.3 de las tres etapas sembradas y confirma que `stage_1` no se mueve.
 
-Resultado esperado:
+### Validación local A3.3 — 2026-08-05
+
+Arturo aportó dos capturas del resultado final y confirmó:
 
 - EditMode: **138/138**;
-- PlayMode: **6/6**.
+- PlayMode: **6/6**;
+- errores: **0**;
+- los seis iconos tienen presencia suficiente y continúan siendo menores que el héroe;
+- el héroe, los cultivos maduros y los tiles se perciben proporcionales;
+- las semillas plantadas quedan mejor centradas dentro de sus filas;
+- el conjunto constituye un excelente punto de partida visual.
+
+A3.3 queda **VALIDADA**.
+
+## Escena de validación generada
+
+La escena `CozyFarmShowcase.unity` es una salida reproducible del pipeline y no forma parte de la fuente canónica. Se añadieron exclusiones específicas en `.gitignore`:
+
+```text
+/Assets/_Project/Scenes/CozyFarmShowcase.unity
+/Assets/_Project/Scenes/CozyFarmShowcase.unity.meta
+```
+
+Unity puede seguir generándola automáticamente y las pruebas pueden abrirla, pero GitHub Desktop no debe ofrecerla para commit.
 
 ## Alcance protegido
 
-A3.3 no modifica:
+El piloto no modifica:
 
-- PNG o slices;
 - `Lab`;
 - prefab, spritesheet o animaciones reales del héroe;
 - collider o movimiento;
 - Domain, inventario o Input System;
 - Tilemaps, agricultura funcional, hotbar o UI conectada.
 
+No se incluyeron ZIP, GIF ni el resto del paquete Cozy Farm.
+
+## Decisiones visuales aprobadas para fases posteriores
+
+- mantener el héroe actual;
+- considerar **1.5×** como escala visual aprobada frente al mundo Cozy Farm;
+- mantener tiles y cultivos en escala de mundo **1.0**;
+- usar iconos de catálogo en **0.75** dentro de la referencia actual;
+- aplicar **−0.3** a la representación sembrada `stage_0`;
+- conservar `cozy_tilled_soil` como muestra provisional de hoyo/montículo, no como parcela rectangular completa;
+- mantener los alias `radish → turnip` y `lettuce → cabbage` como provisionales.
+
 ## Próximo paso exacto
 
-1. Cerrar `CozyFarmShowcase` en Unity.
-2. Hacer Fetch/Pull de `chore/cozy-farm-art-intake`.
-3. Abrir Unity y esperar compilación/importación.
-4. La firma `v4` debe regenerar la escena.
-5. Si la escena anterior estaba abierta, cerrarla y ejecutar `Tools > Farm Simulator > Rebuild Cozy Farm Showcase`.
-6. Revisar que los seis iconos sean mayores pero todavía menores que el héroe.
-7. Revisar que las tres semillas `stage_0` queden centradas dentro de sus tiles y que los brotes no hayan cambiado.
-8. Ejecutar EditMode; esperado **138/138**.
-9. Ejecutar PlayMode; esperado **6/6**.
-10. Compartir captura y resultados antes de modificar el prefab real o avanzar a Tilemaps/hotbar.
-11. No hacer commit todavía de `CozyFarmShowcase.unity` ni de su `.meta`.
+1. Hacer Fetch/Pull para recibir la exclusión de la escena generada y la documentación final.
+2. Confirmar que GitHub Desktop deje de mostrar `CozyFarmShowcase.unity` y su `.meta` como cambios pendientes.
+3. No modificar todavía el prefab real del héroe en esta rama artística.
+4. Revisar el diff completo de `chore/cozy-farm-art-intake` contra `main`.
+5. Crear un PR de cierre del piloto artístico.
+6. Fusionar únicamente después de autorización explícita de Arturo.
+7. Tras la integración, abrir una rama funcional separada para trasladar las decisiones aprobadas a hotbar, mundo o agricultura según el orden de migración.
