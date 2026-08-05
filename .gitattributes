@@ -1,0 +1,51 @@
+# Normalize text files in the repository.
+* text=auto
+
+# Source, configuration and Unity YAML assets use LF in Git.
+*.cs text eol=lf
+*.asmdef text eol=lf
+*.asmref text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.shader text eol=lf
+*.cginc text eol=lf
+*.hlsl text eol=lf
+*.compute text eol=lf
+*.unity text eol=lf
+*.prefab text eol=lf
+*.asset text eol=lf
+*.meta text eol=lf
+*.mat text eol=lf
+*.anim text eol=lf
+*.controller text eol=lf
+*.overrideController text eol=lf
+*.inputactions text eol=lf
+*.uxml text eol=lf
+*.uss text eol=lf
+
+# Common binary asset formats must never be line-normalized.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.tga binary
+*.tif binary
+*.tiff binary
+*.psd binary
+*.fbx binary
+*.blend binary
+*.wav binary
+*.mp3 binary
+*.ogg binary
+*.flac binary
+*.mp4 binary
+*.mov binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.exe binary
+*.unitypackage binary

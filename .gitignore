@@ -13,6 +13,7 @@
 
 # IDE and editor files
 .vs/
+.vscode/
 .idea/
 .gradle/
 ExportedObj/
@@ -22,6 +23,7 @@ ExportedObj/
 *.csproj
 *.unityproj
 *.sln
+*.slnx
 *.suo
 *.tmp
 *.user
