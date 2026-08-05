@@ -12,8 +12,8 @@ Este archivo es el **punto de entrada permanente** para retomar el desarrollo si
 - **Rama estable:** `main`
 - **Rama activa:** `feature/player-prefab-depth-sorting`
 - **Fase actual:** Fase 5 — Prefab reutilizable y profundidad visual
-- **Estado:** implementación compila y genera recursos; validación automatizada y manual pendiente
-- **Cabeza remota registrada de la rama activa:** `4bcc9dc50ce97bf6444716751237c40204c5d7f7`
+- **Estado:** implementación compila, genera recursos y actualiza dinámicamente la profundidad; pruebas automatizadas y validación manual completa pendientes
+- **Cabeza remota registrada de la rama activa:** `080b4873cdc54b03c4a329618f5cc9143205118c`
 - **Bugs activos:** ninguno
 - **Último bug verificado:** `BUG-0005` — colisión entre `FarmSimulator.Application` y `UnityEngine.Application`
 - **Corrección funcional:** `a9a3fe23e214f5d98ba8f9ac8c5677d131b0f036`
@@ -26,6 +26,9 @@ Este archivo es el **punto de entrada permanente** para retomar el desarrollo si
 - Consola: **0 errores y 0 advertencias**.
 - Player prefab reutilizable generado.
 - Sorting layers cenitales generadas.
+- `Playable Player Sprite` existe dentro de `Generated Calibration`.
+- `Order in Layer` varía aproximadamente entre **9600 y 10400** al mover al personaje verticalmente.
+- El rango coincide con el modelo: base **10000** y **100 órdenes por unidad**.
 
 ### Validación pendiente
 
@@ -33,7 +36,7 @@ Este archivo es el **punto de entrada permanente** para retomar el desarrollo si
 - PlayMode esperado: **6/6**.
 - Movimiento y animación con teclado y DualSense.
 - Límites visuales.
-- Cambio de `sortingOrder` según la Y de los pies.
+- Solapamiento visual delante/detrás de referencias según la Y de los pies.
 - Revisión de cambios locales generados antes de commit.
 
 ---
