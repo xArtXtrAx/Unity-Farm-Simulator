@@ -9,10 +9,11 @@ Punto de entrada permanente para retomar el desarrollo sin depender de la memori
 - **Repositorio:** `xArtXtrAx/Unity-Farm-Simulator`
 - **Rama estable:** `main`
 - **Rama activa:** `chore/cozy-farm-art-intake`
-- **Head remoto registrado:** `633a85c92f890027c79e418a9e45955074874adc`
-- **Head funcional A3:** `0a05af5a50538e31acdd849d7eb603d4a6096c76`
-- **Bloque actual:** A3 — escena artística de exhibición Cozy Farm
-- **Estado:** generador corregido y cuatro pruebas EditMode implementados remotamente; generación local de la escena y validación pendientes
+- **Head remoto registrado:** `c65e2fea77502e2bd6cba98af089add0d439c5c9`
+- **Head funcional A3.1:** `39abe438bb6068b21438fb836b5eea01295f0db3`
+- **Bloque actual:** A3.1 — reequilibrio de escala y composición de la exhibición Cozy Farm
+- **Estado:** implementado y documentado remotamente; regeneración, inspección visual y pruebas locales pendientes
+- **A3 original:** validado técnicamente con **134/134 EditMode**, **6/6 PlayMode** y cero errores; composición rechazada visualmente por desproporción
 - **Bloque A2:** validado localmente con **130/130 EditMode**, **6/6 PlayMode** y cero errores
 - **Commit de assets fuente publicado por Arturo:** `e4540b42d275b650f726bad41d4546787ae544e9`
 - **Última fase funcional:** Fase 6, integrada mediante PR #6
@@ -33,52 +34,66 @@ Punto de entrada permanente para retomar el desarrollo sin depender de la memori
 
 - Cinco hojas fuente versionadas en `Pilot/Source`.
 - Configuración pixel-art: Sprite, 16 PPU, Point, sin mipmaps, Clamp y sin compresión.
-- Slicing aprobado: 3 objetos, 3 semillas, 18 etapas de cultivo y 4 tiles.
+- Slicing aprobado: 3 objetos, 3 semillas, 18 etapas de cultivo y 4 muestras de terreno.
 - `tools.png` permanece Single y sin cortes porque no contiene iconos apropiados de azada o regadera.
 - Alias reversibles: `turnip` usa provisionalmente arte `radish`; `cabbage`, arte `lettuce`.
 - Validación final A2 de Arturo: **130/130 EditMode**, **6/6 PlayMode**, sin errores.
 
-## Cozy Farm A3 — pendiente de validación
+## Cozy Farm A3 — validado técnicamente
 
-Se añadió un generador Editor reproducible:
-
-```text
-Assets/_Project/Scripts/Editor/CozyFarmShowcaseScenePipeline.cs
-```
-
-Al importar la rama, genera localmente:
+El generador Editor crea localmente:
 
 ```text
 Assets/_Project/Scenes/CozyFarmShowcase.unity
 ```
 
-La escena es independiente de `Lab` y muestra:
+La primera composición conservó correctamente la cámara, el contenido curado y el prefab actual del héroe. Arturo confirmó:
 
-- el prefab actual del héroe;
-- fondo de césped;
-- cuatro muestras de terreno;
-- tres objetos cosechados y tres bolsas de semillas;
-- tres filas con seis etapas de crecimiento por cultivo.
+- EditMode: **134/134**;
+- PlayMode: **6/6**;
+- errores: **0**.
 
-Correcciones preventivas aplicadas:
+La captura visual mostró:
 
-- la cámara reutiliza `SpatialModel.CameraOrthographicSize` (**4.21875**) en lugar de un valor duplicado;
-- los fondos y muestras usan parches de sprites individuales, no `SpriteDrawMode.Tiled`, evitando dependencias de malla Full Rect y advertencias con sprites Tight.
+- iconos de inventario tratados como objetos físicos de mundo;
+- bases circulares repetidas bajo las 18 etapas;
+- muestras 2×2 sobredimensionadas;
+- exceso de espacio vacío.
 
-También se añadieron cuatro pruebas en `CozyFarmShowcaseSceneTests.cs` para verificar generación/firma, grupos curados, prefab del héroe y cámara conforme al contrato central.
+Por ello A3 quedó aprobada técnicamente, pero no visualmente.
 
-No se añadieron Tilemaps, paletas, UI, hotbar, lógica funcional ni cambios al dominio.
+## Cozy Farm A3.1 — pendiente de validación
+
+El generador y sus pruebas fueron reequilibrados:
+
+- firma `cozy-farm-showcase-scene-v2` para regenerar la escena;
+- objetos y semillas a escala **0.55** sobre una referencia de 3×2 slots;
+- cultivos y héroe a escala de mundo **1.0**;
+- cama compartida de tierra de **6×3 tiles**;
+- eliminación de los 18 objetos `soil_for_*`;
+- cuatro muestras de terreno de **un tile** cada una;
+- héroe intacto sobre referencia de **2×2 tiles**;
+- distribución compactada dentro del encuadre 960×540;
+- protección contra sobrescritura si la escena anterior está abierta.
+
+`cozy_tilled_soil` no fue recortado de nuevo: queda como muestra aislada provisional, pero ya no se repite bajo cada cultivo.
+
+`CozyFarmShowcaseSceneTests.cs` pasa de cuatro a **seis** casos. Los dos nuevos verifican roles de escala y composición compartida.
+
+No se modificaron PNG, `.meta` artísticos, `Lab`, prefab/spritesheet del héroe, Domain, inventario, Input System, Tilemaps, paletas o hotbar.
 
 ## Próxima acción
 
-1. En GitHub Desktop, hacer Fetch/Pull de `chore/cozy-farm-art-intake`.
-2. Abrir Unity y esperar compilación/importación.
-3. Confirmar que aparezca `Assets/_Project/Scenes/CozyFarmShowcase.unity`.
-4. Abrir esa escena y pulsar Play; `Lab` no debe cambiar.
-5. Evaluar escala y compatibilidad visual del héroe con terreno, objetos, semillas y cultivos.
-6. Ejecutar EditMode completo; esperado **134/134**.
-7. Ejecutar PlayMode completo; esperado **6/6**.
-8. Si Unity genera `CozyFarmShowcase.unity` y su `.meta` como cambios locales, no hacer commit todavía: reportar primero la apariencia y los resultados.
+1. Cerrar `CozyFarmShowcase` en Unity antes de actualizar la rama.
+2. En GitHub Desktop, hacer Fetch/Pull de `chore/cozy-farm-art-intake`.
+3. Abrir Unity y esperar compilación/importación.
+4. La firma `v2` debe regenerar `Assets/_Project/Scenes/CozyFarmShowcase.unity`.
+5. Si Unity avisa que la escena antigua estaba abierta, cerrarla y ejecutar `Tools > Farm Simulator > Rebuild Cozy Farm Showcase`.
+6. Abrir la escena, pulsar Play y tomar una captura.
+7. Confirmar iconos menores, filas compactas sin círculos repetidos, cuatro muestras individuales y héroe intacto sobre 2×2 tiles.
+8. Ejecutar EditMode completo; esperado **136/136**.
+9. Ejecutar PlayMode completo; esperado **6/6**.
+10. No hacer commit todavía de la escena generada: reportar primero apariencia, conteos y cualquier error o advertencia.
 
 ---
 
@@ -89,7 +104,7 @@ No se añadieron Tilemaps, paletas, UI, hotbar, lógica funcional ni cambios al 
 3. Leer `COZY_FARM_INTAKE.md` desde esa rama.
 4. Leer `BUGS.MD` y `MIGRACION_DESDE_FARMING_GAME_A.MD`.
 5. Revisar ramas y commits recientes.
-6. Continuar desde la actualización posterior de la bitácora y el próximo paso de `COZY_FARM_INTAKE.md`.
+6. Continuar desde la actualización posterior más reciente de la bitácora y el próximo paso de `COZY_FARM_INTAKE.md`.
 
 ## Reglas críticas
 
@@ -98,11 +113,12 @@ No se añadieron Tilemaps, paletas, UI, hotbar, lógica funcional ni cambios al 
 - No subir el ZIP completo ni GIF de referencia.
 - No hacer slicing masivo; solo recursos con consumidor o prueba definida.
 - No asignar imágenes falsas a azada o regadera.
-- No afirmar que A3 compila, genera la escena o pasa pruebas hasta recibir la validación de Arturo.
+- No afirmar que A3.1 pasa pruebas o está aprobada visualmente hasta recibir la validación de Arturo.
+- No hacer commit de la escena generada antes de la revisión visual.
 - Después de cada implementación, corrección o integración, mantener la documentación sincronizada.
 
 ## Prompt mínimo para un chat nuevo
 
 ```text
-Continúa xArtXtrAx/Unity-Farm-Simulator. Lee CONTINUIDAD_GPT.md desde main y después BITÁCORA_GPT.MD y COZY_FARM_INTAKE.md desde chore/cozy-farm-art-intake. La Fase 6 está integrada. Cozy Farm A1 y A2 están validados con 130/130 EditMode, 6/6 PlayMode y cero errores. A3 está implementado funcionalmente en 0a05af5a50538e31acdd849d7eb603d4a6096c76 y documentado hasta 633a85c92f890027c79e418a9e45955074874adc: un pipeline Editor genera Assets/_Project/Scenes/CozyFarmShowcase.unity y cuatro pruebas nuevas elevan el esperado a 134/134 EditMode. La cámara usa SpatialModel.CameraOrthographicSize y los parches no usan SpriteDrawMode.Tiled. La generación local, inspección visual y pruebas A3 siguen pendientes. Conserva el héroe y no avances a Tilemaps o UI antes del reporte de Arturo.
+Continúa xArtXtrAx/Unity-Farm-Simulator. Lee CONTINUIDAD_GPT.md desde main y después BITÁCORA_GPT.MD y COZY_FARM_INTAKE.md desde chore/cozy-farm-art-intake. La Fase 6 está integrada. Cozy Farm A1 y A2 están validados. A3 pasó 134/134 EditMode y 6/6 PlayMode sin errores, pero su composición fue rechazada por desproporción. A3.1 está implementado funcionalmente en 39abe438bb6068b21438fb836b5eea01295f0db3 y documentado hasta c65e2fea77502e2bd6cba98af089add0d439c5c9: iconos a 0.55, cultivos y héroe a 1.0, cama compartida 6×3, muestras individuales y dos pruebas nuevas. El esperado es 136/136 EditMode y 6/6 PlayMode. Conserva el héroe y no avances a Tilemaps o hotbar antes del reporte visual de Arturo.
 ```
