@@ -1,10 +1,10 @@
 # BITÁCORA GPT — Unity Farm Simulator
 
-Documento maestro de continuidad. Debe permitir retomar el proyecto en un chat nuevo sin depender de la memoria de conversaciones anteriores.
+Documento maestro de continuidad. Debe permitir retomar el proyecto sin depender de la memoria del chat.
 
-> **Regla de continuidad:** antes de modificar el repositorio, GPT debe leer este archivo, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, el estado de ramas y los commits recientes.
+> **Regla de continuidad:** antes de modificar el repositorio, leer este archivo, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, ramas y commits recientes.
 
-> **Regla transaccional obligatoria:** ninguna implementación o corrección realizada por GPT se considera terminada hasta actualizar esta bitácora con lo realizado, lo comprobado, lo pendiente y el siguiente paso exacto.
+> **Regla transaccional:** ninguna implementación o corrección realizada por GPT se considera terminada hasta registrar aquí lo realizado, lo comprobado, lo pendiente y el siguiente paso exacto.
 
 ---
 
@@ -12,17 +12,16 @@ Documento maestro de continuidad. Debe permitir retomar el proyecto en un chat n
 
 - **Repositorio:** `xArtXtrAx/Unity-Farm-Simulator`
 - **Propietario:** Arturo García (`xArtXtrAx`)
-- **Tipo:** simulador de granja 2.5D con arte principal basado en sprites 2D
-- **Motor fijado:** Unity 6.3 LTS `6000.3.21f1`
+- **Motor:** Unity 6.3 LTS `6000.3.21f1`
 - **Plantilla:** Universal 3D / URP
 - **Plataforma inicial:** Windows PC
 - **Control prioritario:** DualSense, además de teclado y mouse
-- **Ruta local de Arturo:** `D:\Git\Unity-Farm-Simulator`
+- **Ruta local:** `D:\Git\Unity-Farm-Simulator`
 - **Rama estable:** `main`
 - **Rama activa:** `feature/lab-spatial-calibration`
 - **Proyecto fuente de migración:** `xArtXtrAx/farming-game-A`
 - **Commit fuente congelado:** `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
-- **Identidad de Unity:**
+- **Identidad Unity:**
   - Company Name: `jarturoga`
   - Product Name: `Unity Farm Simulator`
   - Standalone Identifier: `com.jarturoga.unityfarmsimulator`
@@ -31,226 +30,135 @@ Documento maestro de continuidad. Debe permitir retomar el proyecto en un chat n
 
 ## 2. Principios rectores
 
-### Unity como intermediario
-
-No construir un editor de videojuegos desde cero. Unity debe resolver jerarquía, inspector, escenas, prefabs, sprites, cuadrículas, snapping, colisiones, animación, física y depuración. Solo se crearán herramientas internas específicas del simulador cuando aporten valor real.
-
-### Migración
-
-Migrar comportamientos, reglas, datos, identificadores y criterios de aceptación. No traducir TypeScript/Phaser a C# línea por línea ni recrear en Unity las herramientas genéricas del editor web.
-
-### Git y continuidad
-
+- Unity debe resolver jerarquía, inspector, escenas, prefabs, sprites, Tilemaps, snapping, colisiones, animación, física y depuración.
+- Migrar comportamientos, reglas, datos e identificadores; no traducir Phaser/TypeScript línea por línea.
+- `main` debe permanecer estable.
 - Arturo usa principalmente GitHub Desktop.
-- `main` debe permanecer estable y jugable.
-- Las mejoras relevantes se desarrollan en ramas descriptivas.
-- Evitar ZIP, manifiestos, hashes y comprobaciones Git repetitivas salvo necesidad técnica.
-- Toda implementación de GPT debe actualizar esta bitácora antes de cerrar el bloque.
+- Todo código propio vive bajo `Assets/_Project` y fuera de `Assembly-CSharp`.
+- Los `ScriptableObject` contendrán definiciones estáticas; el progreso mutable usará DTO e identificadores de texto estables.
 
 ---
 
-## 3. Arquitectura acordada
+## 3. Arquitectura
 
-El código propio vive bajo `Assets/_Project` y no debe colocarse en la assembly global `Assembly-CSharp`.
-
-### Assemblies
+Assemblies vigentes:
 
 - `FarmSimulator.Domain`: reglas puras, sin `UnityEngine`.
-- `FarmSimulator.Application`: casos de uso y coordinación; depende de Domain y tampoco usa `UnityEngine`.
-- `FarmSimulator.Infrastructure`: persistencia y adaptadores; depende de Domain y Application.
-- `FarmSimulator.Presentation`: escenas, `MonoBehaviour`, UI, input y representación visual.
+- `FarmSimulator.Application`: casos de uso y contratos; depende de Domain, sin `UnityEngine`.
+- `FarmSimulator.Infrastructure`: persistencia y adaptadores.
+- `FarmSimulator.Presentation`: escenas, UI, input y representación visual.
 - `FarmSimulator.Editor`: herramientas exclusivas del Editor.
-- `FarmSimulator.Tests.EditMode`: reglas y configuración que no requieren Play Mode.
-- `FarmSimulator.Tests.PlayMode`: integración con escenas y ciclo de vida de Unity.
+- `FarmSimulator.Tests.EditMode`.
+- `FarmSimulator.Tests.PlayMode`.
 
-### Modelo espacial 2.5D decidido
-
-- El mundo lógico utiliza el plano **XZ** para desplazamiento sobre el suelo.
-- El eje **Y** representa altura real.
-- La física principal será **3D**.
-- La cámara base será **ortográfica e inclinada**.
-- El arte principal seguirá siendo 2D mediante sprites o tarjetas planas dentro del espacio 3D.
-- El espacio 3D permitirá partículas, iluminación, sombras, trayectorias en arco, saltos y objetos tridimensionales ocasionales.
-- Una celda de calibración equivale provisionalmente a **1 unidad de Unity**.
-- La referencia humana provisional mide **1.8 unidades**.
-- Resolución, relación de aspecto, Pixels Per Unit y escala artística definitiva continúan pendientes de evaluación visual.
-
-### Datos y guardado
-
-- Los `ScriptableObject` contendrán definiciones estáticas de objetos y cultivos.
-- El progreso mutable de la partida se representará con DTO e identificadores de texto estables.
-- Se preservará el enfoque versionado, defensivo y transaccional del guardado del proyecto fuente.
-
-### Control de versiones de Unity
-
-Confirmado:
+Control de versiones confirmado:
 
 - `Visible Meta Files`.
 - `Force Text`.
-- `.meta` incluidos siempre.
-- `.gitignore` excluye cachés, builds y archivos regenerables del IDE.
-- `.gitattributes` normaliza texto/YAML a LF y protege binarios.
+- `.meta` incluidos.
+- `.gitignore` y `.gitattributes` adecuados para Unity.
 
 ---
 
-## 4. Línea base funcional del proyecto anterior
+## 4. Dirección visual y modelo espacial definitivo
 
-La auditoría de `farming-game-A` confirmó:
+La dirección artística objetivo es una vista cenital de sprites y Tilemaps 2D, inspirada en la legibilidad de juegos como Harvest Moon de SNES y Stardew Valley, sin copiar recursos ni mapas.
 
-- granja, casa y mercado norte;
-- personaje, teclado, mouse y gamepad;
-- hotbar de ocho espacios;
-- inventario y almacenamiento;
-- doce parcelas;
-- azada, regadera y semillas;
-- nabo, zanahoria y col de primavera;
-- tienda, economía y caja de envíos;
-- reloj, días, estaciones y años;
-- sueño y procesamiento de fin de día;
-- guardado JSON versionado con validación y rollback;
-- colisiones, interacciones, transiciones y spawns;
-- 806 pruebas documentadas al integrar los cultivos de primavera.
+### Contrato espacial vigente
 
-El plan detallado y los criterios de paridad están en `MIGRACION_DESDE_FARMING_GAME_A.MD`.
+- Plano lógico principal: **XY**.
+- Profundidad y orden visual: **Z** y orden de renderizado.
+- Cámara: **ortográfica frontal**, sin inclinación ni rotación isométrica.
+- Física principal del mapa, jugador e interacciones: **Physics 2D**.
+- Arte principal: sprites y Tilemaps 2D.
+- Se permiten partículas, luces, objetos, trayectorias y efectos 3D cuando aporten valor.
+- Los saltos y arcos pueden representarse mediante desplazamientos visuales, animación o efectos 3D sin convertir el mapa base en XZ.
+- Celda provisional: `1` unidad de Unity.
+- Referencia provisional de personaje: `1.8` unidades de alto y `0.8` de ancho.
+- Cámara provisional: tamaño ortográfico `6.75`, posición Z `-10`.
+- Pixels Per Unit, resolución base y relación de aspecto siguen pendientes de calibración artística.
 
----
+### Decisión descartada
 
-## 5. Primera prueba vertical prevista
-
-La primera versión jugable será pequeña y deberá incluir:
-
-- escenas `Bootstrap` y `Lab`;
-- personaje con DualSense y teclado;
-- cámara, suelo y colisiones;
-- una parcela;
-- azada, regadera y semillas de nabo;
-- cultivo con varias etapas;
-- hotbar e interacción básica;
-- avance de día de prueba;
-- guardado mínimo.
+La primera calibración usó mundo XZ, física 3D y cámara ortográfica inclinada. Produjo una vista isométrica en rombo que no coincide con la dirección artística. Se conserva solo como aprendizaje histórico; ya no es el contrato del proyecto.
 
 ---
 
-## 6. Estado actual
+## 5. Fase 1 — Cimentación: COMPLETADA E INTEGRADA
 
-### Fase 1 — Cimentación: COMPLETADA, VALIDADA E INTEGRADA
-
-- [x] Proyecto Unity 6.3 LTS / URP creado y protegido para Git.
-- [x] Arquitectura por assemblies creada.
-- [x] `Bootstrap` y `Lab` creadas y conectadas.
+- [x] Proyecto Unity 6.3 LTS / URP creado.
+- [x] Arquitectura por assemblies.
+- [x] Escenas `Bootstrap` y `Lab` registradas.
+- [x] Transición automática `Bootstrap → Lab`.
 - [x] Paquetes de plantilla innecesarios retirados.
 - [x] Identidad definitiva aplicada y protegida.
-- [x] EditMode: **2/2 aprobadas**.
-- [x] PlayMode: **1/1 aprobada**.
-- [x] Consola: **0 errores y 0 advertencias**.
+- [x] EditMode: 2/2 aprobadas.
+- [x] PlayMode: 1/1 aprobada.
+- [x] Consola: 0 errores y 0 advertencias.
 - [x] PR #1 fusionado en `main` mediante `ece618c`.
 
-### Fase 2 — Calibración espacial: IMPLEMENTACIÓN INICIAL EN RAMA
+---
 
-Commit funcional: `8ce5c5e` — `feat: add 2.5D spatial calibration lab`.
+## 6. Fase 2 — Calibración visual y espacial
 
-Implementado:
+### Primer intento isométrico
 
-- [x] `SpatialModel.cs` fija XZ, altura Y, física 3D, cámara ortográfica y medidas provisionales.
-- [x] `LabSpatialCalibrationInstaller.cs` instala automáticamente la calibración cuando se carga `Lab`.
-- [x] `LabSpatialCalibration.cs` genera durante la ejecución:
-  - suelo de 16 × 12 unidades con `BoxCollider`;
-  - cuadrícula de celdas de 1 unidad;
-  - ejes X y Z diferenciados;
-  - tarjeta plana de personaje de 1.8 unidades;
-  - tarjetas a distintas profundidades;
-  - regla vertical sobre Y;
-  - trayectoria parabólica para representar movimientos y partículas 3D;
-  - cámara ortográfica inclinada y luz direccional con sombras.
-- [x] La calibración se genera por código al entrar en Play Mode; no ensucia la escena con decenas de objetos serializados.
-- [x] La prueba EditMode ahora valida también el contrato espacial.
-- [x] La prueba PlayMode ahora valida cámara, suelo, collider, dimensiones y referencia de sprite.
+- Commit `8ce5c5e`: laboratorio XZ con cámara inclinada, cuadrícula, referencias y pruebas.
+- Commit `6078d67`: documentación del intento.
+- Validación visual local: funcionó técnicamente, pero la vista resultó isométrica y no adecuada para el objetivo artístico.
+
+### Corrección cenital 2D
+
+Commit funcional: `edd6846` — `fix: switch calibration to top-down 2D`.
+
+Cambios implementados:
+
+- [x] `SpatialModel` ahora fija plano `XY`, profundidad `Z`, física 2D y cámara ortográfica frontal.
+- [x] Se mantiene explícitamente la libertad de integrar efectos tridimensionales.
+- [x] La cámara se coloca en `(0, 0, -10)` con rotación identidad.
+- [x] Se elimina la inclinación y el giro diagonal que producían el tablero en rombo.
+- [x] El suelo de calibración usa `BoxCollider2D`; se eliminan colliders 3D generados por primitivas.
+- [x] La cuadrícula queda paralela a los bordes de la pantalla.
+- [x] Se añadieron referencias cenitales simples: caminos, estanque, parcelas, árboles, sprites, pila de profundidad y trayectoria visual en arco.
+- [x] Los materiales de calibración son planos y sin sombras para aproximarse mejor a una presentación 2D.
+- [x] La prueba EditMode protege el contrato XY/Physics 2D.
+- [x] La prueba PlayMode protege la cámara frontal, `BoxCollider2D`, dimensiones y profundidad visual.
 
 Pendiente de validación local:
 
-- [ ] Unity debe compilar el commit `8ce5c5e` sin errores.
-- [ ] Resultado esperado de EditMode: **3/3**.
-- [ ] Resultado esperado de PlayMode: **2/2**.
+- [ ] Unity debe compilar `edd6846` sin errores.
+- [ ] EditMode esperado: **3/3**.
+- [ ] PlayMode esperado: **2/2**.
 - [ ] Consola esperada: **0 errores y 0 advertencias**.
-- [ ] Ejecutar el juego desde `Bootstrap` y observar la escena `Lab` en la pestaña Game.
-- [ ] Evaluar si encuadre, inclinación, tamaño de celda y referencia humana resultan adecuados.
-- [ ] No se añadió bug a `BUGS.MD`; todavía no existe evidencia local de un fallo.
+- [ ] Abrir `Bootstrap`, entrar en Play y comprobar que `Lab` aparece como una cuadrícula rectangular alineada a pantalla.
+- [ ] Evaluar encuadre, escala de celdas y tamaño provisional del personaje.
+- [ ] No fusionar todavía esta rama.
+
+No se añadió entrada a `BUGS.MD`: se trata de una corrección de dirección artística detectada durante la calibración, no de un defecto del motor o del sistema.
 
 ---
 
-## 7. Paquetes
+## 7. Línea base funcional por migrar
 
-### Conservados
-
-- `com.unity.render-pipelines.universal`
-- `com.unity.inputsystem`
-- `com.unity.test-framework`
-- `com.unity.ai.navigation`
-- `com.unity.timeline`
-- `com.unity.ide.visualstudio`
-- `com.unity.ugui`
-
-### Retirados
-
-- `com.unity.collab-proxy`
-- `com.unity.ide.rider`
-- `com.unity.multiplayer.center`
-- `com.unity.visualscripting`
+El proyecto anterior contiene granja, casa, mercado, personaje, teclado/mouse/gamepad, hotbar, inventario, almacenamiento, doce parcelas, azada, regadera, semillas, nabo, zanahoria, col, tienda, economía, envíos, reloj, estaciones, sueño, fin de día y guardado JSON versionado. El detalle está en `MIGRACION_DESDE_FARMING_GAME_A.MD`.
 
 ---
 
-## 8. Registro cronológico reciente
+## 8. Próximo paso exacto
 
-### 2026-08-05 — Fase 1 integrada
-
-- PR #1 fusionado en `main` mediante `ece618c`.
-- Commit `141c51e`: bitácora actualizada después del merge.
-- Se creó `feature/lab-spatial-calibration` desde la base integrada.
-
-### 2026-08-05 — Modelo espacial definido
-
-- Arturo aclaró que el juego utilizará principalmente sprites 2D, complementados con partículas, iluminación y movimientos tridimensionales.
-- Se decidió usar mundo XZ, altura Y, física 3D y cámara ortográfica inclinada.
-- La estética seguirá leyendo como 2D; la tercera dimensión funcionará como infraestructura para profundidad y efectos.
-
-### 2026-08-05 — Laboratorio de calibración implementado
-
-- Commit `8ce5c5e`: modelo espacial, generador de laboratorio y nuevas pruebas.
-- La escena no fue reescrita manualmente en YAML; la calibración se instala al cargar `Lab`, reduciendo riesgo de corrupción y manteniendo la escena limpia.
-- La validación remota se limita a creación correcta del árbol, commit y actualización de la rama.
-- La compilación, las pruebas y el resultado visual permanecen pendientes de Arturo.
+1. Cerrar Unity.
+2. En GitHub Desktop, permanecer en `feature/lab-spatial-calibration`.
+3. Ejecutar **Fetch origin** y **Pull origin**.
+4. Abrir Unity `6000.3.21f1` y esperar compilación.
+5. Revisar consola.
+6. Ejecutar EditMode: resultado esperado **3/3**.
+7. Ejecutar PlayMode: resultado esperado **2/2**.
+8. Abrir `Assets/_Project/Scenes/Bootstrap.unity` y pulsar Play.
+9. Enviar captura de la pestaña Game y de Test Runner.
+10. Tras validar la vista cenital, decidir resolución base, relación de aspecto y Pixels Per Unit antes de implementar movimiento.
 
 ---
 
-## 9. Próximo paso exacto
+## 9. Protocolo para un chat nuevo
 
-1. Cerrar Unity si está abierto.
-2. En GitHub Desktop, sobre `feature/lab-spatial-calibration`, ejecutar **Fetch origin** y **Pull origin**.
-3. Abrir el proyecto con Unity `6000.3.21f1` y esperar la compilación.
-4. Confirmar consola en `0` errores y `0` advertencias.
-5. Ejecutar Test Runner:
-   - EditMode esperado: **3/3**.
-   - PlayMode esperado: **2/2**.
-6. Abrir `Bootstrap.unity` o ejecutar desde la configuración actual y pulsar Play.
-7. Esperar la transición a `Lab` y tomar una captura de la pestaña **Game**.
-8. Reportar si la cuadrícula, el personaje de referencia, la trayectoria y la profundidad se ven completos y legibles.
-9. Con esa evidencia, ajustar cámara y escala o pasar al controlador de movimiento con teclado y DualSense.
-
----
-
-## 10. Protocolo para un chat nuevo
-
-Usar una instrucción equivalente a:
-
-> Continúa el desarrollo de `xArtXtrAx/Unity-Farm-Simulator`. Antes de modificar archivos, lee `BITÁCORA_GPT.MD`, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, revisa ramas y commits recientes, resume el estado y continúa desde el próximo paso documentado.
-
----
-
-## 11. Decisiones pendientes
-
-- Resolución base y relación de aspecto objetivo.
-- Tamaño definitivo de celda y escala artística.
-- Pixels Per Unit para los sprites.
-- Inclinación y tamaño ortográfico definitivos de la cámara.
-- Dirección artística y primer pack de sprites.
-- Estrategia de CI para pruebas y build de Windows.
+> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Antes de modificar archivos, lee `BITÁCORA_GPT.MD`, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, revisa ramas y commits recientes, resume el estado y continúa desde el próximo paso documentado.
