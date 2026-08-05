@@ -2,7 +2,7 @@
 
 Documento maestro de continuidad. Debe permitir retomar el proyecto en un chat nuevo sin depender de la memoria de conversaciones anteriores.
 
-> **Regla de continuidad:** antes de modificar el repositorio, GPT debe leer este archivo, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, el estado de las ramas y los commits recientes.
+> **Regla de continuidad:** antes de modificar el repositorio, GPT debe leer este archivo, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, el estado de ramas y los commits recientes.
 
 > **Regla transaccional obligatoria:** ninguna implementación o corrección realizada por GPT se considera terminada hasta actualizar esta bitácora con lo realizado, lo comprobado, lo pendiente y el siguiente paso exacto.
 
@@ -17,10 +17,14 @@ Documento maestro de continuidad. Debe permitir retomar el proyecto en un chat n
 - **Plantilla:** Universal 3D / URP
 - **Plataforma inicial:** Windows PC
 - **Control prioritario:** DualSense, además de teclado y mouse
-- **Ruta local:** `D:\Git\Unity-Farm-Simulator`
-- **Rama activa:** `chore/unity-project-foundation`
-- **Proyecto fuente:** `xArtXtrAx/farming-game-A`
+- **Ruta local de Arturo:** `D:\Git\Unity-Farm-Simulator`
+- **Rama de cimentación:** `chore/unity-project-foundation`
+- **Proyecto fuente de migración:** `xArtXtrAx/farming-game-A`
 - **Commit fuente congelado:** `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
+- **Identidad definitiva de Unity:**
+  - Company Name: `jarturoga`
+  - Product Name: `Unity Farm Simulator`
+  - Standalone Identifier: `com.jarturoga.unityfarmsimulator`
 
 ---
 
@@ -39,30 +43,30 @@ Migrar comportamientos, reglas, datos, identificadores y criterios de aceptació
 - Arturo usa principalmente GitHub Desktop.
 - `main` debe permanecer estable y jugable.
 - Las mejoras relevantes se desarrollan en ramas descriptivas.
-- Evitar ZIP y comprobaciones Git repetitivas salvo necesidad técnica.
+- Evitar ZIP, manifiestos, hashes y comprobaciones Git repetitivas salvo necesidad técnica.
 - Toda implementación de GPT debe actualizar esta bitácora antes de cerrar el bloque.
 
 ---
 
 ## 3. Arquitectura acordada
 
-El código propio vive bajo `Assets/_Project`; no colocar código nuevo en `Assembly-CSharp`.
+El código propio vive bajo `Assets/_Project` y no debe colocarse en la assembly global `Assembly-CSharp`.
 
 ### Assemblies
 
 - `FarmSimulator.Domain`: reglas puras, sin `UnityEngine`.
-- `FarmSimulator.Application`: casos de uso; depende de Domain y tampoco usa `UnityEngine`.
-- `FarmSimulator.Infrastructure`: persistencia y adaptadores.
+- `FarmSimulator.Application`: casos de uso y coordinación; depende de Domain y tampoco usa `UnityEngine`.
+- `FarmSimulator.Infrastructure`: persistencia y adaptadores; depende de Domain y Application.
 - `FarmSimulator.Presentation`: escenas, `MonoBehaviour`, UI, input y representación visual.
 - `FarmSimulator.Editor`: herramientas exclusivas del Editor.
-- `FarmSimulator.Tests.EditMode`: reglas y configuración.
-- `FarmSimulator.Tests.PlayMode`: integración con escenas y ciclo de vida.
+- `FarmSimulator.Tests.EditMode`: reglas y configuración que no requieren Play Mode.
+- `FarmSimulator.Tests.PlayMode`: integración con escenas y ciclo de vida de Unity.
 
 ### Datos y guardado
 
-- `ScriptableObject` para definiciones estáticas.
-- DTO e IDs de texto estables para progreso mutable.
-- Preservar el guardado versionado, defensivo y transaccional del proyecto fuente.
+- Los `ScriptableObject` contendrán definiciones estáticas de objetos y cultivos.
+- El progreso mutable de la partida se representará con DTO e identificadores de texto estables.
+- Se preservará el enfoque versionado, defensivo y transaccional del guardado del proyecto fuente.
 
 ### Control de versiones de Unity
 
@@ -71,61 +75,85 @@ Confirmado:
 - `Visible Meta Files`.
 - `Force Text`.
 - `.meta` incluidos siempre.
-- `.gitignore` excluye cachés, builds y archivos regenerables de IDE.
+- `.gitignore` excluye cachés, builds y archivos regenerables del IDE.
 - `.gitattributes` normaliza texto/YAML a LF y protege binarios.
 
 ---
 
-## 4. Línea base funcional anterior
+## 4. Línea base funcional del proyecto anterior
 
-`farming-game-A` contiene granja, casa, mercado, personaje, teclado/mouse/gamepad, hotbar, inventario, almacenamiento, doce parcelas, herramientas, tres cultivos, tienda, economía, envíos, calendario, sueño, guardado versionado, colisiones, transiciones y 806 pruebas documentadas.
+La auditoría de `farming-game-A` confirmó:
 
-El plan detallado está en `MIGRACION_DESDE_FARMING_GAME_A.MD`.
+- granja, casa y mercado norte;
+- personaje, teclado, mouse y gamepad;
+- hotbar de ocho espacios;
+- inventario y almacenamiento;
+- doce parcelas;
+- azada, regadera y semillas;
+- nabo, zanahoria y col de primavera;
+- tienda, economía y caja de envíos;
+- reloj, días, estaciones y años;
+- sueño y procesamiento de fin de día;
+- guardado JSON versionado con validación y rollback;
+- colisiones, interacciones, transiciones y spawns;
+- 806 pruebas documentadas al integrar los cultivos de primavera.
+
+El plan detallado y los criterios de paridad están en `MIGRACION_DESDE_FARMING_GAME_A.MD`.
 
 ---
 
 ## 5. Primera prueba vertical prevista
 
-- `Bootstrap` y `Lab`.
-- Personaje con DualSense y teclado.
-- Cámara, suelo y colisiones.
-- Una parcela.
-- Azada, regadera y semillas de nabo.
-- Cultivo con varias etapas.
-- Hotbar e interacción básica.
-- Avance de día de prueba.
-- Guardado mínimo.
+La primera versión jugable será pequeña y deberá incluir:
+
+- escenas `Bootstrap` y `Lab`;
+- personaje con DualSense y teclado;
+- cámara, suelo y colisiones;
+- una parcela;
+- azada, regadera y semillas de nabo;
+- cultivo con varias etapas;
+- hotbar e interacción básica;
+- avance de día de prueba;
+- guardado mínimo.
 
 ---
 
 ## 6. Estado actual
 
-### Completado
+### Completado y validado localmente
 
 - [x] Proyecto Unity 6.3 LTS Universal 3D / URP creado en el repositorio.
 - [x] Importación inicial con consola limpia.
 - [x] `Visible Meta Files`, `Force Text`, `.gitignore` y `.gitattributes` configurados.
 - [x] Recursos tutoriales eliminados.
-- [x] Assemblies Domain, Application, Infrastructure, Presentation, Editor, EditMode y PlayMode creadas y validadas.
+- [x] Assemblies Domain, Application, Infrastructure, Presentation, Editor, EditMode y PlayMode creadas.
+- [x] Assemblies validadas con `0` errores, `0` advertencias y `0` mensajes.
 - [x] `Bootstrap` y `Lab` creadas.
 - [x] `Bootstrap` registrada como escena 0 y `Lab` como escena 1.
 - [x] Salto automático `Bootstrap → Lab` implementado.
-- [x] Auditoría de paquetes de plantilla realizada.
 - [x] Retirados Unity Version Control, Rider, Multiplayer Center y Visual Scripting.
-- [x] Unity resolvió el nuevo manifest sin errores ni advertencias.
-- [x] Prueba EditMode ejecutada: **1/1 aprobada**.
-- [x] Prueba PlayMode ejecutada: **1/1 aprobada**.
+- [x] Manifest resuelto localmente por Unity.
+- [x] `Packages/packages-lock.json` regenerado y versionado en `214e0fc`.
+- [x] `ProjectSettings/SceneTemplateSettings.json` generado y versionado.
+- [x] Prueba EditMode: **1/1 aprobada**.
+- [x] Prueba PlayMode: **1/1 aprobada**.
 - [x] Consola posterior a pruebas: **0 errores y 0 advertencias**.
+- [x] Commit local y documentación remota reconciliados mediante merge `fad8692`.
 
-### Pendiente para cerrar formalmente la Fase 1
+### Implementado remotamente; pendiente de validación local
 
-- [ ] Revisar en GitHub Desktop el `Packages/packages-lock.json` regenerado por Unity.
-- [ ] Versionar el lock resuelto sin mezclar archivos inesperados.
-- [ ] Sustituir los nombres heredados `DefaultCompany` y `UnityFarmSimulatorTemp` por valores definitivos.
-- [ ] Volver a abrir Unity y confirmar consola limpia tras esos cambios.
-- [ ] Fusionar la rama de cimentación en `main` una vez validada.
+- [x] `ProjectIdentity.cs` centraliza Company Name, Product Name e identificador Standalone.
+- [x] `ProjectIdentityConfigurator.cs` aplica automáticamente esa identidad al abrir/importar el proyecto.
+- [x] Menú manual añadido: `Tools → Farm Simulator → Validate Project Identity`.
+- [x] Segunda prueba EditMode añadida para verificar los tres valores.
+- [ ] Unity debe compilar el commit `ba6b62f` localmente.
+- [ ] Al abrir el proyecto, `ProjectSettings/ProjectSettings.asset` debe actualizarse automáticamente.
+- [ ] EditMode debe mostrar **2/2 pruebas aprobadas**.
+- [ ] PlayMode debe conservar **1/1 prueba aprobada**.
+- [ ] La consola debe permanecer sin errores ni advertencias.
+- [ ] Los cambios locales de `ProjectSettings.asset` deben versionarse antes de fusionar.
 
-### Después de la Fase 1
+### Después de cerrar la Fase 1
 
 - [ ] Definir modelo espacial 2.5D, cámara y escala.
 - [ ] Crear calibración visual de `Lab`.
@@ -152,21 +180,12 @@ El plan detallado está en `MIGRACION_DESDE_FARMING_GAME_A.MD`.
 - `com.unity.multiplayer.center`
 - `com.unity.visualscripting`
 
-`packages-lock.json` debe provenir de la resolución local de Unity, no fabricarse manualmente.
-
 ---
 
-## 8. Registro cronológico
-
-### 2026-08-05 — Inicio y planificación
-
-- Se creó la documentación de continuidad y bugs.
-- Se auditó `farming-game-A` y se fijó `dd32056` como base.
-- Se acordó usar Unity como intermediario y actualizar esta bitácora tras cada implementación.
+## 8. Registro cronológico reciente
 
 ### 2026-08-05 — Proyecto y arquitectura
 
-- Arturo instaló Unity `6000.3.21f1`, clonó el repo y creó la base URP.
 - Commit `ecf6eb3`: proyecto Unity inicial.
 - Commit `3aa30f0`: arquitectura, assemblies e higiene del repositorio.
 - Unity compiló las assemblies con consola limpia.
@@ -174,40 +193,48 @@ El plan detallado está en `MIGRACION_DESDE_FARMING_GAME_A.MD`.
 ### 2026-08-05 — Escenas, arranque y paquetes
 
 - Commit `d46b08c`: `Bootstrap`, `Lab`, arranque automático y pruebas.
-- Se retiraron cuatro paquetes innecesarios del manifest.
-- Commit `8dc4676`: bitácora del bloque y validación local pendiente.
+- Commit `8dc4676`: registro documental del bloque.
+- EditMode y PlayMode fueron ejecutados y aprobados.
+- Commit `214e0fc`: lock de paquetes y configuración de plantillas resueltos localmente.
+- Merge `fad8692`: reconciliación del commit local con la documentación remota.
 
-### 2026-08-05 — Pruebas de cimentación aprobadas
+### 2026-08-05 — Identidad definitiva automatizada
 
-- Arturo ejecutó el Test Runner tras resolver los paquetes.
-- EditMode descubrió y aprobó `FarmSimulator` — **1 prueba aprobada, 0 fallidas**.
-- PlayMode descubrió y aprobó `FarmSimulator` — **1 prueba aprobada, 0 fallidas**.
-- La transición `Bootstrap → Lab` quedó comprobada por la prueba PlayMode.
-- La consola mostró `0` errores y `0` advertencias; los mensajes blancos eran informativos del Test Runner.
-- No se detectó un bug funcional y no fue necesario modificar `BUGS.MD`.
-- La ruta `DefaultCompany/UnityFarmSimulatorTemp` observada en los resultados proviene de Player Settings heredados de la plantilla, no de haber abierto el proyecto temporal.
+- Commit `ba6b62f`: identidad centralizada y configurador automático del Editor.
+- Se evitó editar manualmente el YAML completo de `ProjectSettings.asset` para reducir riesgo de corrupción o pérdida de campos.
+- La identidad se aplicará mediante API nativa de Unity en la próxima apertura.
+- La prueba EditMode ahora debe descubrir dos pruebas: Build Settings e identidad.
+- Validación remota realizada: árbol, commit y referencia de rama actualizados correctamente.
+- Validación local pendiente; no afirmar que compila ni que la identidad quedó persistida hasta recibir la comprobación de Arturo.
+- No se añadió entrada en `BUGS.MD`, porque no se observó un fallo: los nombres temporales eran configuración heredada de la plantilla.
 
 ---
 
 ## 9. Próximo paso exacto
 
-1. Mantener Unity abierto o cerrarlo sin guardar cambios manuales adicionales.
-2. Abrir GitHub Desktop en `chore/unity-project-foundation`.
-3. Mostrar la lista completa de cambios locales, especialmente `Packages/packages-lock.json`.
-4. No hacer commit todavía.
-5. GPT revisará esos cambios, corregirá los nombres definitivos del proyecto y preparará el cierre de la Fase 1.
+1. Cerrar Unity antes de sincronizar.
+2. En GitHub Desktop, sobre `chore/unity-project-foundation`, ejecutar **Fetch origin** y **Pull origin**.
+3. Abrir el proyecto con Unity `6000.3.21f1` y esperar compilación/importación.
+4. Revisar consola: debe mostrar `0` errores y `0` advertencias.
+5. Abrir `Window → General → Test Runner`.
+6. Ejecutar EditMode: resultado esperado **2/2**.
+7. Ejecutar PlayMode: resultado esperado **1/1**.
+8. Revisar GitHub Desktop. Se espera una modificación en `ProjectSettings/ProjectSettings.asset` con los nombres definitivos.
+9. No hacer commit todavía; enviar capturas de pruebas y cambios para revisión.
+10. Tras versionar `ProjectSettings.asset`, cerrar formalmente la Fase 1 y fusionar `chore/unity-project-foundation` en `main`.
 
 ---
 
 ## 10. Protocolo para un chat nuevo
 
-> Continúa el desarrollo de `xArtXtrAx/Unity-Farm-Simulator`. Lee `BITÁCORA_GPT.MD`, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, revisa ramas y commits recientes, resume el estado y continúa desde el próximo paso documentado.
+Usar una instrucción equivalente a:
+
+> Continúa el desarrollo de `xArtXtrAx/Unity-Farm-Simulator`. Antes de modificar archivos, lee `BITÁCORA_GPT.MD`, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, revisa ramas y commits recientes, resume el estado y continúa desde el próximo paso documentado.
 
 ---
 
 ## 11. Decisiones pendientes
 
-- Nombre definitivo de estudio/empresa mostrado por Unity.
 - Resolución base y relación de aspecto.
 - Cámara ortográfica o perspectiva controlada.
 - Mundo XZ con física 3D o XY con física 2D.
