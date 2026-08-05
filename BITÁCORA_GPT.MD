@@ -111,59 +111,66 @@ Integración:
 
 ## 7. Fase 3 — Movimiento del jugador
 
-### Implementación inicial
+### Base funcional implementada
 
-Commit funcional: `e0be2afa9681e56a987725385affb8c5e96efdf7` — `feat: add keyboard and gamepad player movement foundation`.
+Commit inicial: `e0be2afa9681e56a987725385affb8c5e96efdf7` — `feat: add keyboard and gamepad player movement foundation`.
 
-Implementado:
+Incluye:
 
 - [x] `PlayerMovementModel.cs` en Application, sin dependencia de UnityEngine.
 - [x] Zona muerta radial inicial `0.18`.
 - [x] Magnitud analógica remapeada después de la zona muerta.
-- [x] Normalización de entradas digitales diagonales para evitar mayor velocidad.
-- [x] Resolución de cuatro direcciones visuales: arriba, abajo, izquierda y derecha.
+- [x] Normalización de entradas digitales diagonales.
+- [x] Resolución de cuatro orientaciones visuales.
 - [x] `TopDownPlayerMotor` separado de la lectura de input.
 - [x] Movimiento mediante `Rigidbody2D.MovePosition` en `FixedUpdate`.
 - [x] `CapsuleCollider2D` de pies, gravedad cero, rotación bloqueada e interpolación.
 - [x] `UnifiedMovementInput` admite WASD, flechas, stick izquierdo y D-pad.
-- [x] Se elige la fuente activa con mayor magnitud entre teclado y gamepad.
-- [x] El primer gamepad conectado funciona aunque todavía no sea `Gamepad.current`.
-- [x] `PlayerProxyFacingView` muestra la orientación mediante un marcador provisional.
-- [x] `Lab` genera un personaje rojo controlable con marcador amarillo.
-- [x] El suelo es trigger y el perímetro utiliza `EdgeCollider2D` para contener al jugador.
+- [x] Selección de la fuente activa con mayor magnitud entre teclado y gamepad.
+- [x] Compatibilidad con el primer gamepad conectado aunque no sea `Gamepad.current`.
+- [x] Personaje provisional rojo y marcador amarillo de orientación.
+- [x] Perímetro Physics 2D del laboratorio.
 - [x] Presentation referencia explícitamente `Unity.InputSystem`.
 - [x] Pruebas puras de zona muerta, fuerza analógica, diagonal y orientación.
-- [x] Pruebas PlayMode para composición Physics 2D y desplazamiento normalizado.
+- [x] Pruebas PlayMode de composición Physics 2D y desplazamiento normalizado.
 
-### Validación local confirmada por Arturo
+### Validación local confirmada
 
-Estado `724152e`:
+Arturo validó en Unity `6000.3.21f1`:
 
 - [x] EditMode: **11/11 aprobadas**.
 - [x] PlayMode: **4/4 aprobadas**.
-- [x] Consola: **0 errores y 0 advertencias**.
-- [x] WASD y flechas mueven correctamente al jugador.
-- [x] Stick izquierdo y D-pad del DualSense funcionan correctamente.
-- [x] El marcador cambia de acuerdo con la orientación.
-- [x] Las pruebas automatizadas protegen zona muerta, diagonales, orientación, Physics 2D y movimiento.
+- [x] Consola: **0 errores**.
+- [x] WASD y flechas funcionan.
+- [x] Stick izquierdo y D-pad del DualSense funcionan.
+- [x] Movimiento diagonal normalizado.
+- [x] El personaje no atraviesa el perímetro.
 
-### BUG-0002 — Marcador de orientación descentrado
+### BUG-0002 — VERIFICADO
 
-Arturo observó que el marcador lateral amarillo cambiaba correctamente de dirección, pero estaba alineado con el pivote de los pies en vez de con el centro del cuerpo rojo.
+El marcador amarillo estaba descentrado porque el pivote lógico está en los pies. La corrección calcula izquierda/derecha desde el centro real del cuerpo y arriba/abajo desde sus bordes. Arturo confirmó pruebas **11/11** y **4/4**; el registro completo está en `BUGS.MD`.
 
-Corrección implementada:
+### BUG-0003 — CORREGIDO, PENDIENTE DE VALIDACIÓN
 
-- Commit `dd7357c` — `fix: center player facing marker`.
-- Reconciliación final de código y documentación: `079841e`.
-- Las posiciones ahora se calculan desde el ancho y alto reales del personaje.
-- Izquierda y derecha se centran verticalmente sobre el cuerpo.
-- Arriba queda sobre la cabeza y abajo bajo los pies.
-- La prueba PlayMode existente incorpora comprobaciones de alineación lateral.
-- Registro completo en `BUGS.MD` como `BUG-0002`.
+Las capturas de los cuatro extremos mostraron que el límite contenía el collider de los pies, pero permitía recortar el rectángulo rojo y el marcador fuera del área visible, sobre todo arriba y en los lados.
 
-Estado: **CORREGIDO**, pendiente de validación local para pasar a **VERIFICADO**.
+Corrección publicada:
 
-El sprite real y Animator permanecen pendientes; primero debe verificarse el marcador corregido sobre la referencia provisional.
+- `66b3acd` — expone las extensiones visuales completas del jugador y marcador.
+- `9b55ade` — recalcula el perímetro de Lab considerando volumen visual, pivote y collider físico.
+- `6c96d10` — amplía la prueba PlayMode para proteger los cuatro extremos.
+- `8215bd0` — registra `BUG-0003` y verifica `BUG-0002`.
+
+Detalles técnicos:
+
+- El límite ahora es asimétrico verticalmente porque el pivote permanece en los pies.
+- Se consideran ancho del cuerpo, altura completa, marcador amarillo, tamaño del `CapsuleCollider2D` y su offset.
+- El indicador también debe permanecer visible en los extremos.
+- La cantidad de pruebas no cambia: EditMode **11/11**, PlayMode **4/4**.
+
+No afirmar que `BUG-0003` está verificado hasta volver a ejecutar Unity localmente y revisar los cuatro bordes.
+
+El sprite real y Animator permanecen pendientes. No importarlos hasta cerrar `BUG-0003`.
 
 ---
 
@@ -183,15 +190,16 @@ Datos relevantes:
 ## 9. Próximo paso exacto
 
 1. Detener Play Mode y cerrar Unity.
-2. En GitHub Desktop, permanecer en `feature/player-movement-foundation`.
-3. Ejecutar **Fetch origin** y **Pull origin**.
+2. Permanecer en `feature/player-movement-foundation`.
+3. Ejecutar **Fetch origin** y **Pull origin** en GitHub Desktop.
 4. Abrir Unity `6000.3.21f1` y esperar la compilación.
-5. Ejecutar EditMode: esperado **11/11**.
-6. Ejecutar PlayMode: esperado **4/4**.
-7. Confirmar consola limpia.
-8. Ejecutar `Bootstrap → Lab` y orientar al jugador en las cuatro direcciones.
-9. Confirmar que los marcadores laterales están centrados verticalmente respecto al cuerpo rojo, el superior está sobre la cabeza y el inferior bajo los pies.
-10. Tras validar, marcar `BUG-0002` como **VERIFICADO** y comenzar la importación del sprite real y su Animator.
+5. Limpiar la consola.
+6. Ejecutar EditMode: esperado **11/11**.
+7. Ejecutar PlayMode: esperado **4/4**.
+8. Abrir `Bootstrap.unity`, pulsar Play y mover al personaje hasta los cuatro extremos.
+9. Confirmar que el cuerpo rojo y el marcador amarillo permanecen completamente dentro del área verde en izquierda, derecha, arriba y abajo.
+10. Enviar una captura de los extremos o confirmar el resultado.
+11. Tras verificar `BUG-0003`, cerrar la base de movimiento e importar el sprite real de 64 × 72 px con Animator de cuatro direcciones.
 
 ---
 
