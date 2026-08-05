@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using FarmSimulator.Application.Spatial;
 using FarmSimulator.Editor;
 using FarmSimulator.Presentation.Calibration;
 using FarmSimulator.Presentation.Player;
@@ -144,7 +145,7 @@ namespace FarmSimulator.Tests.EditMode
         }
 
         [Test]
-        public void ShowcaseCameraUsesOrthographicReferenceViewport()
+        public void ShowcaseCameraUsesProjectOrthographicContract()
         {
             WithShowcaseScene(scene =>
             {
@@ -158,7 +159,8 @@ namespace FarmSimulator.Tests.EditMode
                 Assert.That(camera.orthographic, Is.True);
                 Assert.That(
                     camera.orthographicSize,
-                    Is.EqualTo(5.625f).Within(0.001f));
+                    Is.EqualTo(SpatialModel.CameraOrthographicSize)
+                        .Within(0.001f));
                 Assert.That(
                     cameraObject.GetComponent<ReferenceAspectCamera>(),
                     Is.Not.Null);
