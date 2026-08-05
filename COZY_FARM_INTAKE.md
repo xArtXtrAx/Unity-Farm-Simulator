@@ -1,26 +1,19 @@
 # Cozy Farm — recepción piloto
 
-## Estado actual
+## Estado integrado
 
-- Rama: `chore/cozy-farm-art-intake`.
-- El héroe actual se conserva; su prefab real todavía no se modifica.
-- El paquete completo `full version.zip` permanece fuera del repositorio.
-- A1, recepción de fuentes: **VALIDADA**.
-- A2, slicing curado: **VALIDADO**.
-- A3 y A3.1, exhibiciones iniciales: **VALIDADAS TÉCNICAMENTE; DESCARTADAS COMO PROPORCIÓN FINAL**.
-- A3.2, visual del héroe a 1.5×: **APROBADA VISUALMENTE**.
-- A3.3, iconos a 0.75× y semillas plantadas centradas: **VALIDADA LOCALMENTE**.
-- La rama queda preparada para revisión y cierre mediante PR; todavía no se fusionó.
+El piloto artístico Cozy Farm está **validado e integrado en `main`**.
 
-## A1 — Fuentes piloto
+- Rama de trabajo: `chore/cozy-farm-art-intake`.
+- PR: **#7 — Add Cozy Farm pilot art and visual calibration**.
+- Head validado: `0f711adcf7dd0ed0c268b57d053ab36f044ea7cc`.
+- Método de integración: **Squash and merge**.
+- Squash commit: `7860095d0d165c83585f21579e9794ea57ec0a35`.
+- Validación final: **138/138 EditMode**, **6/6 PlayMode**, **0 errores**.
+- El héroe actual se conserva; su prefab real no fue modificado por el piloto.
+- El ZIP completo, los GIF y el resto del paquete permanecen fuera del repositorio.
 
-Commit de assets publicado por Arturo:
-
-```text
-e4540b42d275b650f726bad41d4546787ae544e9
-```
-
-Hojas versionadas:
+## Fuentes incorporadas
 
 ```text
 Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/
@@ -35,46 +28,27 @@ Configuración común:
 
 - Sprite 2D/UI;
 - 16 PPU;
-- Point;
+- filtro Point;
 - sin mipmaps;
 - Clamp;
 - sin compresión.
 
-No entraron ZIP, GIF, `global.png`, personajes, animales, edificios, enemigos ni variantes estacionales completas.
+## Slicing aprobado
 
-Validación A1:
+- 3 objetos cosechados: `cozy_turnip`, `cozy_carrot`, `cozy_cabbage`;
+- 3 bolsas de semillas;
+- 18 etapas de cultivo: seis para nabo, zanahoria y col;
+- 4 muestras de terreno;
+- `tools.png` permanece Single y sin cortes.
 
-- EditMode: **124/124**;
-- PlayMode: **6/6**;
-- errores: **0**.
-
-## A2 — Slicing curado
-
-Slices aprobados:
-
-- objetos: `cozy_turnip`, `cozy_carrot`, `cozy_cabbage`;
-- semillas: `cozy_turnip_seeds`, `cozy_carrot_seeds`, `cozy_cabbage_seeds`;
-- cultivos: seis etapas para nabo, zanahoria y col, **18 sprites**;
-- terreno: `cozy_grass`, `cozy_dirt`, `cozy_water`, `cozy_tilled_soil`.
-
-`tools.png` permanece Single porque contiene máquinas y mobiliario, no iconos apropiados de azada o regadera.
-
-Alias provisionales:
+Alias provisionales y reversibles:
 
 - arte `radish` → ID `turnip`;
 - arte `lettuce` → ID `cabbage`.
 
-Validación A2:
+`cozy_tilled_soil` se conserva como hoyo o montículo provisional, no como parcela rectangular completa.
 
-- `items.png`: **3** sprites;
-- `seeds.png`: **3** sprites;
-- `crops.png`: **18** sprites;
-- `tiles.png`: **4** sprites;
-- EditMode: **130/130**;
-- PlayMode: **6/6**;
-- errores: **0**.
-
-## A3 — Pipeline de exhibición
+## Pipeline de exhibición
 
 El pipeline Editor genera localmente:
 
@@ -88,152 +62,43 @@ Comando manual:
 Tools > Farm Simulator > Rebuild Cozy Farm Showcase
 ```
 
-La escena es independiente de `Lab`, utiliza `SpatialModel.CameraOrthographicSize` y conserva una instancia conectada al prefab actual del héroe.
+La escena es una salida reproducible y no una fuente canónica. Está excluida mediante `.gitignore`, junto con su `.meta`.
 
-### A3 original
+## Decisiones visuales aprobadas
 
-Validación:
+- mantener el héroe actual;
+- raíz y collider del jugador en escala **1.0**;
+- visual del héroe en **1.5** frente al mundo Cozy Farm;
+- tiles y cultivos en escala **1.0**;
+- iconos del catálogo en **0.75** dentro de la referencia actual;
+- aplicar offset vertical **−0.3** a `stage_0` de los tres cultivos;
+- no escalar la raíz, collider ni referencias técnicas para resolver diferencias visuales.
 
-- EditMode: **134/134**;
-- PlayMode: **6/6**;
-- errores: **0**.
+La escala 1.5 solo existe por ahora dentro de la exhibición generada. Su traslado al prefab real deberá hacerse en una rama funcional separada.
 
-Problemas: iconos tratados como objetos físicos, 18 bases circulares repetidas, muestras 2×2 sobredimensionadas y distribución dispersa.
+## Evolución de la validación
 
-### A3.1 — Composición compacta
-
-Cambios:
-
-- iconos a 0.55;
-- cama compartida 6×3;
-- eliminación de `soil_for_*`;
-- muestras individuales;
-- héroe inicialmente a escala visual 1.0.
-
-Validación:
-
-- EditMode: **136/136**;
-- PlayMode: **6/6**;
-- errores: **0**.
-
-Cinco comparaciones directas demostraron que el héroe seguía demasiado pequeño frente a tiles y cultivos maduros.
-
-## A3.2 — Calibración visual del héroe
-
-Implementación:
-
-- firma `cozy-farm-showcase-scene-v3`;
-- raíz `Current Hero` en **1.0**;
-- hijo `Playable Player Sprite` en **1.5**;
-- collider, Rigidbody2D, motor, pivote lógico y sorting intactos;
-- tiles y cultivos en **1.0**;
-- tamaño visual aproximado del héroe: **1.5 × 1.6875 unidades**.
-
-Arturo confirmó el 5 de agosto de 2026 que:
-
-- EditMode: **137/137**;
-- PlayMode: **6/6**;
-- errores: **0**;
-- el héroe ya se percibe proporcional frente a las hortalizas plantadas y a los tiles;
-- la escala 1.5 es claramente mejor que 1.0.
-
-El prefab real aún no se modifica. La escala continúa aplicada únicamente a la instancia generada de exhibición hasta decidir su traslado en una fase funcional posterior.
-
-## A3.3 — Iconos y semillas plantadas
-
-Commits funcionales:
-
-```text
-0666f807d2a3f99ad42e648bef7f904c0f0753a1
-879a05894f7989c51df650810a9c1b6c199838af
-```
-
-### Iconos del catálogo
-
-Los seis iconos —tres hortalizas cosechadas y tres bolsas de semillas— cambiaron de:
-
-```text
-0.55 → 0.75
-```
-
-Motivo:
-
-- con el héroe a 1.5, 0.55 resultaba demasiado pequeño;
-- 0.75 conserva una relación visual más clara;
-- a la resolución lógica del proyecto, cada píxel fuente Cozy Farm se representa mediante **3 píxeles de pantalla**, evitando escalado fraccional borroso.
-
-### Semillas plantadas
-
-Las etapas `stage_0` contienen el dibujo de las semillas en el centro de su rectángulo 16×16, pero comparten pivote inferior con brotes y plantas. Eso las elevaba visualmente dentro del tile.
-
-Corrección:
-
-```text
-PlantedSeedStageYOffset = -0.3
-```
-
-Solo las tres etapas `stage_0` reciben el desplazamiento. Los brotes y las demás etapas conservan sus posiciones originales.
-
-### Firma y pruebas
-
-- firma elevada a `cozy-farm-showcase-scene-v4`;
-- `CozyFarmShowcaseSceneTests.cs` pasa de **7 a 8 casos**;
-- una prueba fija los iconos en 0.75;
-- una prueba verifica el desplazamiento −0.3 de las tres etapas sembradas y confirma que `stage_1` no se mueve.
-
-### Validación local A3.3 — 2026-08-05
-
-Arturo aportó dos capturas del resultado final y confirmó:
-
-- EditMode: **138/138**;
-- PlayMode: **6/6**;
-- errores: **0**;
-- los seis iconos tienen presencia suficiente y continúan siendo menores que el héroe;
-- el héroe, los cultivos maduros y los tiles se perciben proporcionales;
-- las semillas plantadas quedan mejor centradas dentro de sus filas;
-- el conjunto constituye un excelente punto de partida visual.
-
-A3.3 queda **VALIDADA**.
-
-## Escena de validación generada
-
-La escena `CozyFarmShowcase.unity` es una salida reproducible del pipeline y no forma parte de la fuente canónica. Se añadieron exclusiones específicas en `.gitignore`:
-
-```text
-/Assets/_Project/Scenes/CozyFarmShowcase.unity
-/Assets/_Project/Scenes/CozyFarmShowcase.unity.meta
-```
-
-Unity puede seguir generándola automáticamente y las pruebas pueden abrirla, pero GitHub Desktop no debe ofrecerla para commit.
+- A1: fuentes piloto — 124/124 EditMode, 6/6 PlayMode.
+- A2: slicing curado — 130/130 EditMode, 6/6 PlayMode.
+- A3: primera exhibición — 134/134 EditMode, 6/6 PlayMode; composición rechazada.
+- A3.1: composición compacta — 136/136 EditMode, 6/6 PlayMode; héroe a 1.0 rechazado.
+- A3.2: visual del héroe a 1.5 — 137/137 EditMode, 6/6 PlayMode; proporción aprobada.
+- A3.3: iconos a 0.75 y semillas centradas — 138/138 EditMode, 6/6 PlayMode; resultado final aprobado.
 
 ## Alcance protegido
 
-El piloto no modifica:
+El piloto no modificó:
 
 - `Lab`;
 - prefab, spritesheet o animaciones reales del héroe;
-- collider o movimiento;
-- Domain, inventario o Input System;
+- collider, movimiento o Input System;
+- Domain, catálogo o inventario;
 - Tilemaps, agricultura funcional, hotbar o UI conectada.
 
-No se incluyeron ZIP, GIF ni el resto del paquete Cozy Farm.
+## Próximo paso
 
-## Decisiones visuales aprobadas para fases posteriores
-
-- mantener el héroe actual;
-- considerar **1.5×** como escala visual aprobada frente al mundo Cozy Farm;
-- mantener tiles y cultivos en escala de mundo **1.0**;
-- usar iconos de catálogo en **0.75** dentro de la referencia actual;
-- aplicar **−0.3** a la representación sembrada `stage_0`;
-- conservar `cozy_tilled_soil` como muestra provisional de hoyo/montículo, no como parcela rectangular completa;
-- mantener los alias `radish → turnip` y `lettuce → cabbage` como provisionales.
-
-## Próximo paso exacto
-
-1. Hacer Fetch/Pull para recibir la exclusión de la escena generada y la documentación final.
-2. Confirmar que GitHub Desktop deje de mostrar `CozyFarmShowcase.unity` y su `.meta` como cambios pendientes.
-3. No modificar todavía el prefab real del héroe en esta rama artística.
-4. Revisar el diff completo de `chore/cozy-farm-art-intake` contra `main`.
-5. Crear un PR de cierre del piloto artístico.
-6. Fusionar únicamente después de autorización explícita de Arturo.
-7. Tras la integración, abrir una rama funcional separada para trasladar las decisiones aprobadas a hotbar, mundo o agricultura según el orden de migración.
+1. Actualizar la copia local de `main` mediante Fetch/Pull.
+2. Confirmar que la escena Showcase generada no aparezca como cambio pendiente.
+3. Mantener cerrada la rama artística para funcionalidad nueva.
+4. Abrir una rama funcional separada para el siguiente bloque de migración.
+5. Trasladar decisiones visuales al prefab, hotbar, mundo o agricultura únicamente cuando exista un consumidor funcional y pruebas específicas.
