@@ -20,6 +20,11 @@ namespace FarmSimulator.Presentation.Calibration
         public const string PlayerFacingMarkerObjectName = "Player Facing Marker";
         public const string MovementBoundsObjectName = "Movement Bounds";
 
+        public const float MovementBoundsMargin = 0.08f;
+        public const float PlayerColliderWidth = 0.38f;
+        public const float PlayerColliderHeight = 0.28f;
+        public const float PlayerColliderOffsetY = 0.14f;
+
         private readonly List<Material> generatedMaterials = new();
         private Transform generatedRoot;
 
@@ -140,17 +145,39 @@ namespace FarmSimulator.Presentation.Calibration
             var boundsObject = new GameObject(MovementBoundsObjectName);
             boundsObject.transform.SetParent(generatedRoot, false);
 
-            float halfWidth = width * 0.5f - 0.08f;
-            float halfHeight = height * 0.5f - 0.08f;
             EdgeCollider2D bounds = boundsObject.AddComponent<EdgeCollider2D>();
             bounds.edgeRadius = 0.02f;
-            bounds.points = new[]
+            bounds.points = CalculateMovementBoundsPoints(width, height);
+        }
+
+        public static Vector2[] CalculateMovementBoundsPoints(float width, float height)
+        {
+            float mapLeft = -width * 0.5f + MovementBoundsMargin;
+            float mapRight = width * 0.5f - MovementBoundsMargin;
+            float mapBottom = -height * 0.5f + MovementBoundsMargin;
+            float mapTop = height * 0.5f - MovementBoundsMargin;
+
+            float colliderHalfWidth = PlayerColliderWidth * 0.5f;
+            float colliderMinY = PlayerColliderOffsetY - PlayerColliderHeight * 0.5f;
+            float colliderMaxY = PlayerColliderOffsetY + PlayerColliderHeight * 0.5f;
+
+            float minimumRootX = mapLeft + PlayerProxyFacingView.HorizontalVisualExtent;
+            float maximumRootX = mapRight - PlayerProxyFacingView.HorizontalVisualExtent;
+            float minimumRootY = mapBottom + PlayerProxyFacingView.BottomVisualExtent;
+            float maximumRootY = mapTop - PlayerProxyFacingView.TopVisualExtent;
+
+            float leftWall = minimumRootX - colliderHalfWidth;
+            float rightWall = maximumRootX + colliderHalfWidth;
+            float bottomWall = minimumRootY + colliderMinY;
+            float topWall = maximumRootY + colliderMaxY;
+
+            return new[]
             {
-                new Vector2(-halfWidth, -halfHeight),
-                new Vector2(-halfWidth, halfHeight),
-                new Vector2(halfWidth, halfHeight),
-                new Vector2(halfWidth, -halfHeight),
-                new Vector2(-halfWidth, -halfHeight),
+                new Vector2(leftWall, bottomWall),
+                new Vector2(leftWall, topWall),
+                new Vector2(rightWall, topWall),
+                new Vector2(rightWall, bottomWall),
+                new Vector2(leftWall, bottomWall),
             };
         }
 
@@ -349,8 +376,8 @@ namespace FarmSimulator.Presentation.Calibration
 
             CapsuleCollider2D playerCollider = player.GetComponent<CapsuleCollider2D>();
             playerCollider.direction = CapsuleDirection2D.Horizontal;
-            playerCollider.size = new Vector2(0.38f, 0.28f);
-            playerCollider.offset = new Vector2(0f, 0.14f);
+            playerCollider.size = new Vector2(PlayerColliderWidth, PlayerColliderHeight);
+            playerCollider.offset = new Vector2(0f, PlayerColliderOffsetY);
 
             player.AddComponent<UnifiedMovementInput>();
 
@@ -372,7 +399,10 @@ namespace FarmSimulator.Presentation.Calibration
                 PrimitiveType.Cube,
                 PlayerFacingMarkerObjectName,
                 new Vector3(feetPosition.x, feetPosition.y, -0.63f),
-                new Vector3(0.14f, 0.14f, 0.04f),
+                new Vector3(
+                    PlayerProxyFacingView.MarkerSize,
+                    PlayerProxyFacingView.MarkerSize,
+                    0.04f),
                 facingMaterial);
             marker.transform.SetParent(player.transform, true);
 
