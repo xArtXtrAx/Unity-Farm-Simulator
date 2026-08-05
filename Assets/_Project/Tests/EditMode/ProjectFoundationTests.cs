@@ -37,14 +37,16 @@ namespace FarmSimulator.Tests.EditMode
         }
 
         [Test]
-        public void SpatialModelUsesXZGroundAndYHeight()
+        public void SpatialModelUsesTopDownXYWithTwoDimensionalPhysics()
         {
-            Assert.That(SpatialModel.GroundPlane, Is.EqualTo("XZ"));
-            Assert.That(SpatialModel.HeightAxis, Is.EqualTo("Y"));
-            Assert.That(SpatialModel.UsesThreeDimensionalPhysics, Is.True);
+            Assert.That(SpatialModel.GroundPlane, Is.EqualTo("XY"));
+            Assert.That(SpatialModel.DepthAxis, Is.EqualTo("Z"));
+            Assert.That(SpatialModel.UsesTwoDimensionalPhysics, Is.True);
+            Assert.That(SpatialModel.AllowsThreeDimensionalEffects, Is.True);
             Assert.That(SpatialModel.UsesOrthographicCamera, Is.True);
             Assert.That(SpatialModel.GridCellSize, Is.EqualTo(1f));
             Assert.That(SpatialModel.ReferenceCharacterHeight, Is.EqualTo(1.8f));
+            Assert.That(SpatialModel.CameraDepth, Is.LessThan(0f));
         }
     }
 }

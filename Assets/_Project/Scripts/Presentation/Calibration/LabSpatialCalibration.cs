@@ -11,6 +11,7 @@ namespace FarmSimulator.Presentation.Calibration
         public const string GeneratedRootName = "Generated Calibration";
         public const string GroundObjectName = "Calibration Ground";
         public const string SpriteProxyObjectName = "Sprite Proxy";
+        public const string DepthStackObjectName = "Depth Stack Front";
 
         private readonly List<Material> generatedMaterials = new();
         private Transform generatedRoot;
@@ -37,21 +38,28 @@ namespace FarmSimulator.Presentation.Calibration
             rootObject.transform.SetParent(transform, false);
             generatedRoot = rootObject.transform;
 
-            Material groundMaterial = CreateMaterial(new Color(0.31f, 0.48f, 0.28f));
-            Material gridMaterial = CreateMaterial(new Color(0.72f, 0.78f, 0.68f));
-            Material xAxisMaterial = CreateMaterial(new Color(0.84f, 0.24f, 0.20f));
-            Material zAxisMaterial = CreateMaterial(new Color(0.20f, 0.42f, 0.86f));
+            Material groundMaterial = CreateMaterial(new Color(0.34f, 0.52f, 0.30f));
+            Material gridMaterial = CreateMaterial(new Color(0.74f, 0.82f, 0.69f));
+            Material xAxisMaterial = CreateMaterial(new Color(0.86f, 0.25f, 0.20f));
+            Material yAxisMaterial = CreateMaterial(new Color(0.20f, 0.43f, 0.88f));
+            Material pathMaterial = CreateMaterial(new Color(0.68f, 0.48f, 0.24f));
+            Material waterMaterial = CreateMaterial(new Color(0.25f, 0.58f, 0.82f));
+            Material plotMaterial = CreateMaterial(new Color(0.39f, 0.23f, 0.12f));
             Material spriteMaterial = CreateMaterial(new Color(0.96f, 0.72f, 0.18f));
-            Material arcMaterial = CreateMaterial(new Color(0.70f, 0.28f, 0.86f));
+            Material foliageMaterial = CreateMaterial(new Color(0.16f, 0.42f, 0.18f));
+            Material trunkMaterial = CreateMaterial(new Color(0.38f, 0.20f, 0.08f));
+            Material arcMaterial = CreateMaterial(new Color(0.72f, 0.30f, 0.88f));
+            Material depthMaterial = CreateMaterial(new Color(0.20f, 0.78f, 0.78f));
 
             BuildGround(groundMaterial);
-            BuildGrid(gridMaterial, xAxisMaterial, zAxisMaterial);
+            BuildMapReferences(pathMaterial, waterMaterial, plotMaterial, foliageMaterial, trunkMaterial);
+            BuildGrid(gridMaterial, xAxisMaterial, yAxisMaterial);
             BuildSpriteReferences(spriteMaterial);
-            BuildHeightReference(xAxisMaterial);
+            BuildDepthStack(depthMaterial);
             BuildArcReference(arcMaterial);
         }
 
-        private void ConfigureCamera()
+        private static void ConfigureCamera()
         {
             Camera camera = Camera.main;
             if (camera == null)
@@ -63,48 +71,119 @@ namespace FarmSimulator.Presentation.Calibration
             camera.orthographicSize = SpatialModel.CameraOrthographicSize;
             camera.nearClipPlane = 0.1f;
             camera.farClipPlane = 100f;
-            camera.backgroundColor = new Color(0.61f, 0.77f, 0.88f);
-
-            camera.transform.position = new Vector3(10f, 10f, -10f);
-            camera.transform.rotation = Quaternion.LookRotation(
-                new Vector3(0f, 0.5f, 0f) - camera.transform.position,
-                Vector3.up);
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = new Color(0.10f, 0.13f, 0.11f);
+            camera.transform.position = new Vector3(0f, 0f, SpatialModel.CameraDepth);
+            camera.transform.rotation = Quaternion.identity;
         }
 
         private static void ConfigureLight()
         {
             Light sceneLight = Object.FindFirstObjectByType<Light>();
-            if (sceneLight == null)
+            if (sceneLight != null)
             {
-                return;
+                sceneLight.enabled = false;
             }
-
-            sceneLight.type = LightType.Directional;
-            sceneLight.intensity = 1.35f;
-            sceneLight.shadows = LightShadows.Soft;
-            sceneLight.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
         }
 
         private void BuildGround(Material material)
         {
             float width = SpatialModel.GridColumns * SpatialModel.GridCellSize;
-            float depth = SpatialModel.GridRows * SpatialModel.GridCellSize;
+            float height = SpatialModel.GridRows * SpatialModel.GridCellSize;
+
+            GameObject ground = CreatePrimitive(
+                PrimitiveType.Cube,
+                GroundObjectName,
+                new Vector3(0f, 0f, 0.2f),
+                new Vector3(width, height, 0.1f),
+                material);
+
+            ground.AddComponent<BoxCollider2D>();
+        }
+
+        private void BuildMapReferences(
+            Material pathMaterial,
+            Material waterMaterial,
+            Material plotMaterial,
+            Material foliageMaterial,
+            Material trunkMaterial)
+        {
+            CreatePrimitive(
+                PrimitiveType.Cube,
+                "Horizontal Path",
+                new Vector3(0f, -1.5f, 0.10f),
+                new Vector3(14f, 2f, 0.04f),
+                pathMaterial);
 
             CreatePrimitive(
                 PrimitiveType.Cube,
-                GroundObjectName,
-                new Vector3(0f, -0.05f, 0f),
-                new Vector3(width, 0.1f, depth),
-                material,
-                keepCollider: true);
+                "Vertical Path",
+                new Vector3(-2.5f, 1.5f, 0.09f),
+                new Vector3(2f, 7f, 0.04f),
+                pathMaterial);
+
+            CreatePrimitive(
+                PrimitiveType.Sphere,
+                "Pond Proxy",
+                new Vector3(4.7f, 2.9f, 0.02f),
+                new Vector3(2.6f, 1.6f, 0.08f),
+                waterMaterial);
+
+            for (int column = 0; column < 3; column++)
+            {
+                for (int row = 0; row < 2; row++)
+                {
+                    CreatePrimitive(
+                        PrimitiveType.Cube,
+                        $"Crop Plot {column}-{row}",
+                        new Vector3(-6f + column * 1.1f, -4.2f + row * 1.1f, 0.03f),
+                        new Vector3(0.9f, 0.9f, 0.04f),
+                        plotMaterial);
+                }
+            }
+
+            BuildTreeProxy(new Vector2(-5.2f, 3.2f), foliageMaterial, trunkMaterial);
+            BuildTreeProxy(new Vector2(5.4f, -3.4f), foliageMaterial, trunkMaterial);
         }
 
-        private void BuildGrid(Material gridMaterial, Material xAxisMaterial, Material zAxisMaterial)
+        private void BuildTreeProxy(
+            Vector2 groundPosition,
+            Material foliageMaterial,
+            Material trunkMaterial)
+        {
+            float trunkHeight = 1.2f;
+            float canopyHeight = 2.2f;
+
+            CreatePrimitive(
+                PrimitiveType.Cube,
+                $"Tree Trunk {groundPosition.x:0.0},{groundPosition.y:0.0}",
+                new Vector3(
+                    groundPosition.x,
+                    groundPosition.y + trunkHeight * 0.5f,
+                    VisualDepthForY(groundPosition.y) - 0.01f),
+                new Vector3(0.55f, trunkHeight, 0.05f),
+                trunkMaterial);
+
+            CreatePrimitive(
+                PrimitiveType.Sphere,
+                $"Tree Canopy {groundPosition.x:0.0},{groundPosition.y:0.0}",
+                new Vector3(
+                    groundPosition.x,
+                    groundPosition.y + trunkHeight + canopyHeight * 0.35f,
+                    VisualDepthForY(groundPosition.y) - 0.02f),
+                new Vector3(2.2f, canopyHeight, 0.08f),
+                foliageMaterial);
+        }
+
+        private void BuildGrid(
+            Material gridMaterial,
+            Material xAxisMaterial,
+            Material yAxisMaterial)
         {
             float width = SpatialModel.GridColumns * SpatialModel.GridCellSize;
-            float depth = SpatialModel.GridRows * SpatialModel.GridCellSize;
+            float height = SpatialModel.GridRows * SpatialModel.GridCellSize;
             float halfWidth = width * 0.5f;
-            float halfDepth = depth * 0.5f;
+            float halfHeight = height * 0.5f;
             const float lineThickness = 0.025f;
 
             for (int column = 0; column <= SpatialModel.GridColumns; column++)
@@ -113,109 +192,107 @@ namespace FarmSimulator.Presentation.Calibration
                 CreatePrimitive(
                     PrimitiveType.Cube,
                     $"Grid X {column:00}",
-                    new Vector3(x, 0.0125f, 0f),
-                    new Vector3(lineThickness, 0.025f, depth),
-                    gridMaterial,
-                    keepCollider: false);
+                    new Vector3(x, 0f, -0.01f),
+                    new Vector3(lineThickness, height, 0.02f),
+                    gridMaterial);
             }
 
             for (int row = 0; row <= SpatialModel.GridRows; row++)
             {
-                float z = -halfDepth + row * SpatialModel.GridCellSize;
+                float y = -halfHeight + row * SpatialModel.GridCellSize;
                 CreatePrimitive(
                     PrimitiveType.Cube,
-                    $"Grid Z {row:00}",
-                    new Vector3(0f, 0.0125f, z),
-                    new Vector3(width, 0.025f, lineThickness),
-                    gridMaterial,
-                    keepCollider: false);
+                    $"Grid Y {row:00}",
+                    new Vector3(0f, y, -0.01f),
+                    new Vector3(width, lineThickness, 0.02f),
+                    gridMaterial);
             }
 
             CreatePrimitive(
                 PrimitiveType.Cube,
                 "X Axis",
-                new Vector3(0f, 0.035f, 0f),
-                new Vector3(width, 0.05f, 0.07f),
-                xAxisMaterial,
-                keepCollider: false);
+                new Vector3(0f, 0f, -0.03f),
+                new Vector3(width, 0.07f, 0.025f),
+                xAxisMaterial);
 
             CreatePrimitive(
                 PrimitiveType.Cube,
-                "Z Axis",
-                new Vector3(0f, 0.04f, 0f),
-                new Vector3(0.07f, 0.06f, depth),
-                zAxisMaterial,
-                keepCollider: false);
+                "Y Axis",
+                new Vector3(0f, 0f, -0.04f),
+                new Vector3(0.07f, height, 0.025f),
+                yAxisMaterial);
         }
 
         private void BuildSpriteReferences(Material material)
         {
-            CreatePrimitive(
-                PrimitiveType.Cube,
+            CreateSpriteProxy(
                 SpriteProxyObjectName,
-                new Vector3(0f, SpatialModel.ReferenceCharacterHeight * 0.5f, 0f),
-                new Vector3(0.8f, SpatialModel.ReferenceCharacterHeight, 0.08f),
-                material,
-                keepCollider: false,
-                faceCamera: true);
+                new Vector2(0f, -0.8f),
+                SpatialModel.ReferenceCharacterWidth,
+                SpatialModel.ReferenceCharacterHeight,
+                material);
 
-            float[] depths = { -3f, 0f, 3f };
-            for (int index = 0; index < depths.Length; index++)
-            {
-                CreatePrimitive(
-                    PrimitiveType.Cube,
-                    $"Sprite Depth {index + 1}",
-                    new Vector3(3.5f, 0.75f, depths[index]),
-                    new Vector3(0.65f, 1.5f, 0.06f),
-                    material,
-                    keepCollider: false,
-                    faceCamera: true);
-            }
+            CreateSpriteProxy("Sprite North", new Vector2(1.4f, 2.4f), 0.7f, 1.5f, material);
+            CreateSpriteProxy("Sprite Center", new Vector2(1.4f, 0.3f), 0.7f, 1.5f, material);
+            CreateSpriteProxy("Sprite South", new Vector2(1.4f, -2.2f), 0.7f, 1.5f, material);
         }
 
-        private void BuildHeightReference(Material material)
+        private void CreateSpriteProxy(
+            string objectName,
+            Vector2 feetPosition,
+            float width,
+            float height,
+            Material material)
         {
             CreatePrimitive(
                 PrimitiveType.Cube,
-                "Y Height Reference",
-                new Vector3(-4.5f, 1f, -3.5f),
-                new Vector3(0.1f, 2f, 0.1f),
-                material,
-                keepCollider: false);
+                objectName,
+                new Vector3(
+                    feetPosition.x,
+                    feetPosition.y + height * 0.5f,
+                    VisualDepthForY(feetPosition.y)),
+                new Vector3(width, height, 0.05f),
+                material);
+        }
 
-            for (int tick = 0; tick <= 4; tick++)
+        private void BuildDepthStack(Material material)
+        {
+            for (int layer = 0; layer < 3; layer++)
             {
-                float y = tick * 0.5f;
                 CreatePrimitive(
                     PrimitiveType.Cube,
-                    $"Height Tick {tick}",
-                    new Vector3(-4.35f, y, -3.5f),
-                    new Vector3(0.3f, 0.035f, 0.08f),
-                    material,
-                    keepCollider: false);
+                    layer == 2 ? DepthStackObjectName : $"Depth Stack {layer + 1}",
+                    new Vector3(-4.2f + layer * 0.3f, 0.7f - layer * 0.25f, -0.18f - layer * 0.08f),
+                    new Vector3(1.2f, 1.2f, 0.04f),
+                    material);
             }
         }
 
         private void BuildArcReference(Material material)
         {
             const int points = 13;
-            Vector3 start = new(-4f, 0.2f, 2.75f);
-            Vector3 end = new(4f, 0.2f, 2.75f);
+            Vector3 start = new(-4.5f, 3.7f, -0.35f);
+            Vector3 end = new(4.5f, 3.7f, -0.35f);
 
             for (int index = 0; index < points; index++)
             {
                 float t = index / (float)(points - 1);
                 Vector3 position = Vector3.Lerp(start, end, t);
-                position.y += 2.5f * 4f * t * (1f - t);
+                position.y += 1.8f * 4f * t * (1f - t);
+                position.z -= 0.15f * Mathf.Sin(Mathf.PI * t);
 
                 CreatePrimitive(
                     PrimitiveType.Sphere,
                     $"Arc Point {index:00}",
                     position,
                     Vector3.one * 0.16f,
-                    material,
-                    keepCollider: false);
+                    material);
             }
+        }
+
+        private static float VisualDepthForY(float feetY)
+        {
+            return -0.20f + feetY * 0.01f;
         }
 
         private GameObject CreatePrimitive(
@@ -223,9 +300,7 @@ namespace FarmSimulator.Presentation.Calibration
             string objectName,
             Vector3 position,
             Vector3 scale,
-            Material material,
-            bool keepCollider,
-            bool faceCamera = false)
+            Material material)
         {
             GameObject instance = GameObject.CreatePrimitive(primitiveType);
             instance.name = objectName;
@@ -233,28 +308,15 @@ namespace FarmSimulator.Presentation.Calibration
             instance.transform.position = position;
             instance.transform.localScale = scale;
 
-            if (faceCamera && Camera.main != null)
-            {
-                Vector3 direction = Camera.main.transform.position - instance.transform.position;
-                direction.y = 0f;
-                if (direction.sqrMagnitude > 0.001f)
-                {
-                    instance.transform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
-                }
-            }
-
             Renderer primitiveRenderer = instance.GetComponent<Renderer>();
             primitiveRenderer.sharedMaterial = material;
-            primitiveRenderer.shadowCastingMode = ShadowCastingMode.On;
-            primitiveRenderer.receiveShadows = true;
+            primitiveRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            primitiveRenderer.receiveShadows = false;
 
-            if (!keepCollider)
+            Collider primitiveCollider = instance.GetComponent<Collider>();
+            if (primitiveCollider != null)
             {
-                Collider primitiveCollider = instance.GetComponent<Collider>();
-                if (primitiveCollider != null)
-                {
-                    Destroy(primitiveCollider);
-                }
+                Destroy(primitiveCollider);
             }
 
             return instance;
@@ -262,7 +324,10 @@ namespace FarmSimulator.Presentation.Calibration
 
         private Material CreateMaterial(Color color)
         {
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            Shader shader = Shader.Find("Universal Render Pipeline/Unlit")
+                ?? Shader.Find("Unlit/Color")
+                ?? Shader.Find("Standard");
+
             var material = new Material(shader)
             {
                 color = color,

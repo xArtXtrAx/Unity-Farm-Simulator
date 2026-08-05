@@ -38,7 +38,7 @@ namespace FarmSimulator.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator LabBuildsOrthographicXZCalibration()
+        public IEnumerator LabBuildsFrontFacingOrthographicXYCalibration()
         {
             AsyncOperation loadOperation = SceneManager.LoadSceneAsync(
                 ProjectSceneNames.Lab,
@@ -58,15 +58,24 @@ namespace FarmSimulator.Tests.PlayMode
             Assert.That(
                 sceneCamera.orthographicSize,
                 Is.EqualTo(SpatialModel.CameraOrthographicSize).Within(0.001f));
+            Assert.That(
+                Vector3.Distance(
+                    sceneCamera.transform.position,
+                    new Vector3(0f, 0f, SpatialModel.CameraDepth)),
+                Is.LessThan(0.001f));
+            Assert.That(
+                Vector3.Dot(sceneCamera.transform.forward, Vector3.forward),
+                Is.GreaterThan(0.999f));
 
             GameObject ground = GameObject.Find(LabSpatialCalibration.GroundObjectName);
             Assert.That(ground, Is.Not.Null);
-            Assert.That(ground.GetComponent<BoxCollider>(), Is.Not.Null);
+            Assert.That(ground.GetComponent<BoxCollider2D>(), Is.Not.Null);
+            Assert.That(ground.GetComponent<BoxCollider>(), Is.Null);
             Assert.That(
                 ground.transform.localScale.x,
                 Is.EqualTo(SpatialModel.GridColumns * SpatialModel.GridCellSize).Within(0.001f));
             Assert.That(
-                ground.transform.localScale.z,
+                ground.transform.localScale.y,
                 Is.EqualTo(SpatialModel.GridRows * SpatialModel.GridCellSize).Within(0.001f));
 
             GameObject spriteProxy = GameObject.Find(LabSpatialCalibration.SpriteProxyObjectName);
@@ -74,6 +83,13 @@ namespace FarmSimulator.Tests.PlayMode
             Assert.That(
                 spriteProxy.transform.localScale.y,
                 Is.EqualTo(SpatialModel.ReferenceCharacterHeight).Within(0.001f));
+            Assert.That(
+                spriteProxy.transform.position.z,
+                Is.LessThan(ground.transform.position.z));
+
+            GameObject depthStackFront = GameObject.Find(
+                LabSpatialCalibration.DepthStackObjectName);
+            Assert.That(depthStackFront, Is.Not.Null);
         }
     }
 }
