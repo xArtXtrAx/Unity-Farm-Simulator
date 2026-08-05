@@ -9,7 +9,8 @@ Punto de entrada permanente para retomar el desarrollo sin depender de la memori
 - **Repositorio:** `xArtXtrAx/Unity-Farm-Simulator`
 - **Rama estable:** `main`
 - **Rama activa:** `chore/cozy-farm-art-intake`
-- **Head remoto registrado:** `d88eeacb38ff50963b31d1d8a0f2c91b4297bf49`
+- **Head remoto registrado:** `57fadeeca15792e880d3c1ea5e2c594b43229b77`
+- **Head funcional A2:** `d88eeacb38ff50963b31d1d8a0f2c91b4297bf49`
 - **Bloque actual:** A2 — slicing curado de Cozy Farm
 - **Estado:** implementado remotamente; reimportación y validación local pendientes
 - **Commit de assets fuente publicado por Arturo:** `e4540b42d275b650f726bad41d4546787ae544e9`
@@ -52,6 +53,7 @@ Decisiones:
 - Los IDs de dominio no cambian.
 - `tools.png` contiene máquinas, no iconos apropiados de azada o regadera; queda sin slicing.
 - La prueba de `tools.png` fue endurecida en `d88eeacb38ff50963b31d1d8a0f2c91b4297bf49` para comprobar que no existan aliases falsos, sin depender de cómo Unity represente internamente un Sprite Single.
+- La bitácora transaccional fue cerrada en `57fadeeca15792e880d3c1ea5e2c594b43229b77`.
 - No se crean todavía Tilemaps, paletas, prefabs, escenas, hotbar ni conexiones funcionales.
 
 ## Próxima acción
@@ -88,5 +90,5 @@ Decisiones:
 ## Prompt mínimo para un chat nuevo
 
 ```text
-Continúa xArtXtrAx/Unity-Farm-Simulator. Lee CONTINUIDAD_GPT.md desde main y después BITÁCORA_GPT.MD y COZY_FARM_INTAKE.md desde chore/cozy-farm-art-intake. La Fase 6 está integrada. A1 de Cozy Farm fue validado con la línea base 124/124 EditMode y 6/6 PlayMode. A2 está implementado en d88eeacb38ff50963b31d1d8a0f2c91b4297bf49: slices de 3 objetos, 3 semillas, 18 etapas de cultivo y 4 tiles, más 6 pruebas EditMode. La validación esperada es 130/130 EditMode y 6/6 PlayMode. Conserva el héroe y no avances a Tilemaps o UI antes del reporte de Arturo.
+Continúa xArtXtrAx/Unity-Farm-Simulator. Lee CONTINUIDAD_GPT.md desde main y después BITÁCORA_GPT.MD y COZY_FARM_INTAKE.md desde chore/cozy-farm-art-intake. La Fase 6 está integrada. A1 de Cozy Farm fue validado con la línea base 124/124 EditMode y 6/6 PlayMode. A2 está implementado funcionalmente en d88eeacb38ff50963b31d1d8a0f2c91b4297bf49 y documentado hasta 57fadeeca15792e880d3c1ea5e2c594b43229b77: slices de 3 objetos, 3 semillas, 18 etapas de cultivo y 4 tiles, más 6 pruebas EditMode. La validación esperada es 130/130 EditMode y 6/6 PlayMode. Conserva el héroe y no avances a Tilemaps o UI antes del reporte de Arturo.
 ```
