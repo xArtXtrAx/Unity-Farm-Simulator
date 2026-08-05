@@ -5,7 +5,8 @@
     "FarmSimulator.Domain",
     "FarmSimulator.Application",
     "FarmSimulator.Infrastructure",
-    "FarmSimulator.Presentation"
+    "FarmSimulator.Presentation",
+    "Unity.ugui"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
