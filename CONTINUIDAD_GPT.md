@@ -12,16 +12,18 @@ Este archivo es el **punto de entrada permanente** para retomar el desarrollo si
 - **Rama estable:** `main`
 - **Rama activa:** `feature/player-prefab-depth-sorting`
 - **Fase actual:** Fase 5 — Prefab reutilizable y profundidad visual
-- **Estado:** implementación remota terminada; validación local pendiente
-- **Cabeza remota registrada de la rama activa:** `e88e41b39a797f0ba6d3e0d1d3ea30c2cddc2c44`
+- **Estado:** implementación remota terminada; validación local bloqueada por errores de compilación
+- **Cabeza remota registrada de la rama activa:** `db4c8c078811d5fdf5c72875a1e1a5e8c6b56e6f`
+- **Bug activo:** `BUG-0005` — Unity solicita Safe Mode por errores de compilación; causa en investigación
 - **Unity:** `6000.3.21f1`
 - **Ruta local habitual:** `D:\Git\Unity-Farm-Simulator`
 
 ### Validación pendiente
 
-- EditMode esperado: **36/36**
-- PlayMode esperado: **6/6**
-- Consola esperada: **0 errores y 0 advertencias**
+- Entrar a **Safe Mode** y capturar los primeros errores completos de la consola.
+- EditMode esperado después de corregir: **36/36**.
+- PlayMode esperado después de corregir: **6/6**.
+- Consola esperada después de corregir: **0 errores y 0 advertencias**.
 
 ---
 
@@ -39,7 +41,7 @@ Este archivo es el **punto de entrada permanente** para retomar el desarrollo si
 
 ## Reglas críticas
 
-- No asumir que una implementación pasó pruebas locales cuando la bitácora indique que está pendiente.
+- No asumir que una implementación pasó pruebas locales cuando la bitácora indique que está pendiente o bloqueada.
 - No modificar el repositorio antes de leer la documentación indicada.
 - `main` debe mantenerse estable.
 - Los cambios locales sin commit/push no están protegidos por este sistema y deben comunicarse antes de cambiar de chat.
