@@ -1,435 +1,254 @@
 # BITÁCORA GPT — Unity Farm Simulator
 
-Documento maestro de continuidad del proyecto. Su objetivo es conservar el contexto técnico, creativo y operativo necesario para retomar el desarrollo en un chat nuevo sin depender de la memoria de conversaciones anteriores.
+Documento maestro de continuidad. Debe permitir retomar el proyecto en un chat nuevo sin depender de la memoria de conversaciones anteriores.
 
-> **Regla de continuidad:** antes de iniciar trabajo en una conversación nueva, GPT debe leer este archivo, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, el estado actual del repositorio y los commits recientes.
+> **Regla de continuidad:** antes de modificar el repositorio, GPT debe leer este archivo, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, el estado de las ramas y los commits recientes.
 
-> **Regla crucial de sincronización:** toda nueva implementación, corrección o cambio técnico realizado por GPT debe ir seguido, dentro del mismo bloque de trabajo, por una actualización de esta bitácora. Ninguna implementación se considera terminada hasta registrar qué cambió, qué se comprobó, cuál es el estado resultante y cuál es el siguiente paso exacto. Esta regla existe para que, si el contexto del chat se interrumpe súbitamente, el proyecto pueda retomarse de inmediato usando únicamente el repositorio.
+> **Regla transaccional obligatoria:** ninguna implementación o corrección realizada por GPT se considera terminada hasta actualizar esta bitácora con lo realizado, lo comprobado, lo pendiente y el siguiente paso exacto.
 
 ---
 
-## 1. Identidad del proyecto
+## 1. Identidad y entorno
 
 - **Repositorio:** `xArtXtrAx/Unity-Farm-Simulator`
 - **Propietario:** Arturo García (`xArtXtrAx`)
-- **Tipo de proyecto:** simulador de granja 2.5D
-- **Motor:** Unity
-- **Versión instalada:** Unity 6.3 LTS `6000.3.21f1`
+- **Tipo:** simulador de granja 2.5D
+- **Motor fijado:** Unity 6.3 LTS `6000.3.21f1`
+- **Plantilla:** Universal 3D / URP
 - **Plataforma inicial:** Windows PC
-- **Control prioritario:** DualSense, sin abandonar teclado y mouse
-- **Ruta local del repositorio de Arturo:** `D:\Git\Unity-Farm-Simulator`
-- **Estado del repositorio:** público temporalmente durante el desarrollo colaborativo; posteriormente será privado
-- **Inicio formal de la bitácora:** 5 de agosto de 2026
-- **Proyecto fuente:** `xArtXtrAx/farming-game-A`
-- **Línea base de migración:** `main` en `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
-- **Rama activa de cimentación:** `chore/unity-project-foundation`
+- **Control prioritario:** DualSense, además de teclado y mouse
+- **Ruta local de Arturo:** `D:\Git\Unity-Farm-Simulator`
+- **Rama de cimentación:** `chore/unity-project-foundation`
+- **Proyecto fuente de migración:** `xArtXtrAx/farming-game-A`
+- **Commit fuente congelado:** `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
 
 ---
 
-## 2. Visión general
+## 2. Principios rectores
 
-Desarrollar un simulador de granja 2.5D con una arquitectura limpia, escalable y orientada a datos. Unity funcionará como el intermediario visual y técnico común entre Arturo y GPT:
+### Unity como intermediario
 
-- Arturo dirige la visión, diseño, estética, sensación de juego, composición de escenas y validación dentro del editor.
-- GPT diseña e implementa arquitectura, scripts C#, automatizaciones, herramientas especializadas, pruebas, documentación y mantenimiento del repositorio.
-- Unity aporta las herramientas generales de escenas, sprites, prefabs, colisiones, cuadrículas, animación, física e inspección.
-- GitHub conserva el historial, permite revisar cambios y sirve como punto de continuidad entre sesiones.
+No construir un editor de videojuegos desde cero. Unity debe resolver jerarquía, inspector, escenas, prefabs, sprites, cuadrículas, snapping, colisiones, animación, física y depuración. Solo se crearán herramientas internas específicas del simulador cuando aporten valor real.
 
-### Principio rector
+### Migración
 
-> No construir un editor de videojuegos desde cero. Construir el juego usando el editor de Unity y crear únicamente herramientas específicas que aporten valor al simulador.
+Migrar comportamientos, reglas, datos, identificadores y criterios de aceptación. No traducir TypeScript/Phaser a C# línea por línea ni recrear en Unity las herramientas genéricas del editor web.
 
-### Principio de migración
+### Git y continuidad
 
-> Portar comportamientos, datos, identificadores y criterios de aceptación; reconstruir la presentación y la integración con el motor usando herramientas nativas de Unity. No traducir TypeScript a C# línea por línea.
-
----
-
-## 3. Decisiones tomadas
-
-### 3.1 Motor y enfoque
-
-- Se eligió Unity para evitar recrear herramientas generales ya disponibles en el motor.
-- `farming-game-A` queda como referencia ejecutable de mecánicas, reglas, escenas, balance y pruebas.
-- No se portarán como sistemas propios el editor de geometría, la jerarquía, el inspector, el overlay general de colisiones ni el snapping del prototipo web, porque Unity ya cubre esas necesidades.
-- La primera meta será una **prueba vertical pequeña y completamente jugable**, no una migración masiva inmediata.
-- Después de validar el flujo Unity–GitHub, se buscará paridad funcional con las tres escenas y sistemas del commit fuente.
-
-### 3.2 Versión y plantilla
-
-- **Versión instalada y fijada para el proyecto:** Unity 6.3 LTS `6000.3.21f1`.
-- **Plantilla:** Universal 3D / URP.
-- La elección está orientada a combinar sprites 2D con profundidad, iluminación, cámara y elementos tridimensionales propios de un juego 2.5D.
-- No abrir ni actualizar el proyecto con otra versión de Unity sin documentar y aprobar previamente la migración del editor.
-
-### 3.3 Flujo Git
-
-- Arturo utilizará principalmente **GitHub Desktop**.
-- Se evitarán comprobaciones Git redundantes, ZIP, manifiestos y hashes salvo necesidad técnica clara.
-- `main` debe mantenerse estable y jugable.
-- Las mejoras relevantes se desarrollarán en ramas con nombres descriptivos, por ejemplo:
-  - `feature/player-controller`
-  - `feature/crop-system`
-  - `feature/content-catalog`
-  - `fix/camera-jitter`
-- Los cambios deben agruparse de forma lógica y documentarse con commits claros.
-
-### 3.4 Control de versiones en Unity
-
-Configuración confirmada:
-
-- `Version Control Mode`: **Visible Meta Files**.
-- `Asset Serialization`: **Force Text**.
-- Incluir en Git:
-  - `Assets/`
-  - `Packages/`
-  - `ProjectSettings/`
-- Excluir archivos regenerables como:
-  - `Library/`
-  - `Temp/`
-  - `Obj/`
-  - `Logs/`
-  - `Build/` y `Builds/`
-  - `UserSettings/`
-  - `.vscode/`
-  - soluciones y proyectos generados por el IDE, incluidos `.sln`, `.slnx` y `.csproj`.
-- Los archivos `.meta` deben conservarse siempre porque contienen los GUID que mantienen referencias entre assets.
-- El repositorio contiene `.gitattributes` para normalizar a LF los archivos de texto y YAML de Unity sin modificar formatos binarios.
-- Evaluar Git LFS únicamente para archivos binarios pesados que realmente lo necesiten.
-
-### 3.5 Arquitectura inicial
-
-- Las reglas críticas vivirán en C# puro, preferentemente sin dependencia de `UnityEngine`.
-- Los `ScriptableObject` contendrán definiciones de objetos, cultivos y contenido, no el progreso mutable de la partida.
-- El estado de partida se guardará mediante DTO e identificadores de texto estables.
-- `MonoBehaviour`, escenas, prefabs, animación y UI serán la capa de presentación.
-- Las pruebas Edit Mode protegerán reglas; las Play Mode protegerán integración con Unity.
-- Se definieron las assemblies iniciales:
-  - `FarmSimulator.Domain`: reglas puras, sin `UnityEngine`.
-  - `FarmSimulator.Application`: casos de uso; depende solo de Domain y tampoco usa `UnityEngine`.
-  - `FarmSimulator.Infrastructure`: persistencia y adaptadores; depende de Domain y Application.
-  - `FarmSimulator.Presentation`: componentes, escenas, UI e input; depende de Domain y Application.
-  - `FarmSimulator.Editor`: herramientas exclusivas del Editor; puede consultar las cuatro capas anteriores.
-  - `FarmSimulator.Tests.EditMode`: pruebas de Domain y Application.
-  - `FarmSimulator.Tests.PlayMode`: pruebas de integración de todas las capas de runtime.
-- No colocar código nuevo en la assembly global `Assembly-CSharp`.
-
-### 3.6 Bitácora transaccional obligatoria
-
-- Cada implementación o corrección realizada por GPT debe actualizar `BITÁCORA_GPT.MD` antes de dar el bloque de trabajo por concluido.
-- La actualización debe formar parte del mismo conjunto lógico de cambios y, cuando sea posible, del mismo commit o PR documentalmente coherente.
-- Debe registrarse como mínimo:
-  - objetivo y fase afectada;
-  - archivos y sistemas modificados;
-  - decisiones o supuestos relevantes;
-  - pruebas realmente ejecutadas y sus resultados;
-  - bugs abiertos, corregidos o pendientes de validación;
-  - estado exacto de la rama o implementación;
-  - próximo paso concreto y cualquier acción requerida de Arturo.
-- Si la implementación queda parcial, bloqueada o pendiente de prueba manual, debe decirse expresamente; nunca registrar como terminado lo que no se comprobó.
-- Si el chat se interrumpe antes de una respuesta final, la prioridad al recuperar acceso será actualizar la bitácora con el último estado verificable antes de continuar desarrollando.
-- Los detalles específicos de errores permanecerán en `BUGS.MD`; esta bitácora debe enlazar o resumir su efecto sobre el estado general.
+- Arturo usa principalmente GitHub Desktop.
+- `main` debe permanecer estable y jugable.
+- Las mejoras relevantes se desarrollan en ramas descriptivas.
+- Evitar ZIP, manifiestos, hashes y comprobaciones Git repetitivas salvo necesidad técnica.
+- Toda implementación de GPT debe actualizar esta bitácora antes de cerrar el bloque.
 
 ---
 
-## 4. División de responsabilidades
+## 3. Arquitectura acordada
 
-### Arturo
+El código propio vive bajo `Assets/_Project` y no debe colocarse en la assembly global `Assembly-CSharp`.
 
-- Dirección creativa y prioridades.
-- Instalación y operación local de Unity.
-- Diseño visual de escenas y colocación de elementos.
-- Selección y validación de sprites, modelos, audio y otros recursos.
-- Pruebas de jugabilidad, sensación de movimiento y control.
-- Capturas, videos y reporte de errores observados en Unity.
+### Assemblies
 
-### GPT
+- `FarmSimulator.Domain`: reglas puras, sin `UnityEngine`.
+- `FarmSimulator.Application`: casos de uso y coordinación; depende de Domain y tampoco usa `UnityEngine`.
+- `FarmSimulator.Infrastructure`: persistencia y adaptadores; depende de Domain y Application.
+- `FarmSimulator.Presentation`: escenas, `MonoBehaviour`, UI, input y representación visual; depende de Domain y Application.
+- `FarmSimulator.Editor`: herramientas exclusivas del Editor.
+- `FarmSimulator.Tests.EditMode`: reglas y configuración que no requieren Play Mode.
+- `FarmSimulator.Tests.PlayMode`: integración con escenas y ciclo de vida de Unity.
 
-- Arquitectura del proyecto.
-- Scripts C# y sistemas del juego.
-- Herramientas personalizadas del editor cuando aporten valor específico.
-- Importadores, validadores y automatización de contenido.
-- Revisión del repositorio, commits, ramas, pull requests y CI cuando corresponda.
-- Pruebas automatizadas y documentación.
-- Actualización obligatoria de esta bitácora después de cada implementación o corrección, además del mantenimiento de la bitácora de migración y de `BUGS.MD`.
+### Datos y guardado
 
----
+- Los `ScriptableObject` contendrán definiciones estáticas de objetos y cultivos.
+- El progreso mutable de la partida se representará con DTO e identificadores de texto estables.
+- Se preservará el enfoque versionado, defensivo y transaccional del guardado del proyecto fuente.
 
-## 5. Política para herramientas internas
+### Control de versiones de Unity
 
-Antes de crear una herramienta personalizada, comprobar si Unity ya resuelve el problema adecuadamente.
+Confirmado:
 
-### Usar herramientas nativas de Unity para
-
-- Jerarquía y selección de objetos.
-- Inspector y edición de componentes.
-- Cuadrículas y snapping.
-- Tilemaps y Tile Palette.
-- Sprite Editor y slicing.
-- Prefabs y Prefab Variants.
-- Colliders, Gizmos y visualización física.
-- Animaciones y Animator.
-- Undo/Redo.
-
-### Crear herramientas propias únicamente para necesidades específicas
-
-Ejemplos potenciales:
-
-- Catálogo de cultivos, vegetación, muebles, construcciones, NPC y objetos interactivos.
-- Validación automática de prefabs y escenas.
-- Importación estandarizada de packs de sprites.
-- Generación de datos y ScriptableObjects.
-- Herramientas de balance y depuración de sistemas del simulador.
-- Validación de IDs, spawns, licencias y referencias obligatorias.
+- `Visible Meta Files`.
+- `Force Text`.
+- `.meta` incluidos siempre.
+- `.gitignore` excluye `Library`, `Temp`, `Obj`, `Logs`, `UserSettings`, builds, `.vscode`, `.sln`, `.slnx`, `.csproj` y archivos regenerables.
+- `.gitattributes` normaliza texto/YAML a LF y protege binarios.
 
 ---
 
-## 6. Estrategia para sprites y contenido
+## 4. Línea base funcional del proyecto anterior
 
-El contenido gráfico se tratará en dos niveles:
+La auditoría de `farming-game-A` confirmó:
 
-1. **Recursos originales**, conservados sin modificación destructiva.
-2. **Contenido preparado para el juego**, organizado, importado, cortado y conectado a prefabs o datos.
-
-Estructura conceptual prevista:
-
-```text
-Assets/_Project/
-├── Art/
-│   ├── Raw/
-│   ├── Characters/
-│   ├── Crops/
-│   ├── Environment/
-│   └── UI/
-├── Audio/
-├── Data/
-├── Prefabs/
-├── Scenes/
-├── Scripts/
-│   ├── Domain/
-│   ├── Application/
-│   ├── Infrastructure/
-│   ├── Presentation/
-│   └── Editor/
-└── Tests/
-    ├── EditMode/
-    └── PlayMode/
-```
-
-Actualmente ya existen físicamente `Scripts` y `Tests` con sus assemblies. Las carpetas de arte, audio, datos, prefabs y escenas se crearán cuando exista su primer contenido real para evitar marcadores vacíos innecesarios.
-
-GPT podrá preparar scripts de importación, slicing, convenciones de nombres, animaciones, prefabs y ScriptableObjects. Arturo realizará la validación visual final dentro de Unity.
-
-Todo recurso externo debe registrar su licencia y confirmar que permite el uso previsto, especialmente si el juego se comercializa.
-
----
-
-## 7. Línea base funcional del proyecto anterior
-
-La auditoría de `farming-game-A` confirmó que el prototipo ya contiene:
-
-- tres escenas: granja, interior de la casa y mercado norte;
-- personaje animado y controles por teclado, mouse y gamepad;
+- granja, casa y mercado norte;
+- personaje, teclado, mouse y gamepad;
 - hotbar de ocho espacios;
-- inventario, almacenamiento y transferencias;
-- doce parcelas agrícolas;
+- inventario y almacenamiento;
+- doce parcelas;
 - azada, regadera y semillas;
 - nabo, zanahoria y col de primavera;
 - tienda, economía y caja de envíos;
 - reloj, días, estaciones y años;
-- sueño y procesamiento transaccional de fin de día;
+- sueño y procesamiento de fin de día;
 - guardado JSON versionado con validación y rollback;
 - colisiones, interacciones, transiciones y spawns;
-- una suite documentada de 806 pruebas al integrar los cultivos de primavera.
+- 806 pruebas documentadas al integrar los cultivos de primavera.
 
-El PR #43 está realmente fusionado en `main`, aunque documentos antiguos del repositorio fuente todavía lo describen como pendiente. El HEAD y GitHub prevalecen sobre esa documentación obsoleta.
-
-Los detalles, equivalencias, fases y puertas de salida están en `MIGRACION_DESDE_FARMING_GAME_A.MD`.
+El plan detallado y los criterios de paridad están en `MIGRACION_DESDE_FARMING_GAME_A.MD`.
 
 ---
 
-## 8. Primera prueba vertical prevista
+## 5. Primera prueba vertical prevista
 
-La primera versión jugable debe ser deliberadamente pequeña e incluir:
+La primera versión jugable será pequeña y deberá incluir:
 
-- escena `Lab` o pequeña granja;
-- personaje controlable con DualSense y teclado;
-- cámara funcional;
-- suelo básico;
-- cuadrícula y colisiones mediante herramientas nativas de Unity;
-- una parcela cultivable;
+- escenas `Bootstrap` y `Lab`;
+- personaje con DualSense y teclado;
+- cámara, suelo y colisiones;
+- una parcela;
 - azada, regadera y semillas de nabo;
-- un cultivo con varias etapas;
+- cultivo con varias etapas;
 - hotbar e interacción básica;
 - avance de día de prueba;
 - guardado mínimo.
 
-El objetivo no es producir contenido abundante, sino validar el flujo completo Unity ↔ GitHub ↔ Arturo ↔ GPT antes de recrear las tres escenas.
+El objetivo es validar el flujo Unity ↔ GitHub ↔ Arturo ↔ GPT antes de migrar las tres escenas completas.
 
 ---
 
-## 9. Estado actual
+## 6. Estado actual
 
 ### Completado
 
 - [x] Decisión de migrar el desarrollo principal a Unity.
-- [x] Definición de Unity como intermediario visual y GitHub como memoria compartida.
-- [x] Creación del repositorio `Unity-Farm-Simulator`.
-- [x] Creación de `BITÁCORA_GPT.MD`.
-- [x] Creación de `BUGS.MD`.
-- [x] Definición inicial del flujo de trabajo y responsabilidades.
-- [x] Auditoría del repositorio `farming-game-A`.
-- [x] Confirmación de la línea base `dd32056` y del PR #43 fusionado.
-- [x] Creación de `MIGRACION_DESDE_FARMING_GAME_A.MD` con fases, contratos y criterios de cierre.
-- [x] Establecimiento de la actualización obligatoria de la bitácora después de cada implementación o corrección.
+- [x] Creación de `BITÁCORA_GPT.MD`, `BUGS.MD` y `MIGRACION_DESDE_FARMING_GAME_A.MD`.
+- [x] Auditoría del repositorio fuente y fijación de `dd32056` como línea base.
 - [x] Instalación de Unity 6.3 LTS `6000.3.21f1`.
-- [x] Clonación del repositorio en `D:\Git\Unity-Farm-Simulator`.
-- [x] Creación de `.gitignore` para excluir cachés, archivos de IDE y builds generados por Unity.
-- [x] Materialización del proyecto Universal 3D / URP dentro de la raíz clonada.
-- [x] Apertura del proyecto desde `D:\Git\Unity-Farm-Simulator` con Unity `6000.3.21f1`.
-- [x] Finalización de la importación inicial sin errores visibles: consola en `0` errores, `0` advertencias y `0` mensajes.
-- [x] Configuración de `Visible Meta Files` y `Force Text`.
-- [x] Eliminación de los recursos tutoriales `TutorialInfo` y `Readme` de la plantilla.
-- [x] Creación y publicación de la rama `chore/unity-project-foundation`.
-- [x] Commit inicial del proyecto Unity: `ecf6eb3` — `chore: initialize Unity 6.3 URP project`.
-- [x] Creación de `.gitattributes` y endurecimiento de `.gitignore`.
-- [x] Retiro de `.vscode/launch.json` y `.vscode/settings.json` del repositorio.
-- [x] Creación de `Assets/_Project` y assemblies iniciales de runtime, editor y pruebas.
-- [x] Validación local de la cimentación arquitectónica: Unity importó las assemblies con consola en `0` errores, `0` advertencias y `0` mensajes.
+- [x] Clonación en `D:\Git\Unity-Farm-Simulator`.
+- [x] Creación del proyecto Universal 3D / URP dentro del repositorio.
+- [x] Primera importación con consola en `0` errores, `0` advertencias y `0` mensajes.
+- [x] Configuración `Visible Meta Files` y `Force Text`.
+- [x] Eliminación de recursos tutoriales de la plantilla.
+- [x] Publicación de `chore/unity-project-foundation`.
+- [x] Commit `ecf6eb3`: proyecto Unity 6.3 URP inicial.
+- [x] Commit `3aa30f0`: assemblies, estructura `_Project`, `.gitattributes` e higiene del repositorio.
+- [x] Validación local de las assemblies con consola completamente limpia.
+- [x] Auditoría inicial de paquetes de plantilla.
+- [x] Creación remota de `Bootstrap` y `Lab`.
+- [x] Registro de ambas escenas en Build Settings, con `Bootstrap` primero.
+- [x] Implementación del salto automático `Bootstrap` → `Lab`.
+- [x] Añadidas pruebas Edit Mode y Play Mode para la cimentación.
+
+### Pendiente de validación local
+
+- [ ] Unity debe resolver el nuevo `Packages/manifest.json`.
+- [ ] `Packages/packages-lock.json` debe regenerarse localmente y después versionarse.
+- [ ] Confirmar compilación sin errores tras retirar paquetes.
+- [ ] Ejecutar pruebas Edit Mode.
+- [ ] Ejecutar pruebas Play Mode y confirmar el salto `Bootstrap` → `Lab`.
 
 ### En curso
 
-- [ ] Revisión y depuración de paquetes instalados por la plantilla.
-- [ ] Creación de las escenas `Bootstrap` y `Lab`.
-- [ ] Confirmación de los módulos instalados junto al editor.
-
-### Próximo paso inmediato
-
-1. Revisar `Packages/manifest.json` y retirar únicamente paquetes de plantilla que no aporten valor al proyecto.
-2. Sincronizar y validar localmente cualquier cambio de paquetes antes de continuar.
-3. Crear las escenas `Bootstrap` y `Lab` y registrarlas en Build Profiles.
-4. Añadir una comprobación mínima de arranque para cerrar la Fase 1.
+- [ ] Cierre formal de la Fase 1.
+- [ ] Confirmación de módulos instalados junto al editor.
+- [ ] Preparación de la calibración visual, cámara, movimiento y DualSense.
 
 ---
 
-## 10. Registro cronológico
+## 7. Paquetes
 
-### 2026-08-05 — Inicio formal del repositorio
+### Conservados deliberadamente
+
+- `com.unity.render-pipelines.universal`: render 2.5D con URP.
+- `com.unity.inputsystem`: teclado, mouse y DualSense.
+- `com.unity.test-framework`: Edit Mode y Play Mode.
+- `com.unity.ai.navigation`: futura navegación de NPC.
+- `com.unity.timeline`: secuencias y eventos futuros.
+- `com.unity.ide.visualstudio`: integración con el IDE instalado.
+- `com.unity.ugui`: UI de runtime.
+
+### Retirados del manifest
+
+- `com.unity.collab-proxy`: usamos GitHub, no Unity Version Control.
+- `com.unity.ide.rider`: el entorno elegido es Visual Studio.
+- `com.unity.multiplayer.center`: el proyecto no es multijugador.
+- `com.unity.visualscripting`: la lógica se desarrollará en C# versionable y comprobable.
+
+`packages-lock.json` no se editó manualmente en GitHub para evitar fabricar un lock no resuelto por Unity. El Editor debe regenerarlo en la próxima apertura.
+
+---
+
+## 8. Registro cronológico
+
+### 2026-08-05 — Inicio y planificación
 
 - Se verificó acceso de lectura y escritura al repositorio.
-- Se estableció este documento como memoria maestra de continuidad.
-- Se acordó conservar el historial de errores en `BUGS.MD`.
-- Se definió que Unity resolverá las herramientas genéricas y que solo se construirán extensiones específicas del simulador.
+- Se establecieron GitHub como memoria compartida y Unity como intermediario visual.
+- Se creó la documentación de continuidad y bugs.
+- Se auditó `farming-game-A` y se creó el plan de migración.
+- Se hizo obligatoria la actualización de esta bitácora después de cada implementación.
 
-### 2026-08-05 — Auditoría y planificación de la migración
+### 2026-08-05 — Proyecto Unity inicial
 
-- Se estudió la estructura completa de `xArtXtrAx/farming-game-A`.
-- Se inventariaron escenas, sistemas de dominio, input, guardado, herramientas y pruebas.
-- Se confirmó que la línea base correcta es `main` en `dd32056` y que el PR #43 ya fue fusionado.
-- Se determinó que deben migrarse reglas, datos, IDs y casos de prueba, no el código Phaser de forma literal.
-- Se decidió sustituir las herramientas genéricas web por las herramientas nativas de Unity.
-- Se creó `MIGRACION_DESDE_FARMING_GAME_A.MD` con once fases posteriores a la congelación de la fuente, criterios de paridad, riesgos y puertas de salida.
+- Arturo instaló Unity `6000.3.21f1` y clonó el repositorio.
+- Se creó un proyecto Universal 3D / URP sin AI Assistant ni proveedor adicional de control de código fuente.
+- Se configuraron `Visible Meta Files`, `Force Text` y `.gitignore`.
+- La importación inicial finalizó con consola limpia.
+- Se publicó `chore/unity-project-foundation` con `ecf6eb3`.
 
-### 2026-08-05 — Regla obligatoria de continuidad inmediata
+### 2026-08-05 — Cimentación arquitectónica
 
-- Arturo estableció como requisito crucial que toda implementación de GPT vaya seguida de una actualización de esta bitácora.
-- Se convirtió el requisito en una puerta de cierre: una implementación no se considera terminada hasta que su estado quede documentado.
-- La actualización debe permitir reconstruir el punto exacto de trabajo incluso si la memoria del chat se interrumpe sin aviso.
-- Se definieron los datos mínimos que debe contener cada registro y la obligación de distinguir entre completado, parcial, bloqueado y pendiente de validación manual.
+- GPT creó `3aa30f0` con las assemblies Domain, Application, Infrastructure, Presentation, Editor, EditMode y PlayMode.
+- Se añadieron `.gitattributes`, reglas de ubicación del código y exclusión de archivos del IDE.
+- Arturo sincronizó y confirmó que Unity compiló todo con `0` errores, `0` advertencias y `0` mensajes.
 
-### 2026-08-05 — Entorno local preparado
+### 2026-08-05 — Escenas, arranque y auditoría de paquetes
 
-- Arturo instaló Unity 6.3 LTS `6000.3.21f1` mediante Unity Hub.
-- El repositorio se clonó correctamente en `D:\Git\Unity-Farm-Simulator`.
-- Se eligió la plantilla Universal 3D / URP sin AI Assistant ni proveedor adicional de control de código fuente.
-
-### 2026-08-05 — Protección inicial del repositorio Unity
-
-- Se creó `.gitignore` en `main` mediante el commit `04f6c9133a1960977cfd6f1db2bf74ea78f67c5e`.
-- Se excluyeron `Library`, `Temp`, `Obj`, `Logs`, `UserSettings`, builds, archivos generados de IDE y otros artefactos regenerables.
-- Los archivos `.meta` no se ignoran porque preservan las referencias de assets de Unity.
-
-### 2026-08-05 — Proyecto Unity abierto y validado inicialmente
-
-- Arturo materializó las carpetas nativas `Assets`, `Packages` y `ProjectSettings` dentro de `D:\Git\Unity-Farm-Simulator`.
-- Unity Hub abrió la raíz correcta con Unity 6.3 LTS `6000.3.21f1`.
-- URP cargó correctamente y terminó la importación inicial.
-- La consola fue revisada visualmente y mostró `0` errores, `0` advertencias y `0` mensajes.
-- No se ejecutaron todavía pruebas automatizadas ni build de Windows; aún no existe implementación funcional del juego.
-
-### 2026-08-05 — Proyecto base publicado
-
-- Arturo creó y publicó `chore/unity-project-foundation`.
-- Se verificó en GitHub el commit `ecf6eb3477489b0308b908624347b966f3578e95` con el mensaje `chore: initialize Unity 6.3 URP project`.
-- La rama quedó un commit por delante de `main` y sin divergencia previa.
-- `ProjectVersion.txt` fija el editor en `6000.3.21f1`.
-- `EditorSettings.asset` contiene `m_SerializationMode: 2`, correspondiente a Force Text.
-- `VersionControlSettings.asset` contiene `m_Mode: Visible Meta Files`.
-- La plantilla conserva URP, Input System y Unity Test Framework como bases útiles.
-
-### 2026-08-05 — Cimentación arquitectónica creada por GPT
-
-- En la rama `chore/unity-project-foundation`, GPT creó el commit `3aa30f03089921b11e63010d8e6f576e4eb8646e` con el mensaje `chore: add Unity project architecture foundation`.
-- Se añadió `.gitattributes` para normalizar archivos de texto y proteger binarios.
-- `.gitignore` pasó a excluir `.vscode/` y archivos `.slnx`; se eliminaron los dos archivos locales de VS Code que habían entrado en el primer commit.
-- Se creó `Assets/_Project/README.md` con las reglas de ubicación y dependencia del código.
-- Se añadieron assemblies para Domain, Application, Infrastructure, Presentation, Editor, EditMode y PlayMode, junto con sus archivos `.meta` y GUID estables.
-- No se modificaron aún `Packages/manifest.json`, escenas ni contenido funcional.
-- Validación remota realizada: árbol Git creado y referencia de la rama actualizada correctamente.
-
-### 2026-08-05 — Cimentación arquitectónica validada localmente
-
-- Arturo sincronizó la rama y abrió el proyecto con Unity `6000.3.21f1`.
-- Unity terminó la importación y compilación de las assemblies nuevas.
-- La captura de la consola confirmó `0` errores, `0` advertencias y `0` mensajes.
-- La validación pendiente registrada para `3aa30f0` queda cerrada satisfactoriamente.
-- No se detectaron bugs y no fue necesario añadir entradas a `BUGS.MD`.
-- El siguiente bloque será la auditoría de paquetes de plantilla, seguida por la creación de `Bootstrap` y `Lab`.
+- GPT creó el commit `d46b08cb9a9c15bb078ba2450218078d8e9d80c5` — `feat: add Bootstrap and Lab project foundation`.
+- `SampleScene` fue reemplazada por:
+  - `Assets/_Project/Scenes/Bootstrap.unity`;
+  - `Assets/_Project/Scenes/Lab.unity`.
+- `EditorBuildSettings.asset` registra `Bootstrap` como escena 0 y `Lab` como escena 1.
+- Se añadió `ProjectSceneNames.cs` para centralizar nombres y rutas.
+- Se añadió `BootstrapStartup.cs`, que instala un listener de escenas y carga `Lab` cuando se abre `Bootstrap`.
+- La inicialización restablece correctamente el estado estático incluso con las opciones rápidas de Play Mode.
+- Se añadió `ProjectFoundationTests.cs` para comprobar el orden de Build Settings.
+- Se añadió `BootstrapStartupTests.cs` para comprobar la transición en Play Mode.
+- Se retiraron del manifest Unity Version Control, Rider, Multiplayer Center y Visual Scripting.
+- Validación remota realizada: commit creado y rama actualizada correctamente.
+- Validación local pendiente: no afirmar que compila o que las pruebas pasan hasta que Arturo lo confirme desde Unity.
+- No se abrió entrada en `BUGS.MD` porque aún no existe un fallo observado; cualquier error de compilación, paquete o prueba se registrará tras la validación.
 
 ---
 
-## 11. Protocolo de actualización
+## 9. Próximo paso exacto
 
-### Regla obligatoria
-
-Después de **cada implementación, corrección o cambio técnico realizado por GPT**, actualizar esta bitácora antes de declarar terminado el bloque de trabajo. No esperar al final de una fase grande ni acumular varias implementaciones sin documentarlas.
-
-Cada actualización debe registrar:
-
-- Fecha.
-- Objetivo realizado.
-- Fase de migración afectada.
-- Archivos o sistemas modificados.
-- Decisiones tomadas y motivo.
-- Pruebas realmente ejecutadas y resultado.
-- Bugs abiertos, corregidos o pendientes.
-- Estado exacto del juego, rama o PR.
-- Próximo paso concreto.
-- Cualquier acción manual requerida de Arturo.
-
-Cuando un cambio sea únicamente documental o administrativo, bastará un registro breve. Cuando sea funcional, el registro debe contener suficiente información para que otro chat pueda continuar sin reconstruir el contexto desde cero.
-
-No convertir la bitácora en un volcado de cada comando. Registrar decisiones, resultados, límites y contexto operativo que permitan continuar el proyecto.
+1. Cerrar Unity antes de sincronizar.
+2. En GitHub Desktop, sobre `chore/unity-project-foundation`, ejecutar **Fetch origin** y **Pull origin**.
+3. Abrir el proyecto con Unity `6000.3.21f1`.
+4. Esperar a que Package Manager termine de resolver y retirar paquetes.
+5. Abrir `Console` y confirmar los contadores.
+6. Abrir `Window → General → Test Runner`.
+7. Ejecutar primero **EditMode** y después **PlayMode**.
+8. Enviar captura de la consola y resultados de pruebas.
+9. Revisar GitHub Desktop: debe aparecer modificado `Packages/packages-lock.json`; no mezclar otros archivos inesperados.
+10. Tras esa validación, versionar el lock regenerado y cerrar formalmente la Fase 1.
 
 ---
 
-## 12. Protocolo para comenzar un chat nuevo
+## 10. Protocolo para un chat nuevo
 
-En una conversación nueva, utilizar una instrucción equivalente a:
+Usar una instrucción equivalente a:
 
-> Continúa el desarrollo del repositorio `xArtXtrAx/Unity-Farm-Simulator`. Antes de modificar archivos, lee `BITÁCORA_GPT.MD`, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, el estado actual del repositorio y los commits recientes. Resume brevemente el estado del proyecto y continúa desde el próximo paso documentado.
-
-La bitácora debe poder indicar por sí misma cuál fue la última implementación, qué quedó comprobado, qué está pendiente y qué debe hacerse inmediatamente después.
+> Continúa el desarrollo de `xArtXtrAx/Unity-Farm-Simulator`. Antes de modificar archivos, lee `BITÁCORA_GPT.MD`, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, revisa ramas y commits recientes, resume el estado y continúa desde el próximo paso documentado.
 
 ---
 
-## 13. Datos pendientes por definir
+## 11. Decisiones pendientes
 
-- Módulos exactos instalados junto a Unity 6.3 LTS.
-- Resolución base y relación de aspecto objetivo.
+- Resolución base y relación de aspecto.
 - Cámara ortográfica o perspectiva controlada.
-- Modelo espacial definitivo: mundo XZ con física 3D o XY con física 2D.
-- Escala visual, tamaño de tiles y Pixels Per Unit.
-- Dirección artística definitiva.
-- Primer pack de sprites o recursos de prueba.
-- Estrategia final de CI para Edit Mode, Play Mode y build de Windows.
+- Mundo XZ con física 3D o XY con física 2D.
+- Tamaño de tiles, escala y Pixels Per Unit.
+- Dirección artística y primer pack de sprites.
+- Estrategia de CI para pruebas y build de Windows.
