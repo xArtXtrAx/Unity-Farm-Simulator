@@ -105,7 +105,9 @@ namespace FarmSimulator.Tests.EditMode
             };
 
             CollectionAssert.AreEquivalent(expectedIds, view.IconItemIds);
-            Assert.That(view.IconSprites, Has.Count.EqualTo(expectedIds.Length));
+            Assert.That(
+                view.IconSprites.Count,
+                Is.EqualTo(expectedIds.Length));
             Assert.That(view.IconSprites.All(sprite => sprite != null), Is.True);
             Assert.That(
                 view.TryGetMappedIcon(ItemId.Hoe.Value, out _),
