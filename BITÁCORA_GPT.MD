@@ -2,7 +2,7 @@
 
 Documento maestro de continuidad. Debe permitir retomar el proyecto sin depender de la memoria del chat.
 
-> **Regla de continuidad:** antes de modificar el repositorio, leer este archivo, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, ramas y commits recientes.
+> **Regla de continuidad:** antes de modificar el repositorio, leer `CONTINUIDAD_GPT.md` desde `main`; después leer este archivo, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, ramas y commits recientes.
 
 > **Regla transaccional:** ninguna implementación o corrección realizada por GPT se considera terminada hasta registrar aquí lo realizado, lo comprobado, lo pendiente y el siguiente paso exacto.
 
@@ -163,7 +163,7 @@ No hacer commit local antes de revisar la lista completa de cambios.
 
 ### Estado de validación
 
-La rama está **2 commits por delante de `main` y 0 por detrás**. La implementación se revisó estructuralmente en GitHub, pero todavía no se ha compilado ni ejecutado en el Unity local de Arturo.
+La implementación se revisó estructuralmente en GitHub, pero todavía no se ha compilado ni ejecutado en el Unity local de Arturo.
 
 Resultado esperado:
 
@@ -179,14 +179,44 @@ No existe un bug nuevo confirmado. Cualquier fallo observado debe añadirse a `B
 
 ---
 
-## 5. Próximo paso exacto
+## 5. Protocolo permanente de continuidad
+
+Se creó en `main` el archivo estable `CONTINUIDAD_GPT.md` y el `README.md` apunta a él.
+
+Cadena de recuperación obligatoria:
+
+```text
+README.md en main
+  → CONTINUIDAD_GPT.md en main
+  → BITÁCORA_GPT.MD en la rama activa
+  → BUGS.MD + MIGRACION_DESDE_FARMING_GAME_A.MD
+  → comparación main/rama y commits recientes
+  → “Próximo paso exacto”
+```
+
+Reglas:
+
+- `CONTINUIDAD_GPT.md` es el puntero breve y siempre vive en `main`.
+- Esta bitácora conserva el detalle técnico y vive actualizada en la rama activa.
+- Cuando cambie la rama activa, la fase, el estado de validación o el commit remoto de referencia, debe actualizarse `CONTINUIDAD_GPT.md`.
+- Los cambios locales sin commit/push siguen siendo el único estado que GitHub no puede proteger; deben comunicarse antes de cambiar de chat.
+- Un chat nuevo puede retomar usando únicamente el prompt mínimo incluido en `CONTINUIDAD_GPT.md`.
+
+Commits de creación en `main`:
+
+- `3cbbee5` — crea `CONTINUIDAD_GPT.md`.
+- `8088bf8` — enlaza el punto de entrada desde `README.md`.
+
+---
+
+## 6. Próximo paso exacto
 
 1. Cerrar Unity.
 2. En GitHub Desktop cambiar a `main`.
-3. Ejecutar **Fetch origin** y **Pull origin**.
+3. Ejecutar **Fetch origin** y **Pull origin** para recibir `CONTINUIDAD_GPT.md`, el README actualizado y el cierre de la Fase 4.
 4. Ejecutar nuevamente **Fetch origin**.
 5. Cambiar a `feature/player-prefab-depth-sorting`.
-6. Ejecutar **Pull origin** si aparece.
+6. Ejecutar **Pull origin** para recibir la implementación y esta actualización de bitácora.
 7. Abrir Unity y esperar compilación, actualización de sorting layers, recarga y generación del prefab.
 8. Esperar a que Unity termine por completo antes de pulsar Play.
 9. Limpiar la consola y comprobar cero errores/advertencias.
@@ -199,12 +229,12 @@ No existe un bug nuevo confirmado. Cualquier fallo observado debe añadirse a `B
 
 ---
 
-## 6. Línea base pendiente de migrar
+## 7. Línea base pendiente de migrar
 
 Granja, casa, mercado, hotbar, inventario, almacenamiento, doce parcelas, herramientas, tres cultivos, tienda, economía, envíos, reloj, estaciones, sueño, fin de día y guardado JSON versionado. Detalle en `MIGRACION_DESDE_FARMING_GAME_A.MD`.
 
 ---
 
-## 7. Protocolo para chat nuevo
+## 8. Protocolo para chat nuevo
 
-> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee `BITÁCORA_GPT.MD`, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, revisa ramas y commits, resume el estado y continúa desde el próximo paso documentado.
+> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`; después sigue el orden de lectura y el “Próximo paso exacto” que ahí se indican. No asumas que las pruebas locales pendientes ya pasaron. Tras cada implementación o corrección, actualiza `BITÁCORA_GPT.MD` y mantén actualizado `CONTINUIDAD_GPT.md` cuando cambie la rama activa, la fase o el estado.
