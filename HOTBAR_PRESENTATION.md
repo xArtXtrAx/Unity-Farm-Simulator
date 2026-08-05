@@ -5,7 +5,8 @@
 - Rama: `feature/inventory-hotbar-presentation`.
 - Base: `main` en `57d7d165cfba47dcc753a6fc9c484a7191ab068a`.
 - Commit funcional inicial: `9084ab05874ae8e7f013d701135d8e9ce1cef762`.
-- Estado: **implementado remotamente; compilación, generación del prefab, pruebas e inspección local pendientes**.
+- Corrección de compatibilidad NUnit: `6cb50b63a91cc35463419e9ad0b594036a56165c`.
+- Estado: **compilación y generación del prefab confirmadas; primer pase EditMode 165/166; corrección publicada y repetición pendiente**.
 - Línea base previa confirmada: **138/138 EditMode**, **6/6 PlayMode**, **0 errores**.
 
 ## Fuente congelada estudiada
@@ -128,7 +129,36 @@ Resultado esperado:
 8/8 PlayMode
 ```
 
-Estos resultados todavía no están confirmados localmente.
+## Primera ejecución local — 2026-08-05
+
+Arturo confirmó:
+
+- Unity compiló la rama;
+- el prefab fue generado;
+- EditMode: **165/166**;
+- único fallo: `HotbarMapsOnlyApprovedCozyFarmIcons`;
+- excepción: `System.ArgumentException: Property Count was not found`;
+- línea afectada: aserción `Has.Count` sobre `Sprite[]`.
+
+Diagnóstico:
+
+- no falló el mapeo de iconos;
+- no falló la hotbar ni el prefab;
+- la versión de NUnit incluida en Unity intentó resolver una propiedad reflectiva `Count` sobre un arreglo, que expone `Length` y la interfaz `IReadOnlyList.Count`.
+
+Corrección:
+
+```text
+Assert.That(view.IconSprites.Count, Is.EqualTo(expectedIds.Length));
+```
+
+Commit:
+
+```text
+6cb50b63a91cc35463419e9ad0b594036a56165c
+```
+
+La repetición de EditMode y PlayMode sigue pendiente.
 
 ## Exclusiones
 
@@ -150,11 +180,11 @@ El prefab, collider, spritesheet, animaciones y movimiento del héroe siguen int
 
 ## Validación local requerida
 
-1. En GitHub Desktop, hacer Fetch y cambiar a `feature/inventory-hotbar-presentation`.
-2. Hacer Pull origin.
-3. Abrir Unity `6000.3.21f1` y esperar compilación/importación.
-4. Confirmar que se genere `Assets/_Project/Resources/Prefabs/UI/InventoryHotbar.prefab`.
-5. Si no aparece, ejecutar `Tools > Farm Simulator > Rebuild Inventory Hotbar`.
+1. En GitHub Desktop, hacer Fetch/Pull de `feature/inventory-hotbar-presentation`.
+2. Esperar la recompilación de Unity.
+3. Ejecutar primero **Rerun Failed** o el test `HotbarMapsOnlyApprovedCozyFarmIcons`.
+4. Si pasa, ejecutar EditMode completo; esperado **166/166**.
+5. Ejecutar PlayMode completo; esperado **8/8**.
 6. Abrir `Bootstrap` o `Lab` y pulsar Play.
 7. Confirmar visualmente:
    - hotbar inferior centrada;
@@ -164,7 +194,5 @@ El prefab, collider, spritesheet, animaciones y movimiento del héroe siguen int
    - slots 4–8 vacíos.
 8. Probar selección con 1–8, rueda y L1/R1.
 9. Confirmar que el movimiento del héroe continúe intacto.
-10. Ejecutar EditMode completo; esperado **166/166**.
-11. Ejecutar PlayMode completo; esperado **8/8**.
-12. Reportar captura, conteos, errores y advertencias.
-13. No hacer commit todavía de los assets generados hasta revisar el resultado.
+10. Reportar captura, conteos, errores y advertencias.
+11. No hacer commit todavía de los assets generados hasta revisar el resultado.
