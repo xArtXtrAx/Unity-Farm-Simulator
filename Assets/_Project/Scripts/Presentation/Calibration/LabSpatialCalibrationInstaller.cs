@@ -33,14 +33,25 @@ namespace FarmSimulator.Presentation.Calibration
                 return;
             }
 
-            if (Object.FindFirstObjectByType<LabSpatialCalibration>() != null)
+            LabSpatialCalibration calibration =
+                Object.FindFirstObjectByType<LabSpatialCalibration>();
+            if (calibration == null)
             {
-                return;
+                var installerObject = new GameObject(InstallerObjectName);
+                SceneManager.MoveGameObjectToScene(installerObject, scene);
+                calibration =
+                    installerObject.AddComponent<LabSpatialCalibration>();
             }
 
-            var installerObject = new GameObject(InstallerObjectName);
-            SceneManager.MoveGameObjectToScene(installerObject, scene);
-            installerObject.AddComponent<LabSpatialCalibration>();
+            LabDepthSortingReference depthReference =
+                calibration.GetComponent<LabDepthSortingReference>();
+            if (depthReference == null)
+            {
+                depthReference =
+                    calibration.gameObject.AddComponent<LabDepthSortingReference>();
+            }
+
+            depthReference.EnsureCreated();
         }
     }
 }
