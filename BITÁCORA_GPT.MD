@@ -104,7 +104,7 @@ Bugs verificados acumulados: `BUG-0001` a `BUG-0006`.
 
 ---
 
-## 4. Fase 6 — Catálogo de objetos e inventario de dominio: IMPLEMENTACIÓN REMOTA COMPLETA; VALIDACIÓN LOCAL PENDIENTE
+## 4. Fase 6 — Catálogo de objetos e inventario de dominio: VALIDADA LOCALMENTE; INTEGRACIÓN PENDIENTE
 
 Rama:
 
@@ -112,7 +112,7 @@ Rama:
 feature/domain-item-inventory-foundation
 ```
 
-Objetivo cumplido remotamente: núcleo de catálogo e inventario puro en `FarmSimulator.Domain`, sin hotbar visual, ScriptableObjects, almacenamiento, UI ni cambios de escenas.
+Objetivo cumplido: núcleo de catálogo e inventario puro en `FarmSimulator.Domain`, sin hotbar visual, ScriptableObjects, almacenamiento, UI ni cambios de escenas.
 
 ### Fuente congelada estudiada
 
@@ -218,15 +218,15 @@ Commits:
 - `cedaa70982c5dec0da6bf6fa18a7addf9e36200c` — 63 casos de inventario;
 - `718000a776ac109dfbdd9d053f3aa93ee591e690` — meta de inventario.
 
-Cobertura nueva calculada por atributos NUnit:
+Cobertura nueva:
 
 - catálogo: **25** casos;
 - inventario: **63** casos;
 - nuevos: **88** casos;
 - línea base existente: **36** casos;
-- total EditMode esperado: **124** casos.
+- total EditMode: **124** casos.
 
-PlayMode no cambia y conserva un conteo esperado de **6** casos.
+PlayMode no cambió y conserva la línea base previamente validada de **6/6**.
 
 ### Revisión estática realizada
 
@@ -236,10 +236,7 @@ PlayMode no cambia y conserva un conteo esperado de **6** casos.
 - `FarmSimulator.Domain.asmdef` conserva `noEngineReferences: true`;
 - el asmdef EditMode ya referencia `FarmSimulator.Domain`; no requirió cambios;
 - conteo estático confirmado: 25 + 63 = 88 casos nuevos;
-- archivos funcionales y pruebas verificados en la rama activa y ausentes de `main`;
-- no hay `dotnet`, `csc`, `mcs` ni Unity disponibles en el entorno remoto.
-
-Por lo anterior, **no se afirma que Unity compile ni que las pruebas pasen**.
+- archivos funcionales y pruebas verificados en la rama activa y ausentes de `main`.
 
 ### Incidencia de escritura en rama — resuelta sin residuo
 
@@ -251,21 +248,20 @@ El primer intento del catálogo usó el parámetro antiguo `branch_name`, que el
 - `main` fue restaurada exactamente a `d1893aa596203546e3915b6babf1f8828d861177`, eliminando también el historial accidental;
 - todas las escrituras posteriores usaron `branch` y fueron verificadas.
 
-### Estado de validación
+### Validación local de Arturo — 2026-08-05
 
-- Investigación fuente: **completada**.
-- Tabla de paridad: **completada**.
-- Catálogo remoto: **implementado y revisado estáticamente**.
-- Inventario remoto: **implementado y revisado estáticamente**.
-- Pruebas EditMode: **88 casos publicados; no ejecutados aún en Unity**.
-- Compilación local Unity: **pendiente de Arturo**.
-- EditMode esperado: **124**.
-- PlayMode esperado: **6**, sin cambios funcionales.
-- Consola esperada: pendiente de validación local.
+Arturo sincronizó la rama y confirmó que todas las pruebas del bloque pasaron sin errores.
 
-### Puerta de salida todavía pendiente
+- Unity pudo cargar y ejecutar el conjunto de pruebas sin errores de compilación reportados.
+- EditMode completo: **124/124**.
+- Fallos de pruebas: **0**.
+- Los **88 casos nuevos** de catálogo e inventario quedan aprobados localmente.
+- PlayMode no era requisito de salida de esta fase; se conserva la última regresión confirmada de **6/6** de la Fase 5.
+- No se registró en este mensaje un conteo independiente de advertencias de consola.
 
-Arturo debe sincronizar la rama en `D:\Git\Unity-Farm-Simulator`, dejar que Unity importe/compile y ejecutar EditMode. Solo su resultado local puede cerrar la Fase 6 y autorizar integración.
+### Puerta de salida
+
+**Cumplida.** El catálogo y el inventario puros pasan pruebas EditMode exhaustivas sin abrir ni modificar escenas. La Fase 6 puede integrarse a `main` mediante PR.
 
 ---
 
@@ -290,16 +286,15 @@ Los cambios exclusivamente locales siguen siendo el único estado que GitHub no 
 
 ## 6. Próximo paso exacto
 
-1. En GitHub Desktop, cambiar o permanecer en `feature/domain-item-inventory-foundation` y hacer **Fetch origin / Pull origin**.
-2. Abrir `D:\Git\Unity-Farm-Simulator` con Unity `6000.3.21f1`.
-3. Esperar a que termine la importación y compilación.
-4. Revisar la consola y reportar cualquier error o advertencia.
-5. Abrir Test Runner y ejecutar **EditMode** completo.
-6. Resultado esperado, no confirmado: **124/124** EditMode.
-7. Si EditMode pasa y la consola está limpia, ejecutar PlayMode como regresión opcional; esperado, no confirmado: **6/6**.
-8. Comunicar resultados exactos antes de corregir, integrar o cambiar de fase.
-9. No crear todavía UI, ScriptableObjects, almacenamiento ni cambios de escenas.
-10. Tras validación exitosa, actualizar esta bitácora, `CONTINUIDAD_GPT.md`, preparar PR y decidir la siguiente fase.
+1. No añadir más funcionalidad a `feature/domain-item-inventory-foundation`.
+2. Revisar la diferencia final de la rama contra `main`; el alcance permitido es Domain, pruebas EditMode, metas y documentación.
+3. Crear el PR de la Fase 6 hacia `main`, con título sugerido: `Add domain item catalog and inventory foundation`.
+4. Incluir en el PR la validación local: **124/124 EditMode**, cero fallos y sin cambios de escenas o UI.
+5. Revisar el PR y fusionarlo únicamente cuando el alcance sea correcto.
+6. Tras el merge, registrar en `BITÁCORA_GPT.MD` el número de PR, commit de merge y estado integrado.
+7. Actualizar `CONTINUIDAD_GPT.md` en `main` con la integración y la siguiente rama/fase.
+8. Solo después crear la siguiente rama; no continuar el desarrollo sobre esta rama ya validada.
+9. El siguiente bloque debe definirse desde `MIGRACION_DESDE_FARMING_GAME_A.MD`, priorizando la capa inmediatamente superior que consuma catálogo e inventario sin adelantar todavía agricultura completa.
 
 ---
 
@@ -311,4 +306,4 @@ Hotbar visual, almacenamiento, economía, tiempo, agricultura, herramientas, tre
 
 ## 8. Protocolo para chat nuevo
 
-> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`; después sigue el orden de lectura y el “Próximo paso exacto”. La rama activa es `feature/domain-item-inventory-foundation`. La implementación remota de la Fase 6 está completa: catálogo, inventario puro y 88 casos EditMode nuevos. Unity y las pruebas siguen pendientes de validación local; no afirmar que pasan hasta recibir los resultados de Arturo.
+> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`; después sigue el orden de lectura y el “Próximo paso exacto”. La rama activa es `feature/domain-item-inventory-foundation`. La Fase 6 está implementada y validada localmente con 124/124 EditMode y cero fallos; su integración a `main` mediante PR sigue pendiente. No añadir más funcionalidad a esta rama antes del merge.
