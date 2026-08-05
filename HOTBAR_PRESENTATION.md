@@ -3,10 +3,10 @@
 ## Estado actual
 
 - Rama: `feature/inventory-hotbar-presentation`.
-- Base: `main` en `57d7d165cfba47dcc753a6fc9c484a7191ab068a`.
+- Base original: `main` en `57d7d165cfba47dcc753a6fc9c484a7191ab068a`.
 - Commit funcional inicial: `9084ab05874ae8e7f013d701135d8e9ce1cef762`.
 - Corrección de compatibilidad NUnit: `6cb50b63a91cc35463419e9ad0b594036a56165c`.
-- Estado: **compilación, generación del prefab y suites completas validadas; inspección visual y controles manuales en `Lab` pendientes**.
+- Estado: **implementación, suites completas, inspección visual y controles manuales validados; publicación del prefab generado pendiente**.
 - Línea base validada de la rama: **166/166 EditMode**, **8/8 PlayMode**, **0 errores**.
 
 ## Fuente congelada estudiada
@@ -160,6 +160,36 @@ Commit:
 
 Después de la corrección, Arturo confirmó **166/166 EditMode** y **8/8 PlayMode**, sin errores.
 
+## Validación visual y manual — aprobada
+
+Arturo confirmó el 5 de agosto de 2026 que:
+
+- la hotbar aparece abajo y centrada;
+- el slot 1 muestra `AZ` y comienza seleccionado;
+- el slot 2 muestra `RG`;
+- el slot 3 muestra el icono de semillas de nabo y `×20`;
+- los slots 4–8 aparecen vacíos;
+- el nombre seleccionado es legible;
+- funcionan las teclas 1–8 y el teclado numérico;
+- funciona la rueda del mouse;
+- funcionan L1/R1 con DualSense;
+- el movimiento y comportamiento del héroe permanecen intactos;
+- no se observaron errores adicionales.
+
+La fase queda aprobada técnica, visual y funcionalmente.
+
+## Asset generado pendiente de publicación
+
+El prefab generado existe localmente y fue utilizado por las pruebas, pero todavía no está publicado en GitHub. Deben versionarse exactamente:
+
+```text
+Assets/_Project/Resources/Prefabs/UI.meta
+Assets/_Project/Resources/Prefabs/UI/InventoryHotbar.prefab
+Assets/_Project/Resources/Prefabs/UI/InventoryHotbar.prefab.meta
+```
+
+El prefab debe quedar versionado porque `InventoryHotbarInstaller` lo carga mediante `Resources.Load`; el pipeline Editor permite reconstruirlo, pero una compilación o clon limpio necesita el asset incluido.
+
 ## Exclusiones
 
 No se implementaron:
@@ -178,19 +208,15 @@ No se implementaron:
 
 El prefab, collider, spritesheet, animaciones y movimiento del héroe siguen intactos.
 
-## Validación visual y manual pendiente
+## Próximo paso exacto
 
-1. Abrir `Bootstrap` o `Lab` y pulsar Play.
-2. Confirmar visualmente:
-   - hotbar inferior centrada;
-   - slot 1 `AZ` seleccionado;
-   - slot 2 `RG`;
-   - slot 3 con icono de semillas y `×20`;
-   - slots 4–8 vacíos;
-   - nombre del objeto seleccionado legible.
-3. Probar selección con teclas 1–8 y teclado numérico.
-4. Probar ciclo con rueda del mouse.
-5. Probar L1/R1 con DualSense.
-6. Confirmar que el movimiento del héroe permanezca intacto.
-7. Compartir una captura y cualquier observación de tamaño, posición, contraste o legibilidad.
-8. No abrir PR ni hacer commit manual de assets generados hasta cerrar esta revisión visual.
+1. En GitHub Desktop, confirmar que solo aparezcan los tres archivos del bloque `Resources/Prefabs/UI` indicados arriba.
+2. Hacer commit con el mensaje:
+
+```text
+Add generated inventory hotbar prefab
+```
+
+3. Pulsar **Push origin**.
+4. No modificar otros archivos ni regenerar escenas.
+5. Después del push, revisar el commit remoto, cerrar la bitácora y preparar el PR hacia `main`.
