@@ -24,7 +24,54 @@ Registro histórico de errores detectados, investigados y corregidos durante el 
 
 ## Bugs activos
 
-No hay bugs activos.
+## BUG-0005 — La Fase 5 abre Unity con errores de compilación y solicita Safe Mode
+
+- **Estado:** INVESTIGANDO
+- **Severidad:** S0 — Bloqueante
+- **Detectado:** 2026-08-05
+- **Versión de Unity:** `6000.3.21f1`
+- **Sistema:** prefab reutilizable y orden visual por profundidad
+- **Rama afectada:** `feature/player-prefab-depth-sorting`
+- **Cabeza remota observada:** `e88e41b`
+- **Reportado por:** Arturo
+
+### Comportamiento observado
+
+Al abrir el proyecto después de sincronizar la rama de la Fase 5, Unity mostró el diálogo:
+
+```text
+The project you are opening contains compilation errors.
+Entering Safe Mode allows you to resolve these errors without waiting for the rest of your project to import.
+```
+
+La validación local no puede comenzar porque el proyecto todavía no compila.
+
+### Comportamiento esperado
+
+Unity debe abrir normalmente, completar la compilación, crear las sorting layers y generar el Player prefab antes de ejecutar las pruebas.
+
+### Evidencia pendiente
+
+Se indicó entrar mediante **Enter Safe Mode**. Falta capturar desde la consola los primeros errores completos, incluyendo:
+
+- código del error;
+- archivo;
+- número de línea;
+- mensaje completo;
+- cualquier error adicional distinto del primero.
+
+### Causa raíz
+
+Pendiente de determinar. No aplicar correcciones hasta revisar los mensajes exactos del compilador.
+
+### Siguiente paso
+
+1. Entrar a Safe Mode.
+2. Abrir la consola.
+3. Mostrar los primeros errores completos.
+4. Identificar la causa raíz.
+5. Implementar una corrección acotada y añadir o ajustar la prueba de regresión correspondiente.
+6. Volver a validar compilación, EditMode, PlayMode y consola.
 
 ---
 
@@ -132,3 +179,4 @@ El marcador lateral se calculaba alrededor del pivote de los pies. Se reposicion
 ### 2026-08-05
 
 - Se verificaron `BUG-0001`, `BUG-0002`, `BUG-0003` y `BUG-0004`.
+- Se añadió `BUG-0005` como bloqueo de compilación al abrir la Fase 5; está en investigación pendiente de los mensajes exactos del compilador.
