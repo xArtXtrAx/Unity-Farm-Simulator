@@ -18,7 +18,7 @@ Documento maestro de continuidad. Debe permitir reanudar el proyecto sin depende
 - **Control prioritario:** DualSense, además de teclado y mouse
 - **Ruta local:** `D:\Git\Unity-Farm-Simulator`
 - **Rama estable:** `main`
-- **Próxima rama:** `feature/domain-item-inventory-foundation`
+- **Rama activa:** `feature/domain-item-inventory-foundation`
 - **Proyecto fuente:** `xArtXtrAx/farming-game-A`
 - **Commit fuente congelado:** `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
 - **Identidad Unity:** `jarturoga` / `Unity Farm Simulator` / `com.jarturoga.unityfarmsimulator`
@@ -57,7 +57,7 @@ Application
 Infrastructure / Presentation
 ```
 
-`Domain` no depende de `UnityEngine`.
+`FarmSimulator.Domain` no depende de `UnityEngine`.
 
 ---
 
@@ -77,116 +77,145 @@ WASD, flechas, stick, D-pad, zona muerta, diagonales, orientación, collider de 
 
 ### Fase 4 — Sprite y animación
 
-Spritesheet congelado `src/assets/hero_hd.png`, 192 × 288 px, frames 64 × 72, idle y walk en cuatro direcciones a 8 FPS. PNG, ocho clips y Animator versionados.
-
-Validación:
-
-- EditMode: **27/27**.
-- PlayMode: **5/5**.
-- Consola: **0 errores y 0 advertencias**.
-- Teclado, DualSense, sprite, animación, pivote y límites aprobados.
-
-Integración:
-
-- PR #4: `Add animated farmer sprite and import pipeline`.
-- Merge en `main`: `d04a35934df167db1c6366ee59846c36a0228470`.
+Spritesheet congelado `src/assets/hero_hd.png`, 192 × 288 px, frames 64 × 72, idle y walk en cuatro direcciones a 8 FPS. Validación: EditMode 27/27, PlayMode 5/5, consola limpia, teclado y DualSense aprobados. PR #4.
 
 ### Fase 5 — Prefab reutilizable y profundidad visual
 
-Incluye:
-
-- Player prefab reutilizable;
-- `Rigidbody2D`, collider de pies, input, motor, sprite y Animator dentro del prefab;
-- sorting layers para suelo, mundo, actores, efectos y UI;
-- orden dinámico por coordenada Y de los pies;
-- referencia morada 2D para comprobar oclusión delante/detrás;
-- pipeline de generación y recursos Unity versionados;
-- instalación idempotente en `Lab`;
-- pruebas de composición, generación y profundidad.
-
-Bugs de la fase:
-
-- `BUG-0005`: colisión entre `FarmSimulator.Application` y `UnityEngine.Application`; **VERIFICADO**.
-- `BUG-0006`: no existía referencia 2D compatible para validar oclusión; **VERIFICADO**.
+Player prefab reutilizable, sorting layers, profundidad por Y de los pies y referencia 2D de oclusión.
 
 Validación local de Arturo — 2026-08-05:
 
 - EditMode: **36/36**.
 - PlayMode: **6/6**.
 - Consola: **0 errores y 0 advertencias**.
-- Teclado y DualSense aprobados.
-- Límites aprobados.
+- Teclado, DualSense y límites aprobados.
 - `Order in Layer`: aproximadamente **9600–10400**.
-- Jugador detrás al superar hacia arriba la línea de pies de la referencia y delante al regresar hacia abajo.
-
-Recursos versionados:
-
-- `Assets/_Project/Resources/Prefabs/Player/Player.prefab`;
-- sus metadatos de carpetas y asset;
-- `ProjectSettings/TagManager.asset`.
+- Oclusión correcta delante/detrás.
+- `BUG-0005` y `BUG-0006`: **VERIFICADOS**.
 
 Integración:
 
 - Commit de recursos: `258de79c40cb8f419f1f9a4b7d737c379015c6e1`.
-- Cabeza final de rama: `b4db4b915119effa2e1f1c5eb2e83f1d51f47929`.
 - PR #5: `Add reusable player prefab and top-down depth sorting`.
 - Merge en `main`: `341051f097d9d70796e69b9cddc9277ba3902ed0`.
+- Registro posterior: `8a85534526ad1e491cb0687d817f2924acee2d4d`.
 
 Bugs verificados acumulados: `BUG-0001` a `BUG-0006`.
 
 ---
 
-## 4. Próxima fase — Catálogo de objetos e inventario de dominio
+## 4. Fase 6 — Catálogo de objetos e inventario de dominio: PREPARADA; IMPLEMENTACIÓN PENDIENTE
 
-Rama prevista:
+Rama:
 
 ```text
 feature/domain-item-inventory-foundation
 ```
 
-Este bloque inicia el núcleo de dominio recomendado en la migración. No añade todavía hotbar visual ni interacción en escenas.
+Objetivo: iniciar el núcleo de dominio puro recomendado por la migración. Este bloque no debe añadir todavía hotbar visual, ScriptableObjects, almacenamiento ni interacción en escenas.
 
-### Fuente congelada que debe estudiarse
+### Fuente congelada identificada
 
 - `src/game/data/items.ts`
 - `src/game/inventory/InventoryState.ts`
 - `src/game/inventory/InventoryManager.ts`
-- pruebas fuente relacionadas con catálogo e inventario
+- pruebas fuente relacionadas con catálogo e inventario, todavía por localizar y estudiar
 
-### Alcance funcional
+### Datos confirmados de la fuente
 
-1. IDs estables de objetos.
-2. Categorías y definiciones puras de dominio.
-3. Catálogo inicial de ocho objetos:
-   - `hoe`;
-   - `watering-can`;
-   - `turnip-seeds`;
-   - `turnip`;
-   - `carrot-seeds`;
-   - `carrot`;
-   - `cabbage-seeds`;
-   - `cabbage`.
-4. Precios y límites de stack equivalentes a la fuente.
-5. `InventoryState` de ocho slots por defecto.
-6. Selección directa y ciclo con wrap-around.
-7. Adición atómica: si no cabe toda la cantidad, no mutar nada.
-8. Completar stacks existentes antes de usar slots vacíos.
-9. Consumo desde slot seleccionado o índice explícito.
-10. Snapshot y restauración defensiva.
-11. Estado inicial: azada, regadera y veinte semillas de nabo en los tres primeros slots.
-12. Pruebas EditMode puras; sin cargar escenas.
+Ocho IDs iniciales:
 
-### Restricciones arquitectónicas
+- `hoe`
+- `watering-can`
+- `turnip-seeds`
+- `turnip`
+- `carrot-seeds`
+- `carrot`
+- `cabbage-seeds`
+- `cabbage`
 
-- `FarmSimulator.Domain` no debe depender de `UnityEngine`.
-- No traducir TypeScript línea por línea.
-- Conservar comportamientos, IDs y atomicidad.
-- No crear todavía UI, ScriptableObjects ni almacenamiento; esos consumidores vendrán después.
-- Las colecciones expuestas no deben permitir mutar el estado interno accidentalmente.
+Categorías conocidas: herramienta, semilla, cultivo, material, comida y regalo.
+
+Reglas de catálogo:
+
+- herramientas: stack máximo 1;
+- semillas y cosechas actuales: stack máximo 99;
+- semillas comprables: nabo 30, zanahoria 50, col 75;
+- cosechas vendibles: nabo 60, zanahoria 100, col 150;
+- IDs desconocidos deben rechazarse de forma explícita.
+
+Reglas observadas de inventario:
+
+- ocho slots por defecto;
+- índice seleccionado inicial 0;
+- selección directa validada;
+- ciclo con wrap-around;
+- los slots vacíos usan cantidad 0;
+- completar primero stacks existentes;
+- después ocupar slots vacíos;
+- adición atómica: si no cabe toda la cantidad, no mutar ningún slot;
+- consumo desde slot seleccionado o índice explícito;
+- limpiar el slot cuando llega a cero;
+- snapshots defensivos de slots e índice seleccionado;
+- restauración validada sin exponer referencias mutables internas.
+
+Estado inicial requerido por paridad:
+
+```text
+slot 0: hoe ×1
+slot 1: watering-can ×1
+slot 2: turnip-seeds ×20
+slots 3–7: vacíos
+selección: slot 0
+```
+
+### Diseño objetivo del bloque
+
+Dominio puro, sin `UnityEngine`:
+
+- identificador estable de objeto;
+- categoría de objeto;
+- definición inmutable;
+- catálogo con búsquedas y validación;
+- slot de inventario;
+- resultado de adición;
+- snapshot de inventario;
+- `InventoryState` con ocho slots por defecto;
+- fábrica o método para crear el estado inicial.
+
+No decidir todavía el formato de ScriptableObjects. El dominio debe poder probarse y serializarse sin referencias Unity.
+
+### Casos mínimos de prueba EditMode
+
+- catálogo contiene exactamente los ocho objetos iniciales;
+- IDs, nombres, etiquetas, categorías, stacks y precios correctos;
+- sellable/comprable solo cuando corresponde;
+- constructor rechaza cero slots;
+- índices inválidos se rechazan;
+- cantidades inválidas se rechazan;
+- selección repetida no reporta cambio;
+- ciclo positivo y negativo envuelve correctamente;
+- capacidad incluye espacio parcial y slots vacíos;
+- add completa stacks existentes antes de abrir otro;
+- add distribuye entre múltiples slots;
+- add sin capacidad suficiente no cambia el inventario;
+- herramientas no se apilan;
+- consumo insuficiente no cambia el inventario;
+- consumo exacto vacía el slot;
+- snapshots no permiten mutación externa del estado;
+- restauración recupera slots y selección;
+- estado inicial coincide con la fuente.
 
 ### Puerta de salida
 
-El catálogo y el inventario pasan pruebas EditMode exhaustivas sin abrir Unity Play Mode, incluyendo límites, datos inválidos, stacking, capacidad, atomicidad, consumo, selección y snapshots.
+El catálogo y el inventario pasan pruebas EditMode exhaustivas sin abrir una escena. No se requiere nueva prueba PlayMode en este bloque salvo que aparezca una integración Unity inevitable, lo cual debe justificarse.
+
+### Estado de validación
+
+- Implementación remota: **pendiente**.
+- Compilación local Unity: **pendiente**.
+- Pruebas EditMode nuevas: **pendientes**.
+- Conteo final esperado: debe calcularse después de implementar y documentarse antes de pedir validación.
 
 ---
 
@@ -211,16 +240,22 @@ Los cambios exclusivamente locales siguen siendo el único estado que GitHub no 
 
 ## 6. Próximo paso exacto
 
-1. Crear `feature/domain-item-inventory-foundation` desde el `main` que contiene el PR #5.
-2. Actualizar `CONTINUIDAD_GPT.md` para apuntar a la nueva rama.
-3. En la nueva rama, estudiar los archivos fuente congelados del catálogo e inventario y localizar sus pruebas.
-4. Documentar las reglas extraídas antes de implementar.
-5. Implementar primero tipos y catálogo puros en `FarmSimulator.Domain`.
-6. Implementar `InventoryState` y snapshots sin `UnityEngine`.
-7. Añadir pruebas EditMode de cada regla y regresión.
-8. No crear UI ni modificar escenas en este bloque.
-9. No afirmar que Unity compila o que las pruebas pasan hasta validación local de Arturo.
-10. Actualizar esta bitácora tras cada implementación o corrección.
+1. Leer `CONTINUIDAD_GPT.md` desde `main` y confirmar esta rama activa.
+2. Revisar `BUGS.MD` y `MIGRACION_DESDE_FARMING_GAME_A.MD`.
+3. Estudiar completos, desde el commit fuente congelado:
+   - `src/game/data/items.ts`;
+   - `src/game/inventory/InventoryState.ts`;
+   - `src/game/inventory/InventoryManager.ts`.
+4. Localizar y leer las pruebas fuente que cubren catálogo e inventario.
+5. Redactar una tabla de paridad: regla fuente → tipo/método C# → prueba EditMode.
+6. Implementar tipos y catálogo puros en `FarmSimulator.Domain`.
+7. Implementar `InventoryState`, resultados y snapshots en `FarmSimulator.Domain`.
+8. Añadir pruebas EditMode exhaustivas en `FarmSimulator.Tests.EditMode`.
+9. No crear UI, ScriptableObjects, almacenamiento ni modificar escenas.
+10. Revisar estáticamente dependencias y asegurar que Domain no usa `UnityEngine`.
+11. Actualizar esta bitácora con archivos, commits, pruebas añadidas, conteo esperado y validación local pendiente.
+12. Solo entonces pedir a Arturo sincronizar y validar en Unity.
+13. No afirmar que Unity compila o que las pruebas pasan hasta que Arturo lo confirme.
 
 ---
 
@@ -232,4 +267,4 @@ Hotbar visual, almacenamiento, economía, tiempo, agricultura, herramientas, tre
 
 ## 8. Protocolo para chat nuevo
 
-> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`; después sigue el orden de lectura y el “Próximo paso exacto”. La Fase 5 está integrada mediante el PR #5. La siguiente fase comienza en `feature/domain-item-inventory-foundation` y debe implementar catálogo e inventario puros de dominio, sin UI ni escenas.
+> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`; después sigue el orden de lectura y el “Próximo paso exacto”. La Fase 5 está integrada mediante el PR #5. La rama activa es `feature/domain-item-inventory-foundation` y la Fase 6 debe implementar catálogo e inventario puros de dominio, sin UI ni escenas.
