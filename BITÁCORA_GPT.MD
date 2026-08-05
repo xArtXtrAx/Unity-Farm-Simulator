@@ -12,17 +12,17 @@ Documento maestro de continuidad. Debe permitir retomar el proyecto en un chat n
 
 - **Repositorio:** `xArtXtrAx/Unity-Farm-Simulator`
 - **Propietario:** Arturo García (`xArtXtrAx`)
-- **Tipo:** simulador de granja 2.5D
+- **Tipo:** simulador de granja 2.5D con arte principal basado en sprites 2D
 - **Motor fijado:** Unity 6.3 LTS `6000.3.21f1`
 - **Plantilla:** Universal 3D / URP
 - **Plataforma inicial:** Windows PC
 - **Control prioritario:** DualSense, además de teclado y mouse
 - **Ruta local de Arturo:** `D:\Git\Unity-Farm-Simulator`
-- **Rama estable actual:** `main`
-- **Rama de cimentación concluida:** `chore/unity-project-foundation`
+- **Rama estable:** `main`
+- **Rama activa:** `feature/lab-spatial-calibration`
 - **Proyecto fuente de migración:** `xArtXtrAx/farming-game-A`
 - **Commit fuente congelado:** `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
-- **Identidad definitiva de Unity:**
+- **Identidad de Unity:**
   - Company Name: `jarturoga`
   - Product Name: `Unity Farm Simulator`
   - Standalone Identifier: `com.jarturoga.unityfarmsimulator`
@@ -62,6 +62,18 @@ El código propio vive bajo `Assets/_Project` y no debe colocarse en la assembly
 - `FarmSimulator.Editor`: herramientas exclusivas del Editor.
 - `FarmSimulator.Tests.EditMode`: reglas y configuración que no requieren Play Mode.
 - `FarmSimulator.Tests.PlayMode`: integración con escenas y ciclo de vida de Unity.
+
+### Modelo espacial 2.5D decidido
+
+- El mundo lógico utiliza el plano **XZ** para desplazamiento sobre el suelo.
+- El eje **Y** representa altura real.
+- La física principal será **3D**.
+- La cámara base será **ortográfica e inclinada**.
+- El arte principal seguirá siendo 2D mediante sprites o tarjetas planas dentro del espacio 3D.
+- El espacio 3D permitirá partículas, iluminación, sombras, trayectorias en arco, saltos y objetos tridimensionales ocasionales.
+- Una celda de calibración equivale provisionalmente a **1 unidad de Unity**.
+- La referencia humana provisional mide **1.8 unidades**.
+- Resolución, relación de aspecto, Pixels Per Unit y escala artística definitiva continúan pendientes de evaluación visual.
 
 ### Datos y guardado
 
@@ -121,43 +133,48 @@ La primera versión jugable será pequeña y deberá incluir:
 
 ## 6. Estado actual
 
-### Fase 1 — Cimentación del proyecto: COMPLETADA, VALIDADA E INTEGRADA
+### Fase 1 — Cimentación: COMPLETADA, VALIDADA E INTEGRADA
 
-- [x] Proyecto Unity 6.3 LTS Universal 3D / URP creado en el repositorio.
-- [x] `Visible Meta Files`, `Force Text`, `.gitignore` y `.gitattributes` configurados.
-- [x] Recursos tutoriales eliminados.
-- [x] Assemblies Domain, Application, Infrastructure, Presentation, Editor, EditMode y PlayMode creadas.
-- [x] `Bootstrap` y `Lab` creadas y registradas en Build Settings.
-- [x] Salto automático `Bootstrap → Lab` implementado.
-- [x] Retirados Unity Version Control, Rider, Multiplayer Center y Visual Scripting.
-- [x] `Packages/packages-lock.json` regenerado por Unity y versionado.
-- [x] `ProjectSettings/SceneTemplateSettings.json` versionado.
-- [x] Identidad definitiva aplicada y protegida mediante configurador y prueba automática.
-- [x] EditMode: **2/2 pruebas aprobadas**.
-- [x] PlayMode: **1/1 prueba aprobada**.
-- [x] Consola final: **0 errores y 0 advertencias**.
-- [x] Ruta de resultados confirmada bajo `jarturoga/Unity Farm Simulator`.
-- [x] `ProjectSettings/ProjectSettings.asset` versionado en `bd17f89`.
-- [x] PR #1 fusionado en `main` mediante el commit `ece618c`.
-- [x] No se detectaron bugs que requirieran entrada en `BUGS.MD`.
+- [x] Proyecto Unity 6.3 LTS / URP creado y protegido para Git.
+- [x] Arquitectura por assemblies creada.
+- [x] `Bootstrap` y `Lab` creadas y conectadas.
+- [x] Paquetes de plantilla innecesarios retirados.
+- [x] Identidad definitiva aplicada y protegida.
+- [x] EditMode: **2/2 aprobadas**.
+- [x] PlayMode: **1/1 aprobada**.
+- [x] Consola: **0 errores y 0 advertencias**.
+- [x] PR #1 fusionado en `main` mediante `ece618c`.
 
-### Estado local pendiente
+### Fase 2 — Calibración espacial: IMPLEMENTACIÓN INICIAL EN RAMA
 
-- [ ] Arturo debe cambiar a `main` en GitHub Desktop y ejecutar **Fetch origin / Pull origin**.
-- [ ] Abrir Unity desde `main` y confirmar que la consola sigue limpia después de la fusión.
+Commit funcional: `8ce5c5e` — `feat: add 2.5D spatial calibration lab`.
 
-### Próxima fase
+Implementado:
 
-**Fase 2 — Calibración visual, modelo espacial, cámara y movimiento base.**
+- [x] `SpatialModel.cs` fija XZ, altura Y, física 3D, cámara ortográfica y medidas provisionales.
+- [x] `LabSpatialCalibrationInstaller.cs` instala automáticamente la calibración cuando se carga `Lab`.
+- [x] `LabSpatialCalibration.cs` genera durante la ejecución:
+  - suelo de 16 × 12 unidades con `BoxCollider`;
+  - cuadrícula de celdas de 1 unidad;
+  - ejes X y Z diferenciados;
+  - tarjeta plana de personaje de 1.8 unidades;
+  - tarjetas a distintas profundidades;
+  - regla vertical sobre Y;
+  - trayectoria parabólica para representar movimientos y partículas 3D;
+  - cámara ortográfica inclinada y luz direccional con sombras.
+- [x] La calibración se genera por código al entrar en Play Mode; no ensucia la escena con decenas de objetos serializados.
+- [x] La prueba EditMode ahora valida también el contrato espacial.
+- [x] La prueba PlayMode ahora valida cámara, suelo, collider, dimensiones y referencia de sprite.
 
-Objetivos inmediatos:
+Pendiente de validación local:
 
-- decidir mundo XZ con física 3D o XY con física 2D;
-- decidir cámara ortográfica o perspectiva controlada;
-- definir escala, resolución base y relación de aspecto;
-- preparar `Lab` con suelo y referencias visuales;
-- implementar movimiento con teclado y DualSense;
-- validar zona muerta, velocidad, cámara y sensación de control.
+- [ ] Unity debe compilar el commit `8ce5c5e` sin errores.
+- [ ] Resultado esperado de EditMode: **3/3**.
+- [ ] Resultado esperado de PlayMode: **2/2**.
+- [ ] Consola esperada: **0 errores y 0 advertencias**.
+- [ ] Ejecutar el juego desde `Bootstrap` y observar la escena `Lab` en la pestaña Game.
+- [ ] Evaluar si encuadre, inclinación, tamaño de celda y referencia humana resultan adecuados.
+- [ ] No se añadió bug a `BUGS.MD`; todavía no existe evidencia local de un fallo.
 
 ---
 
@@ -184,41 +201,40 @@ Objetivos inmediatos:
 
 ## 8. Registro cronológico reciente
 
-### 2026-08-05 — Proyecto y arquitectura
+### 2026-08-05 — Fase 1 integrada
 
-- Commit `ecf6eb3`: proyecto Unity inicial.
-- Commit `3aa30f0`: arquitectura, assemblies e higiene del repositorio.
-- Unity compiló las assemblies con consola limpia.
+- PR #1 fusionado en `main` mediante `ece618c`.
+- Commit `141c51e`: bitácora actualizada después del merge.
+- Se creó `feature/lab-spatial-calibration` desde la base integrada.
 
-### 2026-08-05 — Escenas, arranque y paquetes
+### 2026-08-05 — Modelo espacial definido
 
-- Commit `d46b08c`: `Bootstrap`, `Lab`, arranque automático y pruebas.
-- Commit `214e0fc`: lock de paquetes y configuración de plantillas resueltos localmente.
-- Merge `fad8692`: reconciliación del commit local con la documentación remota.
+- Arturo aclaró que el juego utilizará principalmente sprites 2D, complementados con partículas, iluminación y movimientos tridimensionales.
+- Se decidió usar mundo XZ, altura Y, física 3D y cámara ortográfica inclinada.
+- La estética seguirá leyendo como 2D; la tercera dimensión funcionará como infraestructura para profundidad y efectos.
 
-### 2026-08-05 — Identidad definitiva
+### 2026-08-05 — Laboratorio de calibración implementado
 
-- Commit `ba6b62f`: identidad centralizada y configurador automático del Editor.
-- Commit `bd17f89`: persistencia final de `ProjectSettings.asset` con la identidad correcta.
-- EditMode terminó en **2/2**, PlayMode en **1/1** y la consola en **0 errores / 0 advertencias**.
-
-### 2026-08-05 — Fase 1 integrada en main
-
-- Commit `d65ea25`: cierre documental de la cimentación.
-- PR #1 `chore: establish Unity 6.3 project foundation` abierto y revisado como fusionable.
-- PR #1 fusionado mediante merge commit `ece618c10dfa19e1189405b21aacdef1661cdc65`.
-- `main` contiene ahora la base completa y validada del proyecto Unity.
+- Commit `8ce5c5e`: modelo espacial, generador de laboratorio y nuevas pruebas.
+- La escena no fue reescrita manualmente en YAML; la calibración se instala al cargar `Lab`, reduciendo riesgo de corrupción y manteniendo la escena limpia.
+- La validación remota se limita a creación correcta del árbol, commit y actualización de la rama.
+- La compilación, las pruebas y el resultado visual permanecen pendientes de Arturo.
 
 ---
 
 ## 9. Próximo paso exacto
 
-1. En GitHub Desktop, cambiar de `chore/unity-project-foundation` a `main`.
-2. Ejecutar **Fetch origin** y **Pull origin**.
-3. Abrir el proyecto con Unity `6000.3.21f1` desde `main`.
+1. Cerrar Unity si está abierto.
+2. En GitHub Desktop, sobre `feature/lab-spatial-calibration`, ejecutar **Fetch origin** y **Pull origin**.
+3. Abrir el proyecto con Unity `6000.3.21f1` y esperar la compilación.
 4. Confirmar consola en `0` errores y `0` advertencias.
-5. Obtener la rama remota `feature/lab-spatial-calibration` cuando esté creada y cambiar a ella.
-6. Documentar y decidir el modelo espacial 2.5D, cámara, escala y resolución antes de implementar movimiento.
+5. Ejecutar Test Runner:
+   - EditMode esperado: **3/3**.
+   - PlayMode esperado: **2/2**.
+6. Abrir `Bootstrap.unity` o ejecutar desde la configuración actual y pulsar Play.
+7. Esperar la transición a `Lab` y tomar una captura de la pestaña **Game**.
+8. Reportar si la cuadrícula, el personaje de referencia, la trayectoria y la profundidad se ven completos y legibles.
+9. Con esa evidencia, ajustar cámara y escala o pasar al controlador de movimiento con teclado y DualSense.
 
 ---
 
@@ -232,9 +248,9 @@ Usar una instrucción equivalente a:
 
 ## 11. Decisiones pendientes
 
-- Resolución base y relación de aspecto.
-- Cámara ortográfica o perspectiva controlada.
-- Mundo XZ con física 3D o XY con física 2D.
-- Tamaño de tiles, escala y Pixels Per Unit.
+- Resolución base y relación de aspecto objetivo.
+- Tamaño definitivo de celda y escala artística.
+- Pixels Per Unit para los sprites.
+- Inclinación y tamaño ortográfico definitivos de la cámara.
 - Dirección artística y primer pack de sprites.
 - Estrategia de CI para pruebas y build de Windows.
