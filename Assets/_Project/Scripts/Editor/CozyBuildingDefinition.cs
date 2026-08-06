@@ -39,6 +39,9 @@ namespace FarmSimulator.Editor
         [SerializeField] private Vector2 spawnOffset;
         [SerializeField] private Vector2 colliderSize;
         [SerializeField] private Vector2 colliderOffset;
+        [SerializeField] private bool colliderAuthored;
+        [SerializeField] private Vector2 catalogColliderSize;
+        [SerializeField] private Vector2 catalogColliderOffset;
         [SerializeField] private float maximumWidth = 1f;
         [SerializeField] private float maximumHeight = 1f;
         [SerializeField] private float baseline;
@@ -62,6 +65,7 @@ namespace FarmSimulator.Editor
         public Vector2 SpawnOffset => spawnOffset;
         public Vector2 ColliderSize => colliderSize;
         public Vector2 ColliderOffset => colliderOffset;
+        public bool ColliderAuthored => colliderAuthored;
         public float MaximumWidth => maximumWidth;
         public float MaximumHeight => maximumHeight;
         public float Baseline => baseline;
@@ -95,10 +99,6 @@ namespace FarmSimulator.Editor
             bool legacyCentreAnchor = footprintAnchorOffset.sqrMagnitude < 0.0001f;
             if (!footprintAnchorAuthored || legacyPortalAnchor || legacyCentreAnchor)
             {
-                // Grid offsets identify cell centres. Moving the footprint origin half
-                // a cell upward makes the lower edge of row zero coincide exactly with
-                // the sprite's bottom-centre visual base. The next cell below remains
-                // free for paths, steps and other entrance decoration.
                 footprintAnchorOffset = DefaultHouseFootprintAnchor;
                 footprintAnchorAuthored = false;
             }
@@ -106,8 +106,15 @@ namespace FarmSimulator.Editor
             doorAnchor = house.DoorAnchor;
             portalOffset = house.PortalOffset;
             spawnOffset = house.SpawnOffset;
-            colliderSize = house.ColliderSize;
-            colliderOffset = house.ColliderOffset;
+
+            catalogColliderSize = SanitizeColliderSize(house.ColliderSize);
+            catalogColliderOffset = house.ColliderOffset;
+            if (!colliderAuthored)
+            {
+                colliderSize = catalogColliderSize;
+                colliderOffset = catalogColliderOffset;
+            }
+
             maximumWidth = house.MaximumWidth;
             maximumHeight = house.MaximumHeight;
             baseline = house.Baseline;
@@ -130,6 +137,22 @@ namespace FarmSimulator.Editor
                     ? DefaultHouseFootprintAnchor
                     : localOffset;
             footprintAnchorAuthored = true;
+        }
+
+        public void SetColliderAuthoring(Vector2 prefabBaseCentre, Vector2 size)
+        {
+            colliderSize = SanitizeColliderSize(size);
+            colliderOffset = new Vector2(
+                prefabBaseCentre.x,
+                prefabBaseCentre.y + baseline);
+            colliderAuthored = true;
+        }
+
+        public void ResetColliderToCatalogDefault()
+        {
+            colliderSize = SanitizeColliderSize(catalogColliderSize);
+            colliderOffset = catalogColliderOffset;
+            colliderAuthored = false;
         }
 
         public void ResetFootprintToCategoryDefault()
@@ -174,6 +197,13 @@ namespace FarmSimulator.Editor
                 footprintOffsets = new[] { Vector2Int.zero };
             }
             footprintAuthored = authored;
+        }
+
+        private static Vector2 SanitizeColliderSize(Vector2 value)
+        {
+            return new Vector2(
+                Mathf.Max(0.05f, Mathf.Abs(value.x)),
+                Mathf.Max(0.05f, Mathf.Abs(value.y)));
         }
 
         private static IEnumerable<Vector2Int> CreateDefaultHouseFootprint()

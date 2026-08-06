@@ -12,6 +12,9 @@ namespace FarmSimulator.Editor
         private Vector2Int size = new Vector2Int(4, 3);
         private Vector2 anchorOffset;
         private HashSet<Vector2Int> occupied = new HashSet<Vector2Int>();
+        private Vector2 colliderCentre;
+        private Vector2 colliderSize = Vector2.one;
+        private float colliderNudgeStep = 0.1f;
         private bool showVisualBounds = true;
         private bool showColliderBounds = true;
         private bool showFootprintOverlay = true;
@@ -29,9 +32,8 @@ namespace FarmSimulator.Editor
         {
             var window = GetWindow<CozyBuildingFootprintWindow>();
             window.titleContent = new GUIContent("Footprint Editor");
-            window.minSize = new Vector2(520f, 620f);
-            window.SetDefinition(
-                selected ?? CozyFarmBuildingRegistry.LoadAll().FirstOrDefault());
+            window.minSize = new Vector2(520f, 760f);
+            window.SetDefinition(selected ?? CozyFarmBuildingRegistry.LoadAll().FirstOrDefault());
             window.Show();
         }
 
@@ -46,18 +48,13 @@ namespace FarmSimulator.Editor
 
         private void OnGUI()
         {
-            EditorGUILayout.LabelField(
-                "Farm Development Kit — Building Authoring",
-                EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Farm Development Kit — Building Authoring", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "The preview separates visual bounds, physical collider and logical ground footprint. These layers intentionally serve different purposes and do not need to share the same outline.",
+                "The preview separates visual bounds, physical collider and logical ground footprint. Collider values are authored in prefab base space: (0, 0) is the bottom-centre visual base.",
                 MessageType.Info);
 
             CozyBuildingDefinition next = (CozyBuildingDefinition)EditorGUILayout.ObjectField(
-                "Building",
-                definition,
-                typeof(CozyBuildingDefinition),
-                false);
+                "Building", definition, typeof(CozyBuildingDefinition), false);
             if (next != definition) SetDefinition(next);
 
             if (definition == null)
@@ -69,8 +66,7 @@ namespace FarmSimulator.Editor
                 {
                     if (GUILayout.Button("Rebuild definitions", GUILayout.Height(28f)))
                     {
-                        IReadOnlyList<CozyBuildingDefinition> rebuilt =
-                            CozyFarmBuildingRegistry.Rebuild();
+                        IReadOnlyList<CozyBuildingDefinition> rebuilt = CozyFarmBuildingRegistry.Rebuild();
                         SetDefinition(rebuilt.FirstOrDefault());
                     }
                     if (GUILayout.Button("Open Building Browser", GUILayout.Height(28f)))
@@ -84,26 +80,18 @@ namespace FarmSimulator.Editor
             EditorGUILayout.LabelField("Preview overlays", EditorStyles.boldLabel);
             using (new EditorGUILayout.HorizontalScope())
             {
-                showVisualBounds = EditorGUILayout.ToggleLeft(
-                    "Visual bounds",
-                    showVisualBounds,
-                    GUILayout.Width(125f));
-                showColliderBounds = EditorGUILayout.ToggleLeft(
-                    "Collider",
-                    showColliderBounds,
-                    GUILayout.Width(95f));
-                showFootprintOverlay = EditorGUILayout.ToggleLeft(
-                    "Footprint",
-                    showFootprintOverlay,
-                    GUILayout.Width(105f));
+                showVisualBounds = EditorGUILayout.ToggleLeft("Visual bounds", showVisualBounds, GUILayout.Width(125f));
+                showColliderBounds = EditorGUILayout.ToggleLeft("Collider", showColliderBounds, GUILayout.Width(95f));
+                showFootprintOverlay = EditorGUILayout.ToggleLeft("Footprint", showFootprintOverlay, GUILayout.Width(105f));
             }
 
             DrawAuthoringPreview();
+            DrawColliderAuthoring();
 
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Footprint authoring", EditorStyles.boldLabel);
             anchorOffset = EditorGUILayout.Vector2Field(
-                new GUIContent(
-                    "Footprint Anchor",
-                    "Local ground origin relative to the normalized visual base."),
+                new GUIContent("Footprint Anchor", "Local ground origin relative to the normalized visual base."),
                 anchorOffset);
             if (GUILayout.Button("Reset anchor to visual base (0, 0)"))
             {
@@ -155,24 +143,74 @@ namespace FarmSimulator.Editor
             }
 
             EditorGUILayout.LabelField(
-                $"Occupied cells: {occupied.Count} · Logical anchor cell: (0, 0) · Local anchor: {anchorOffset}",
+                $"Occupied cells: {occupied.Count} · Footprint anchor: {anchorOffset} · Collider centre: {colliderCentre} · Collider size: {colliderSize}",
                 EditorStyles.miniLabel);
+        }
+
+        private void DrawColliderAuthoring()
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Collider authoring", EditorStyles.boldLabel);
+            colliderCentre = EditorGUILayout.Vector2Field(
+                new GUIContent("Collider Center", "Centre relative to the prefab bottom-centre visual base."),
+                colliderCentre);
+            colliderSize = SanitizeColliderSize(EditorGUILayout.Vector2Field("Collider Size", colliderSize));
+            colliderNudgeStep = Mathf.Clamp(
+                EditorGUILayout.FloatField("Nudge step", colliderNudgeStep),
+                0.01f,
+                1f);
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUILayout.Label("Move", GUILayout.Width(48f));
+                if (GUILayout.Button("←")) colliderCentre.x -= colliderNudgeStep;
+                if (GUILayout.Button("→")) colliderCentre.x += colliderNudgeStep;
+                if (GUILayout.Button("↓")) colliderCentre.y -= colliderNudgeStep;
+                if (GUILayout.Button("↑")) colliderCentre.y += colliderNudgeStep;
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUILayout.Label("Size", GUILayout.Width(48f));
+                if (GUILayout.Button("Narrower")) colliderSize.x -= colliderNudgeStep * 2f;
+                if (GUILayout.Button("Wider")) colliderSize.x += colliderNudgeStep * 2f;
+                if (GUILayout.Button("Shorter")) colliderSize.y -= colliderNudgeStep * 2f;
+                if (GUILayout.Button("Taller")) colliderSize.y += colliderNudgeStep * 2f;
+            }
+            colliderSize = SanitizeColliderSize(colliderSize);
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("Align bottom to visual base"))
+                {
+                    colliderCentre.y = colliderSize.y * 0.5f;
+                }
+                if (GUILayout.Button("Reset collider to catalog default"))
+                {
+                    Undo.RecordObject(definition, "Reset building collider");
+                    definition.ResetColliderToCatalogDefault();
+                    EditorUtility.SetDirty(definition);
+                    colliderSize = definition.ColliderSize;
+                    colliderCentre = CozyFarmBuildingPrefabGenerator.ToPrefabBaseSpace(
+                        definition.ColliderOffset,
+                        definition.Baseline);
+                    Repaint();
+                }
+            }
+
+            EditorGUILayout.HelpBox(
+                "The orange rectangle updates immediately. Save + regenerate prefab applies these values to the reusable BoxCollider2D. Rebuilding definitions preserves authored collider values.",
+                MessageType.None);
         }
 
         private void DrawAuthoringPreview()
         {
-            Rect previewRect = GUILayoutUtility.GetRect(
-                260f,
-                265f,
-                GUILayout.ExpandWidth(true));
+            Rect previewRect = GUILayoutUtility.GetRect(260f, 265f, GUILayout.ExpandWidth(true));
             EditorGUI.DrawRect(previewRect, new Color(0.10f, 0.10f, 0.10f, 1f));
 
             if (definition.GeneratedSprite == null)
             {
-                GUI.Label(
-                    previewRect,
-                    "Generate the building sprite to preview it.",
-                    EditorStyles.centeredGreyMiniLabel);
+                GUI.Label(previewRect, "Generate the building sprite to preview it.", EditorStyles.centeredGreyMiniLabel);
                 return;
             }
 
@@ -183,22 +221,14 @@ namespace FarmSimulator.Editor
                 definition.MaximumHeight / Mathf.Max(0.01f, rawSize.y));
             Vector2 visualSize = rawSize * visualScale;
 
-            Vector2 colliderSize = definition.ColliderSize;
-            Vector2 colliderOffset = CozyFarmBuildingPrefabGenerator.ToPrefabBaseSpace(
-                definition.ColliderOffset,
-                definition.Baseline);
-            Vector2 colliderMin = colliderOffset - colliderSize * 0.5f;
-            Vector2 colliderMax = colliderOffset + colliderSize * 0.5f;
+            Vector2 safeColliderSize = SanitizeColliderSize(colliderSize);
+            Vector2 colliderMin = colliderCentre - safeColliderSize * 0.5f;
+            Vector2 colliderMax = colliderCentre + safeColliderSize * 0.5f;
 
-            float minX = -visualSize.x * 0.5f;
-            float maxX = visualSize.x * 0.5f;
-            float minY = 0f;
-            float maxY = visualSize.y;
-
-            minX = Mathf.Min(minX, colliderMin.x);
-            maxX = Mathf.Max(maxX, colliderMax.x);
-            minY = Mathf.Min(minY, colliderMin.y);
-            maxY = Mathf.Max(maxY, colliderMax.y);
+            float minX = Mathf.Min(-visualSize.x * 0.5f, colliderMin.x);
+            float maxX = Mathf.Max(visualSize.x * 0.5f, colliderMax.x);
+            float minY = Mathf.Min(0f, colliderMin.y);
+            float maxY = Mathf.Max(visualSize.y, colliderMax.y);
 
             foreach (Vector2Int offset in occupied)
             {
@@ -219,9 +249,7 @@ namespace FarmSimulator.Editor
             float pixelsPerUnit = Mathf.Min(
                 previewRect.width / worldWidth,
                 (previewRect.height - 26f) / worldHeight);
-            Vector2 worldCentre = new Vector2(
-                (minX + maxX) * 0.5f,
-                (minY + maxY) * 0.5f);
+            Vector2 worldCentre = new Vector2((minX + maxX) * 0.5f, (minY + maxY) * 0.5f);
             Vector2 previewCentre = previewRect.center + Vector2.up * 10f;
 
             Vector2 Map(Vector2 world)
@@ -262,12 +290,12 @@ namespace FarmSimulator.Editor
                     colliderTopLeft.y,
                     colliderBottomRight.x,
                     colliderBottomRight.y);
-                EditorGUI.DrawRect(
-                    colliderRect,
-                    new Color(1f, 0.65f, 0.15f, 0.14f));
-                DrawOutline(
-                    colliderRect,
-                    new Color(1f, 0.65f, 0.15f, 1f));
+                EditorGUI.DrawRect(colliderRect, new Color(1f, 0.65f, 0.15f, 0.14f));
+                DrawOutline(colliderRect, new Color(1f, 0.65f, 0.15f, 1f));
+
+                Vector2 centrePoint = Map(colliderCentre);
+                EditorGUI.DrawRect(new Rect(centrePoint.x - 5f, centrePoint.y - 1f, 10f, 2f), new Color(1f, 0.65f, 0.15f));
+                EditorGUI.DrawRect(new Rect(centrePoint.x - 1f, centrePoint.y - 5f, 2f, 10f), new Color(1f, 0.65f, 0.15f));
             }
 
             if (showFootprintOverlay)
@@ -277,11 +305,7 @@ namespace FarmSimulator.Editor
                     Vector2 centre = anchorOffset + (Vector2)offset;
                     Vector2 topLeft = Map(centre + new Vector2(-0.5f, 0.5f));
                     Vector2 bottomRight = Map(centre + new Vector2(0.5f, -0.5f));
-                    Rect cellRect = Rect.MinMaxRect(
-                        topLeft.x,
-                        topLeft.y,
-                        bottomRight.x,
-                        bottomRight.y);
+                    Rect cellRect = Rect.MinMaxRect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
                     bool anchorCell = offset == Vector2Int.zero;
                     EditorGUI.DrawRect(
                         cellRect,
@@ -297,12 +321,8 @@ namespace FarmSimulator.Editor
             }
 
             Vector2 anchorPoint = Map(anchorOffset);
-            EditorGUI.DrawRect(
-                new Rect(anchorPoint.x - 5f, anchorPoint.y - 1f, 10f, 2f),
-                Color.cyan);
-            EditorGUI.DrawRect(
-                new Rect(anchorPoint.x - 1f, anchorPoint.y - 5f, 2f, 10f),
-                Color.cyan);
+            EditorGUI.DrawRect(new Rect(anchorPoint.x - 5f, anchorPoint.y - 1f, 10f, 2f), Color.cyan);
+            EditorGUI.DrawRect(new Rect(anchorPoint.x - 1f, anchorPoint.y - 5f, 2f, 10f), Color.cyan);
 
             GUI.Label(
                 new Rect(previewRect.x + 6f, previewRect.y + 5f, 250f, 18f),
@@ -315,26 +335,12 @@ namespace FarmSimulator.Editor
         {
             float y = previewRect.yMax - 20f;
             float x = previewRect.x + 8f;
-
-            if (showVisualBounds)
-            {
-                DrawLegendItem(ref x, y, new Color(0.25f, 0.85f, 1f, 1f), "Visual");
-            }
-            if (showColliderBounds)
-            {
-                DrawLegendItem(ref x, y, new Color(1f, 0.65f, 0.15f, 1f), "Collider");
-            }
-            if (showFootprintOverlay)
-            {
-                DrawLegendItem(ref x, y, new Color(0.25f, 1f, 0.4f, 1f), "Footprint");
-            }
+            if (showVisualBounds) DrawLegendItem(ref x, y, new Color(0.25f, 0.85f, 1f, 1f), "Visual");
+            if (showColliderBounds) DrawLegendItem(ref x, y, new Color(1f, 0.65f, 0.15f, 1f), "Collider");
+            if (showFootprintOverlay) DrawLegendItem(ref x, y, new Color(0.25f, 1f, 0.4f, 1f), "Footprint");
         }
 
-        private static void DrawLegendItem(
-            ref float x,
-            float y,
-            Color color,
-            string label)
+        private static void DrawLegendItem(ref float x, float y, Color color, string label)
         {
             EditorGUI.DrawRect(new Rect(x, y + 2f, 11f, 11f), color);
             GUI.Label(new Rect(x + 15f, y, 72f, 18f), label, EditorStyles.miniLabel);
@@ -385,9 +391,11 @@ namespace FarmSimulator.Editor
         private void Save()
         {
             occupied.Add(Vector2Int.zero);
+            colliderSize = SanitizeColliderSize(colliderSize);
             Undo.RecordObject(definition, "Edit building authoring");
             definition.SetFootprint(size, occupied);
             definition.SetFootprintAnchor(anchorOffset);
+            definition.SetColliderAuthoring(colliderCentre, colliderSize);
             EditorUtility.SetDirty(definition);
             AssetDatabase.SaveAssets();
         }
@@ -410,6 +418,10 @@ namespace FarmSimulator.Editor
             anchorOffset = definition.FootprintAnchorOffset;
             occupied = new HashSet<Vector2Int>(definition.FootprintOffsets);
             occupied.Add(Vector2Int.zero);
+            colliderSize = SanitizeColliderSize(definition.ColliderSize);
+            colliderCentre = CozyFarmBuildingPrefabGenerator.ToPrefabBaseSpace(
+                definition.ColliderOffset,
+                definition.Baseline);
         }
 
         private IEnumerable<Vector2Int> AllCanvasCells()
@@ -422,6 +434,13 @@ namespace FarmSimulator.Editor
             var allowed = new HashSet<Vector2Int>(AllCanvasCells());
             occupied.RemoveWhere(cell => !allowed.Contains(cell));
             occupied.Add(Vector2Int.zero);
+        }
+
+        private static Vector2 SanitizeColliderSize(Vector2 value)
+        {
+            return new Vector2(
+                Mathf.Max(0.05f, Mathf.Abs(value.x)),
+                Mathf.Max(0.05f, Mathf.Abs(value.y)));
         }
     }
 }
