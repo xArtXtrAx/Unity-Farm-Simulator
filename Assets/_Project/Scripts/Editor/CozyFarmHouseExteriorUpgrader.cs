@@ -10,23 +10,26 @@ using UnityEngine.SceneManagement;
 namespace FarmSimulator.Editor
 {
     /// <summary>
-    /// Rebuilds only the visual children of the farm house. The functional
-    /// house root, collider, spawn point and entrance portal remain untouched.
-    /// The facade is a complete transparent house extracted from the purchased
-    /// Cozy Farm full-version buildings atlas.
+    /// Rebuilds only the generated visual children of the farm house. Functional
+    /// scene objects remain untouched unless a variant-specific metadata target
+    /// can be found safely by name.
     /// </summary>
     public static class CozyFarmHouseExteriorUpgrader
     {
-        public const string VisualRootName = "Cozy Full-Pack House v4";
-        public const float MaximumHouseWidth = 5.8f;
-        public const float MaximumHouseHeight = 4.45f;
-        public const float HouseBaseline = -1.62f;
+        public const string VisualRootName = "Cozy Full-Pack House v5";
 
         [MenuItem("Tools/Farm Simulator/Apply Cozy House Exterior To Farm Scene")]
         public static void ApplyFromMenu()
         {
+            ApplyVariant(CoziestSelectedVariantId());
+        }
+
+        public static void ApplyVariant(string variantId)
+        {
             HouseAndSleepScenePipeline.EnsureScenes();
-            Sprite houseSprite = CozyFarmBuildingCatalog.EnsureStarterHouse();
+            CozyFarmBuildingCatalog.HouseVariant variant =
+                CozyFarmBuildingCatalog.GetHouse(variantId);
+            Sprite houseSprite = CozyFarmBuildingCatalog.EnsureHouse(variant.Id);
 
             Scene scene = SceneManager.GetSceneByPath(ProjectSceneNames.FarmPath);
             bool openedHere = !scene.IsValid() || !scene.isLoaded;
@@ -46,7 +49,8 @@ namespace FarmSimulator.Editor
                         "Farm is missing 'Hero House Exterior'. Rebuild the house scenes first.");
                 }
 
-                RebuildVisuals(house, houseSprite);
+                RebuildVisuals(house, houseSprite, variant);
+                ApplyOptionalFunctionalMetadata(scene, house, variant);
                 EditorSceneManager.MarkSceneDirty(scene);
                 if (!EditorSceneManager.SaveScene(scene, ProjectSceneNames.FarmPath))
                 {
@@ -62,21 +66,36 @@ namespace FarmSimulator.Editor
                 }
             }
 
+            CozyFarmHouseStyleWindow.SelectedVariantId = variant.Id;
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log(
-                "Applied a complete Cozy Farm full-pack house sprite to Farm.");
+            Debug.Log($"Applied Cozy Farm house variant '{variant.DisplayName}' to Farm.");
         }
 
-        private static void RebuildVisuals(Transform house, Sprite houseSprite)
+        private static string CoziestSelectedVariantId()
+        {
+            string id = CozyFarmHouseStyleWindow.SelectedVariantId;
+            try
+            {
+                CozyFarmBuildingCatalog.GetHouse(id);
+                return id;
+            }
+            catch (ArgumentException)
+            {
+                return CozyFarmBuildingCatalog.DefaultHouseId;
+            }
+        }
+
+        private static void RebuildVisuals(
+            Transform house,
+            Sprite houseSprite,
+            CozyFarmBuildingCatalog.HouseVariant variant)
         {
             if (houseSprite == null)
             {
                 throw new ArgumentNullException(nameof(houseSprite));
             }
 
-            // The house root owns only generated visual children. Functional
-            // portal, collider and spawn objects live elsewhere in Farm World.
             for (int index = house.childCount - 1; index >= 0; index--)
             {
                 UnityEngine.Object.DestroyImmediate(
@@ -87,7 +106,7 @@ namespace FarmSimulator.Editor
             visualRoot.transform.SetParent(house, false);
             visualRoot.transform.localPosition = Vector3.zero;
 
-            var facade = new GameObject("Starter Green Gable House");
+            var facade = new GameObject(variant.DisplayName);
             facade.transform.SetParent(visualRoot.transform, false);
 
             Vector2 spriteSize = houseSprite.bounds.size;
@@ -95,31 +114,59 @@ namespace FarmSimulator.Editor
                 spriteSize.y <= Mathf.Epsilon
                 ? 1f
                 : Mathf.Min(
-                    MaximumHouseWidth / spriteSize.x,
-                    MaximumHouseHeight / spriteSize.y);
+                    variant.MaximumWidth / spriteSize.x,
+                    variant.MaximumHeight / spriteSize.y);
 
             facade.transform.localScale = new Vector3(scale, scale, 1f);
-            facade.transform.localPosition =
-                new Vector3(0f, HouseBaseline, 0f);
+            facade.transform.localPosition = new Vector3(0f, variant.Baseline, 0f);
 
             SpriteRenderer renderer = facade.AddComponent<SpriteRenderer>();
             renderer.sprite = houseSprite;
             renderer.color = Color.white;
             renderer.sortingLayerName = TopDownSortingLayers.World;
-            renderer.sortingOrder = 20;
+            renderer.sortingOrder = variant.SortingOrder;
 
-            // A subtle porch shadow anchors the complete atlas sprite to the
-            // gameplay floor without modifying its original artwork.
             var shadow = new GameObject("Entrance Grounding Shadow");
             shadow.transform.SetParent(visualRoot.transform, false);
-            shadow.transform.localPosition = new Vector3(0f, -1.67f, 0f);
-            shadow.transform.localScale = new Vector3(1.25f, 0.28f, 1f);
+            shadow.transform.localPosition = new Vector3(
+                variant.ShadowOffset.x,
+                variant.ShadowOffset.y,
+                0f);
+            shadow.transform.localScale = new Vector3(
+                variant.ShadowScale.x,
+                variant.ShadowScale.y,
+                1f);
             SpriteRenderer shadowRenderer = shadow.AddComponent<SpriteRenderer>();
             shadowRenderer.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>(
                 "UI/Skin/UISprite.psd");
             shadowRenderer.color = new Color(0.16f, 0.12f, 0.08f, 0.22f);
             shadowRenderer.sortingLayerName = TopDownSortingLayers.World;
-            shadowRenderer.sortingOrder = 19;
+            shadowRenderer.sortingOrder = variant.SortingOrder - 1;
+        }
+
+        private static void ApplyOptionalFunctionalMetadata(
+            Scene scene,
+            Transform house,
+            CozyFarmBuildingCatalog.HouseVariant variant)
+        {
+            Transform portal = Find(scene, "House Entrance Portal");
+            if (portal != null)
+            {
+                portal.position = house.TransformPoint(variant.PortalOffset);
+            }
+
+            Transform spawn = Find(scene, "Farm Spawn Point");
+            if (spawn != null)
+            {
+                spawn.position = house.TransformPoint(variant.SpawnOffset);
+            }
+
+            BoxCollider2D collider = house.GetComponent<BoxCollider2D>();
+            if (collider != null)
+            {
+                collider.size = variant.ColliderSize;
+                collider.offset = variant.ColliderOffset;
+            }
         }
 
         private static Transform Find(Scene scene, string name)
