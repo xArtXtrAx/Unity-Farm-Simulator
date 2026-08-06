@@ -5,7 +5,7 @@ using FarmSimulator.Presentation.World;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace FarmSimulator.Presentation.Time
+namespace FarmSimulator.Presentation.Sleep
 {
     [DisallowMultipleComponent]
     public sealed class BedInteractable :
