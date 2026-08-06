@@ -68,13 +68,24 @@ Este archivo complementa `BUGS.MD` durante el PR #14.
 
 ## Incremento — Farm Development Kit: prefabs reutilizables
 
-- **Estado:** IMPLEMENTADO; compilación y pruebas locales pendientes.
+- **Estado:** VERIFICADO para la entrega rectangular anterior; reemplazado por huellas lógicas editables.
+- Arturo confirmó que EditMode pasó sin errores y que la colocación/snap operaba en la retícula.
 - `CozyFarmBuildingPrefabGenerator` crea un prefab por cada `CozyBuildingDefinition`.
-- Cada prefab contiene un visual escalado desde los metadatos, `BoxCollider2D` y anclas nombradas para puerta, portal y aparición.
-- Los prefabs se guardan en `Assets/_Project/Buildings/CozyFarm/Prefabs` y quedan enlazados desde su definición.
-- El Building Browser permite generar, localizar y colocar el prefab seleccionado en la escena actual.
-- Se añadieron pruebas EditMode para verificar la cantidad de prefabs, el visual, el collider y las anclas.
-- No se considera validado hasta que Arturo confirme compilación, generación de los cinco prefabs y EditMode completo.
+- Cada prefab contiene visual, `BoxCollider2D`, anclas y metadatos de ocupación.
+
+## BUG-0014 — La huella rectangular de la casa era mayor que su base real
+
+- **Estado:** CORREGIDO; validación visual y pruebas locales pendientes.
+- **Severidad:** S3 — Media.
+- **Detectado:** 2026-08-06.
+- **Sistema:** Farm Development Kit / colocación de edificios.
+- **Comportamiento observado:** la casa utilizaba una huella automática de `6 × 5`, basada en las dimensiones visuales completas; el área incluía techo y espacio transparente y no coincidía con la base física del edificio.
+- **Causa:** `GridSize` se derivaba de `MaximumWidth`/`MaximumHeight` y `GridBuildingFootprint` ocupaba todo el rectángulo.
+- **Solución:** separar límites visuales y huella lógica. Cada definición guarda ahora una lista de offsets de celdas ocupadas, el prefab copia esa máscara y la detección de colisiones usa únicamente esas celdas.
+- **Valor inicial para casas:** lienzo `4 × 3` con diez celdas ocupadas; la fila superior solo ocupa las dos celdas centrales.
+- **Herramienta nueva:** `Farm Development Kit → Footprint Editor`, también accesible con `Edit footprint` desde Building Browser.
+- **Regla:** la celda `(0, 0)` es el ancla de puerta/base y siempre permanece ocupada.
+- **Validación pendiente:** regenerar definiciones y prefabs, confirmar que la máscara sigue la casa, cambia a rojo únicamente cuando las bases lógicas se intersectan y ejecutar EditMode completo.
 
 ## Incidencia de compatibilidad Unity 6
 
@@ -84,17 +95,18 @@ Este archivo complementa `BUGS.MD` durante el PR #14.
 
 ## Estado de pruebas
 
-- Arturo confirmó **201/201 EditMode** antes del incremento de reinicio de la granja.
+- Arturo confirmó EditMode completo sin errores antes del rediseño de huellas lógicas.
 - `BUG-0013` quedó verificado manualmente con DualSense.
-- Los incrementos de layout, vegetación, Building Browser y prefabs requieren volver a ejecutar EditMode y PlayMode.
+- El rediseño de `BUG-0014` requiere una nueva ejecución de EditMode y validación visual.
 
 ## Validación pendiente
 
 1. actualizar la rama y confirmar que Unity compila;
 2. abrir `Farm Development Kit → Building Browser`;
-3. pulsar `Generate all prefabs`;
-4. confirmar cinco prefabs en `Assets/_Project/Buildings/CozyFarm/Prefabs`;
-5. localizar y colocar uno en una escena temporal;
-6. comprobar visual, collider y anclas;
-7. ejecutar EditMode y PlayMode completos;
-8. no marcar el incremento como validado hasta recibir confirmación de Arturo.
+3. pulsar `Rebuild definitions` y luego `Generate all prefabs`;
+4. confirmar que las casas muestran diez celdas ocupadas en un lienzo `4 × 3`;
+5. usar `Edit footprint` para activar/desactivar celdas y guardar;
+6. regenerar el prefab y colocarlo en la escena;
+7. comprobar que la máscara coincide con la base, sigue el transform y detecta colisiones por celdas reales;
+8. ejecutar EditMode completo;
+9. no marcar `BUG-0014` como VERIFICADO hasta recibir confirmación de Arturo.
