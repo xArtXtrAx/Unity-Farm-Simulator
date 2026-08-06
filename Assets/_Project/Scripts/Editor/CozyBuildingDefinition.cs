@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace FarmSimulator.Editor
@@ -25,6 +27,8 @@ namespace FarmSimulator.Editor
         [SerializeField] private CozyBuildingCategory category;
         [SerializeField] private RectInt atlasRect;
         [SerializeField] private Vector2Int gridSize = Vector2Int.one;
+        [SerializeField] private Vector2Int[] footprintOffsets = { Vector2Int.zero };
+        [SerializeField] private bool footprintAuthored;
         [SerializeField] private Vector2 doorAnchor;
         [SerializeField] private Vector2 portalOffset;
         [SerializeField] private Vector2 spawnOffset;
@@ -45,6 +49,8 @@ namespace FarmSimulator.Editor
         public CozyBuildingCategory Category => category;
         public RectInt AtlasRect => atlasRect;
         public Vector2Int GridSize => gridSize;
+        public IReadOnlyList<Vector2Int> FootprintOffsets => footprintOffsets;
+        public bool FootprintAuthored => footprintAuthored;
         public Vector2 DoorAnchor => doorAnchor;
         public Vector2 PortalOffset => portalOffset;
         public Vector2 SpawnOffset => spawnOffset;
@@ -73,9 +79,13 @@ namespace FarmSimulator.Editor
             displayName = house.DisplayName;
             category = CozyBuildingCategory.House;
             atlasRect = house.SourceRect;
-            gridSize = new Vector2Int(
-                Mathf.Max(1, Mathf.CeilToInt(house.MaximumWidth)),
-                Mathf.Max(1, Mathf.CeilToInt(house.MaximumHeight)));
+            if (!footprintAuthored || footprintOffsets == null || footprintOffsets.Length == 0)
+            {
+                SetFootprintInternal(
+                    new Vector2Int(4, 3),
+                    CreateDefaultHouseFootprint(),
+                    authored: false);
+            }
             doorAnchor = house.DoorAnchor;
             portalOffset = house.PortalOffset;
             spawnOffset = house.SpawnOffset;
@@ -91,9 +101,61 @@ namespace FarmSimulator.Editor
             generatedSprite = sprite;
         }
 
+        public void SetFootprint(Vector2Int size, IEnumerable<Vector2Int> offsets)
+        {
+            SetFootprintInternal(size, offsets, authored: true);
+        }
+
+        public void ResetFootprintToCategoryDefault()
+        {
+            if (category == CozyBuildingCategory.House)
+            {
+                SetFootprintInternal(
+                    new Vector2Int(4, 3),
+                    CreateDefaultHouseFootprint(),
+                    authored: false);
+                return;
+            }
+
+            SetFootprintInternal(
+                Vector2Int.one,
+                new[] { Vector2Int.zero },
+                authored: false);
+        }
+
         public void AssignGeneratedPrefab(GameObject prefab)
         {
             generatedPrefab = prefab;
+        }
+
+        private void SetFootprintInternal(
+            Vector2Int size,
+            IEnumerable<Vector2Int> offsets,
+            bool authored)
+        {
+            gridSize = new Vector2Int(Mathf.Max(1, size.x), Mathf.Max(1, size.y));
+            footprintOffsets = offsets?
+                .Distinct()
+                .OrderBy(value => value.y)
+                .ThenBy(value => value.x)
+                .ToArray() ?? Array.Empty<Vector2Int>();
+            if (footprintOffsets.Length == 0)
+            {
+                footprintOffsets = new[] { Vector2Int.zero };
+            }
+            footprintAuthored = authored;
+        }
+
+        private static IEnumerable<Vector2Int> CreateDefaultHouseFootprint()
+        {
+            for (int x = -2; x <= 1; x++)
+            {
+                yield return new Vector2Int(x, 0);
+                yield return new Vector2Int(x, 1);
+            }
+
+            yield return new Vector2Int(-1, 2);
+            yield return new Vector2Int(0, 2);
         }
     }
 }
