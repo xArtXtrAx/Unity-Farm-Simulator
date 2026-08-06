@@ -133,3 +133,25 @@ Estado al integrar: **IMPLEMENTADO y validado visualmente por Arturo**. `BUG-001
 ## Regla que se mantiene
 
 Los Tilemaps se usan para autoría del mundo estático. Los cultivos siguen siendo entidades runtime con `SpriteRenderer`. Los edificios completos se extraen del atlas Full-Pack mediante un catálogo reproducible y sus huellas lógicas se autorizan por separado del tamaño visual del sprite.
+
+## Incremento — tamaño de escena y cámara de seguimiento
+
+Rama activa: `dev/seasonal-tile-browser`.
+
+Se amplió `Scene Size` para separar correctamente el tamaño lógico del mapa y el encuadre visible:
+
+- `Farm` conserva un zoom fijo expresado como altura visible en celdas;
+- la cámara sigue al jugador mediante `PlayerFollowCamera2D`;
+- el seguimiento puede suavizarse con un tiempo configurable;
+- la posición de cámara se limita opcionalmente a `Scene Authoring Bounds`;
+- cuando la ventana cambia el ancho o alto de la granja, actualiza el Tilemap y los límites sin intentar mostrar toda la escena simultáneamente;
+- `HouseInterior` mantiene por ahora únicamente el autorado de tamaño, sin aplicar el seguimiento exterior.
+
+Commits publicados:
+
+- `b80a74ad4a5911e09301f58f518e92e04b1a9219` — componente runtime de cámara de seguimiento acotada;
+- `e571301ea5a8bc8f49af637129ee97c8fc51a079` — metadata Unity;
+- `e739e780f1356e37e7fd1479ce67ddc2025b55bc` — controles de cámara en `Scene Size` y configuración de la escena;
+- `255c64b56574e9d05b005b7f162269665e19369f` — limpieza de un archivo placeholder accidental.
+
+Estado: **IMPLEMENTADO, pendiente de compilación y validación en Unity**. No se marca ningún bug como `VERIFICADO` hasta recibir confirmación de compilación, seguimiento correcto, límites de cámara y pruebas.
