@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using FarmSimulator.Presentation.Buildings;
 using UnityEditor;
@@ -72,13 +73,7 @@ namespace FarmSimulator.Editor
             }
 
             Grid grid = FindGrid();
-            Vector3Int origin = grid == null
-                ? new Vector3Int(
-                    Mathf.RoundToInt(instance.transform.position.x),
-                    Mathf.RoundToInt(instance.transform.position.y),
-                    0)
-                : grid.WorldToCell(instance.transform.position);
-
+            Vector3Int origin = WorldToCell(grid, instance.transform.position);
             int radiusLimit = Mathf.Max(0, searchRadius);
             for (int radius = 0; radius <= radiusLimit; radius++)
             {
@@ -118,12 +113,7 @@ namespace FarmSimulator.Editor
                 : footprint.AnchorCell;
 
             Grid grid = FindGrid();
-            Vector3Int cell = grid == null
-                ? new Vector3Int(
-                    Mathf.RoundToInt(instance.transform.position.x),
-                    Mathf.RoundToInt(instance.transform.position.y),
-                    0)
-                : grid.WorldToCell(instance.transform.position);
+            Vector3Int cell = WorldToCell(grid, instance.transform.position);
 
             Undo.RecordObject(instance.transform, "Snap building to grid");
             if (footprint != null)
@@ -150,10 +140,30 @@ namespace FarmSimulator.Editor
         public static bool OverlapsAnother(GridBuildingFootprint footprint)
         {
             if (footprint == null) return false;
-            return UnityEngine.Object.FindObjectsByType<GridBuildingFootprint>(
-                    FindObjectsInactive.Include,
-                    FindObjectsSortMode.None)
-                .Any(other => other != footprint && footprint.Overlaps(other));
+            Grid grid = FindGrid();
+            Vector2Int anchor = CurrentAnchor(footprint, grid);
+            var occupied = new HashSet<Vector2Int>(
+                footprint.GetOccupiedCells(anchor));
+
+            foreach (GridBuildingFootprint other in
+                     UnityEngine.Object.FindObjectsByType<GridBuildingFootprint>(
+                         FindObjectsInactive.Include,
+                         FindObjectsSortMode.None))
+            {
+                if (other == footprint ||
+                    other.gameObject.scene != footprint.gameObject.scene)
+                {
+                    continue;
+                }
+
+                Vector2Int otherAnchor = CurrentAnchor(other, grid);
+                if (other.GetOccupiedCells(otherAnchor).Any(occupied.Contains))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static Grid FindGrid()
@@ -162,6 +172,24 @@ namespace FarmSimulator.Editor
                     FindObjectsInactive.Include,
                     FindObjectsSortMode.None)
                 .FirstOrDefault();
+        }
+
+        private static Vector2Int CurrentAnchor(
+            GridBuildingFootprint footprint,
+            Grid grid)
+        {
+            Vector3Int cell = WorldToCell(grid, footprint.transform.position);
+            return new Vector2Int(cell.x, cell.y);
+        }
+
+        private static Vector3Int WorldToCell(Grid grid, Vector3 position)
+        {
+            return grid == null
+                ? new Vector3Int(
+                    Mathf.RoundToInt(position.x),
+                    Mathf.RoundToInt(position.y),
+                    0)
+                : grid.WorldToCell(position);
         }
 
         private static void SetCell(
