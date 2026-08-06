@@ -15,7 +15,10 @@ namespace FarmSimulator.Editor
         [MenuItem("Tools/Farm Simulator/Farm Development Kit/Footprint Editor")]
         public static void OpenFromMenu()
         {
-            Open(Selection.activeObject as CozyBuildingDefinition);
+            CozyBuildingDefinition selected =
+                Selection.activeObject as CozyBuildingDefinition ??
+                CozyFarmBuildingRegistry.LoadAll().FirstOrDefault();
+            Open(selected);
         }
 
         public static void Open(CozyBuildingDefinition selected)
@@ -23,7 +26,8 @@ namespace FarmSimulator.Editor
             var window = GetWindow<CozyBuildingFootprintWindow>();
             window.titleContent = new GUIContent("Footprint Editor");
             window.minSize = new Vector2(520f, 500f);
-            window.SetDefinition(selected);
+            window.SetDefinition(
+                selected ?? CozyFarmBuildingRegistry.LoadAll().FirstOrDefault());
             window.Show();
         }
 
@@ -55,8 +59,21 @@ namespace FarmSimulator.Editor
             if (definition == null)
             {
                 EditorGUILayout.HelpBox(
-                    "Select a CozyBuildingDefinition asset from the Building Browser.",
+                    "No building definitions are available. Rebuild them or open a building from the Building Browser.",
                     MessageType.Warning);
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("Rebuild definitions", GUILayout.Height(28f)))
+                    {
+                        IReadOnlyList<CozyBuildingDefinition> rebuilt =
+                            CozyFarmBuildingRegistry.Rebuild();
+                        SetDefinition(rebuilt.FirstOrDefault());
+                    }
+                    if (GUILayout.Button("Open Building Browser", GUILayout.Height(28f)))
+                    {
+                        CozyFarmBuildingBrowserWindow.Open();
+                    }
+                }
                 return;
             }
 
