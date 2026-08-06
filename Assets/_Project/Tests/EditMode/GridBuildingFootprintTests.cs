@@ -40,7 +40,7 @@ namespace FarmSimulator.Tests.EditMode
             Assert.That(cells.Min(cell => cell.x), Is.EqualTo(-2));
             Assert.That(cells.Max(cell => cell.x), Is.EqualTo(1));
             Assert.That(cells, Does.Contain(Vector2Int.zero));
-            Assert.That(cells, Does.Not.Contain(new Vector2Int(2, 0)));
+            Assert.That(cells.Contains(new Vector2Int(2, 0)), Is.False);
         }
 
         [Test]
