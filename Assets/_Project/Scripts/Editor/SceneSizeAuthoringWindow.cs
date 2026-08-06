@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using FarmSimulator.Presentation.World;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -26,13 +27,16 @@ namespace FarmSimulator.Editor
         private Vector2Int centreCell = Vector2Int.zero;
         private bool fillMissingGround = true;
         private bool clearTilesOutsideBounds;
+        private float farmVisibleHeightCells = 14f;
+        private float farmCameraSmoothTime = 0.12f;
+        private bool clampFarmCameraToBounds = true;
 
         [MenuItem("Tools/Farm Simulator/Farm Development Kit/Scene Size")]
         public static void Open()
         {
             var window = GetWindow<SceneSizeAuthoringWindow>();
             window.titleContent = new GUIContent("Scene Size");
-            window.minSize = new Vector2(430f, 330f);
+            window.minSize = new Vector2(430f, 430f);
             window.Show();
         }
 
@@ -43,7 +47,7 @@ namespace FarmSimulator.Editor
                 EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
                 "Define the logical width and height of Farm or House Interior in grid cells. " +
-                "The tool updates the shared authoring bounds and, for Farm, can extend the Ground Tilemap without rebuilding the scene.",
+                "Farm keeps a fixed zoom and follows the player inside the authored scene bounds.",
                 MessageType.Info);
 
             SceneKind nextKind = (SceneKind)GUILayout.Toolbar(
@@ -77,6 +81,24 @@ namespace FarmSimulator.Editor
                 EditorGUILayout.HelpBox(
                     "Clearing outside bounds is destructive for painted Tilemaps. Leave it disabled while expanding or testing a size.",
                     MessageType.Warning);
+            }
+
+            if (sceneKind == SceneKind.Farm)
+            {
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField("Camera framing", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("Mode", "Follow Player");
+                farmVisibleHeightCells = Mathf.Clamp(
+                    EditorGUILayout.FloatField("Visible height (cells)", farmVisibleHeightCells),
+                    4f,
+                    64f);
+                farmCameraSmoothTime = Mathf.Clamp(
+                    EditorGUILayout.FloatField("Smooth follow (seconds)", farmCameraSmoothTime),
+                    0f,
+                    2f);
+                clampFarmCameraToBounds = EditorGUILayout.ToggleLeft(
+                    "Clamp camera to scene bounds",
+                    clampFarmCameraToBounds);
             }
 
             EditorGUILayout.Space();
@@ -131,6 +153,30 @@ namespace FarmSimulator.Editor
                 centreCell = new Vector2Int(
                     Mathf.FloorToInt((min.x + max.x) * 0.5f),
                     Mathf.FloorToInt((min.y + max.y) * 0.5f));
+
+                if (sceneKind == SceneKind.Farm)
+                {
+                    Camera camera = FindCamera(scene);
+                    if (camera != null && camera.orthographic)
+                    {
+                        float cellHeight = Mathf.Abs(grid.cellSize.y);
+                        if (cellHeight > 0.0001f)
+                        {
+                            farmVisibleHeightCells = camera.orthographicSize * 2f / cellHeight;
+                        }
+                    }
+
+                    PlayerFollowCamera2D follow = camera != null
+                        ? camera.GetComponent<PlayerFollowCamera2D>()
+                        : null;
+                    if (follow != null)
+                    {
+                        var serialized = new SerializedObject(follow);
+                        farmCameraSmoothTime = serialized.FindProperty("smoothTime").floatValue;
+                        clampFarmCameraToBounds = serialized.FindProperty("clampToBounds").boolValue;
+                    }
+                }
+
                 Repaint();
             }
             finally
@@ -168,6 +214,7 @@ namespace FarmSimulator.Editor
                 if (sceneKind == SceneKind.Farm)
                 {
                     ResizeFarmTilemaps(scene, cellBounds);
+                    ConfigureFarmCamera(scene, grid, bounds);
                 }
 
                 EditorSceneManager.MarkSceneDirty(scene);
@@ -194,6 +241,31 @@ namespace FarmSimulator.Editor
                     EditorSceneManager.CloseScene(scene, true);
                 }
             }
+        }
+
+        private void ConfigureFarmCamera(Scene scene, Grid grid, BoxCollider2D bounds)
+        {
+            Camera camera = FindCamera(scene);
+            if (camera == null)
+            {
+                throw new InvalidOperationException(
+                    "Farm does not contain a Camera. Add or restore the Farm camera before applying camera framing.");
+            }
+
+            camera.orthographic = true;
+            camera.orthographicSize = Mathf.Max(
+                0.5f,
+                farmVisibleHeightCells * Mathf.Abs(grid.cellSize.y) * 0.5f);
+
+            PlayerFollowCamera2D follow = camera.GetComponent<PlayerFollowCamera2D>();
+            if (follow == null)
+            {
+                follow = Undo.AddComponent<PlayerFollowCamera2D>(camera.gameObject);
+            }
+
+            follow.Configure(bounds, farmCameraSmoothTime, clampFarmCameraToBounds);
+            EditorUtility.SetDirty(camera);
+            EditorUtility.SetDirty(follow);
         }
 
         private void ResizeFarmTilemaps(Scene scene, RectInt bounds)
@@ -295,6 +367,16 @@ namespace FarmSimulator.Editor
             return scene.GetRootGameObjects()
                 .SelectMany(root => root.GetComponentsInChildren<Grid>(true))
                 .FirstOrDefault();
+        }
+
+        private static Camera FindCamera(Scene scene)
+        {
+            return scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<Camera>(true))
+                .FirstOrDefault(camera => camera.CompareTag("MainCamera"))
+                ?? scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<Camera>(true))
+                    .FirstOrDefault();
         }
 
         private RectInt CalculateCellBounds()
