@@ -13,9 +13,8 @@ namespace FarmSimulator.Editor
             var footprint = (GridBuildingFootprint)target;
             Grid grid = Object.FindFirstObjectByType<Grid>(FindObjectsInactive.Include);
             Vector2Int previewAnchor = GetPreviewAnchor(footprint, grid);
-            IReadOnlyList<Vector2Int> previewCells = GetOccupiedCells(
-                previewAnchor,
-                footprint.GridSize);
+            var previewCells = new List<Vector2Int>(
+                footprint.GetOccupiedCells(previewAnchor));
             bool blocked = OverlapsAnother(footprint, previewCells, grid);
 
             Handles.color = blocked
@@ -44,7 +43,7 @@ namespace FarmSimulator.Editor
                 footprint.transform.position + Vector3.up * 0.35f,
                 blocked
                     ? "Footprint blocked"
-                    : $"{footprint.GridSize.x} × {footprint.GridSize.y} cells");
+                    : $"{previewCells.Count} occupied cells");
 
             SceneView.RepaintAll();
         }
@@ -62,24 +61,6 @@ namespace FarmSimulator.Editor
 
             Vector3Int cell = grid.WorldToCell(footprint.transform.position);
             return new Vector2Int(cell.x, cell.y);
-        }
-
-        private static IReadOnlyList<Vector2Int> GetOccupiedCells(
-            Vector2Int anchor,
-            Vector2Int size)
-        {
-            var cells = new List<Vector2Int>(size.x * size.y);
-            int startX = anchor.x - ((size.x - 1) / 2);
-            int startY = anchor.y - ((size.y - 1) / 2);
-            for (int y = 0; y < size.y; y++)
-            {
-                for (int x = 0; x < size.x; x++)
-                {
-                    cells.Add(new Vector2Int(startX + x, startY + y));
-                }
-            }
-
-            return cells;
         }
 
         private static bool OverlapsAnother(
@@ -100,10 +81,7 @@ namespace FarmSimulator.Editor
                 }
 
                 Vector2Int otherAnchor = GetPreviewAnchor(other, grid);
-                IReadOnlyList<Vector2Int> otherCells = GetOccupiedCells(
-                    otherAnchor,
-                    other.GridSize);
-                foreach (Vector2Int occupied in otherCells)
+                foreach (Vector2Int occupied in other.GetOccupiedCells(otherAnchor))
                 {
                     if (preview.Contains(occupied))
                     {
