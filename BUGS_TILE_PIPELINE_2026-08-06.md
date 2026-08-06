@@ -73,19 +73,22 @@ Este archivo complementa `BUGS.MD` durante el PR #14.
 - `CozyFarmBuildingPrefabGenerator` crea un prefab por cada `CozyBuildingDefinition`.
 - Cada prefab contiene visual, `BoxCollider2D`, anclas y metadatos de ocupación.
 
-## BUG-0014 — La huella rectangular de la casa era mayor que su base real
+## BUG-0014 — La huella lógica no coincidía con la base visual de la casa
 
 - **Estado:** CORREGIDO; validación visual y pruebas locales pendientes.
 - **Severidad:** S3 — Media.
 - **Detectado:** 2026-08-06.
 - **Sistema:** Farm Development Kit / colocación de edificios.
-- **Comportamiento observado:** la casa utilizaba una huella automática de `6 × 5`, basada en las dimensiones visuales completas; el área incluía techo y espacio transparente y no coincidía con la base física del edificio.
-- **Causa:** `GridSize` se derivaba de `MaximumWidth`/`MaximumHeight` y `GridBuildingFootprint` ocupaba todo el rectángulo.
-- **Solución:** separar límites visuales y huella lógica. Cada definición guarda ahora una lista de offsets de celdas ocupadas, el prefab copia esa máscara y la detección de colisiones usa únicamente esas celdas.
-- **Valor inicial para casas:** lienzo `4 × 3` con diez celdas ocupadas; la fila superior solo ocupa las dos celdas centrales.
-- **Herramienta nueva:** `Farm Development Kit → Footprint Editor`, también accesible con `Edit footprint` desde Building Browser.
-- **Regla:** la celda `(0, 0)` es el ancla de puerta/base y siempre permanece ocupada.
-- **Validación pendiente:** regenerar definiciones y prefabs, confirmar que la máscara sigue la casa, cambia a rojo únicamente cuando las bases lógicas se intersectan y ejecutar EditMode completo.
+- **Comportamiento observado:** primero la casa utilizó una huella automática `6 × 5`; después de migrarla a una máscara `4 × 3`, la huella seguía apareciendo demasiado abajo y algunas colocaciones mostraban una máscara antigua de diez celdas aunque el editor tuviera doce.
+- **Causas:**
+  1. `GridSize` se derivaba inicialmente de las dimensiones visuales completas.
+  2. El generador reutilizable aplicaba `-Baseline`, moviendo el sprite en la dirección opuesta a la composición exterior.
+  3. `Place on scene grid` podía instanciar un prefab previamente generado y desactualizado respecto de la definición editada.
+- **Solución:** separar límites visuales y huella lógica; normalizar el prefab reutilizable alrededor del pivote inferior central del sprite; convertir portal, spawn y collider al mismo espacio local de base; y regenerar siempre el prefab antes de colocarlo desde Building Browser.
+- **Autoría:** el Footprint Editor superpone ahora sobre el sprite la misma máscara exacta que usan el prefab, el gizmo de Scene, el snap y las colisiones.
+- **Valor inicial para casas:** lienzo `4 × 3` con diez celdas ocupadas; la fila posterior solo ocupa las dos celdas centrales.
+- **Commits de corrección más recientes:** `79585178ce8f752f2c0172721c861809e5078064`, `7903348eaaccf428faab231ab4ba2099f1a62b61`, `0484756f8cc0e5a1752c72bfb26682af582ee72b`, `e9583964368838c463dd9a1c185020b73091980d`.
+- **Validación pendiente:** regenerar y colocar una casa; confirmar que la máscara coincide exactamente con el editor y con la base visual; comprobar rojo/verde al solapar; ejecutar EditMode completo.
 
 ## Incidencia de compatibilidad Unity 6
 
@@ -95,18 +98,18 @@ Este archivo complementa `BUGS.MD` durante el PR #14.
 
 ## Estado de pruebas
 
-- Arturo confirmó EditMode completo sin errores antes del rediseño de huellas lógicas.
+- Arturo confirmó EditMode completo sin errores antes del último ajuste de normalización de prefabs.
 - `BUG-0013` quedó verificado manualmente con DualSense.
-- El rediseño de `BUG-0014` requiere una nueva ejecución de EditMode y validación visual.
+- `BUG-0014` requiere una nueva ejecución de EditMode y validación visual.
 
 ## Validación pendiente
 
 1. actualizar la rama y confirmar que Unity compila;
 2. abrir `Farm Development Kit → Building Browser`;
-3. pulsar `Rebuild definitions` y luego `Generate all prefabs`;
-4. confirmar que las casas muestran diez celdas ocupadas en un lienzo `4 × 3`;
-5. usar `Edit footprint` para activar/desactivar celdas y guardar;
-6. regenerar el prefab y colocarlo en la escena;
-7. comprobar que la máscara coincide con la base, sigue el transform y detecta colisiones por celdas reales;
+3. abrir una casa con `Edit footprint` y comprobar la superposición exacta sobre el sprite;
+4. guardar con `Save + regenerate prefab` o usar `Regenerate + place on scene grid`;
+5. eliminar instancias antiguas y colocar una nueva;
+6. confirmar que el patrón y el número de celdas coinciden con el editor;
+7. comprobar que la máscara sigue la casa y cambia a rojo solo al intersectar otras celdas ocupadas;
 8. ejecutar EditMode completo;
 9. no marcar `BUG-0014` como VERIFICADO hasta recibir confirmación de Arturo.
