@@ -338,7 +338,7 @@ namespace FarmSimulator.Editor
         private static string ToAbsoluteProjectPath(string relativePath)
         {
             string projectRoot = Path.GetFullPath(
-                Path.Combine(Application.dataPath, ".."));
+                Path.Combine(global::UnityEngine.Application.dataPath, ".."));
             return Path.GetFullPath(Path.Combine(
                 projectRoot,
                 relativePath.Replace('/', Path.DirectorySeparatorChar)));
