@@ -19,7 +19,7 @@ namespace FarmSimulator.Editor
         {
             EditorGUILayout.LabelField("Farm Tile Manager", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "Each button loads its categorized palette and sets the matching Farm Tilemap as the active paint target. Soil and Crops are separate so both can occupy the same grid cell.",
+                "Use Tilemaps to author terrain and decoration. Crops are runtime entities owned by FarmPlotBehaviour, so they are intentionally not paintable from a Tile Palette.",
                 MessageType.Info);
 
             EditorGUILayout.Space();
@@ -59,19 +59,14 @@ namespace FarmSimulator.Editor
                     CozyPaletteCategory.Soil,
                     layers => layers.Soil);
                 LayerButton(
-                    "Crops",
-                    CozyPaletteCategory.Crops,
-                    layers => layers.Crops);
+                    "Decoration",
+                    CozyPaletteCategory.Decoration,
+                    layers => layers.Decoration);
             }
-
-            LayerButton(
-                "Decoration",
-                CozyPaletteCategory.Decoration,
-                layers => layers.Decoration);
 
             EditorGUILayout.Space();
             EditorGUILayout.HelpBox(
-                "Ground: grass/water. Paths: dirt/bridge. Soil: tilled ground. Crops: transparent growth stages. Decoration: lamp, bench, rocks and fence.",
+                "Ground: grass/water. Paths: dirt/bridge. Soil: authored tilled ground. Decoration: lamp, bench, rocks and fence. Seeds and growing plants appear only through gameplay.",
                 MessageType.None);
         }
 
