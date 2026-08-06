@@ -2,12 +2,10 @@ using System;
 using System.Linq;
 using FarmSimulator.Application.Scenes;
 using FarmSimulator.Presentation.Farming;
-using FarmSimulator.Presentation.Scenes;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.Tilemaps;
 
 namespace FarmSimulator.Editor
 {
@@ -49,6 +47,11 @@ namespace FarmSimulator.Editor
                 return;
             }
 
+            if (!force && IsAlreadyApplied())
+            {
+                return;
+            }
+
             HouseAndSleepScenePipeline.EnsureScenes();
             FarmSceneFarmingUpgrader.ApplyFromMenu();
 
@@ -75,11 +78,6 @@ namespace FarmSimulator.Editor
 
             try
             {
-                if (!force && Find(scene, LayoutRootName) != null)
-                {
-                    return;
-                }
-
                 Transform world = Find(scene, "Farm World");
                 FarmTilemapLayers layers = FindComponent<FarmTilemapLayers>(scene);
                 Transform house = Find(scene, "Hero House Exterior");
@@ -111,7 +109,10 @@ namespace FarmSimulator.Editor
 
                 RepositionPlots(field, grid);
                 AlignHouseFlow(scene, house, variantId);
-                SnapToCellCenter(Find(scene, "Spawn farm-start"), grid, new Vector3Int(0, -3, 0));
+                SnapToCellCenter(
+                    Find(scene, "Spawn farm-start"),
+                    grid,
+                    new Vector3Int(0, -3, 0));
 
                 Transform marker = new GameObject(LayoutRootName).transform;
                 marker.SetParent(world, false);
@@ -135,6 +136,35 @@ namespace FarmSimulator.Editor
             AssetDatabase.Refresh();
             Debug.Log(
                 "Reset Farm to grid starter layout: house, nine plots, right bench and left lamp.");
+        }
+
+        private static bool IsAlreadyApplied()
+        {
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ProjectSceneNames.FarmPath) == null)
+            {
+                return false;
+            }
+
+            Scene scene = SceneManager.GetSceneByPath(ProjectSceneNames.FarmPath);
+            bool openedHere = !scene.IsValid() || !scene.isLoaded;
+            if (openedHere)
+            {
+                scene = EditorSceneManager.OpenScene(
+                    ProjectSceneNames.FarmPath,
+                    OpenSceneMode.Additive);
+            }
+
+            try
+            {
+                return Find(scene, LayoutRootName) != null;
+            }
+            finally
+            {
+                if (openedHere && scene.IsValid() && scene.isLoaded)
+                {
+                    EditorSceneManager.CloseScene(scene, true);
+                }
+            }
         }
 
         private static void RepositionPlots(Transform field, Grid grid)
