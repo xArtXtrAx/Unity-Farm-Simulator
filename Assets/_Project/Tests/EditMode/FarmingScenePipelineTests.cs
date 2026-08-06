@@ -15,18 +15,16 @@ namespace FarmSimulator.Tests.EditMode
     public sealed class FarmingScenePipelineTests
     {
         [Test]
-        public void FarmContainsNineConfiguredPlotsOnTilemapGrid()
+        public void FarmContainsNineConfiguredPlotsOnSeparatedTilemapGrid()
         {
             HouseAndSleepScenePipeline.EnsureScenes();
             Assert.That(
-                AssetDatabase.LoadAssetAtPath<SceneAsset>(
-                    ProjectSceneNames.FarmPath),
+                AssetDatabase.LoadAssetAtPath<SceneAsset>(ProjectSceneNames.FarmPath),
                 Is.Not.Null);
 
             FarmSceneFarmingUpgrader.ApplyFromMenu();
 
-            Scene scene =
-                SceneManager.GetSceneByPath(ProjectSceneNames.FarmPath);
+            Scene scene = SceneManager.GetSceneByPath(ProjectSceneNames.FarmPath);
             bool openedHere = !scene.IsValid() || !scene.isLoaded;
             if (openedHere)
             {
@@ -37,59 +35,50 @@ namespace FarmSimulator.Tests.EditMode
 
             try
             {
-                FarmPlotBehaviour[] plots =
-                    scene.GetRootGameObjects()
-                        .SelectMany(root =>
-                            root.GetComponentsInChildren<
-                                FarmPlotBehaviour>(true))
-                        .ToArray();
+                FarmPlotBehaviour[] plots = scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<FarmPlotBehaviour>(true))
+                    .ToArray();
 
                 Assert.That(
                     plots.Length,
-                    Is.EqualTo(
-                        FarmSceneFarmingUpgrader.Columns *
-                        FarmSceneFarmingUpgrader.Rows));
+                    Is.EqualTo(FarmSceneFarmingUpgrader.Columns * FarmSceneFarmingUpgrader.Rows));
 
-                string[] identifiers =
-                    plots.Select(plot => plot.PlotId)
-                        .OrderBy(value => value)
-                        .ToArray();
+                string[] identifiers = plots.Select(plot => plot.PlotId)
+                    .OrderBy(value => value)
+                    .ToArray();
                 Assert.That(
                     new HashSet<string>(identifiers).Count,
                     Is.EqualTo(identifiers.Length));
                 Assert.That(
-                    plots.All(plot =>
-                        plot.SoilRenderer != null &&
-                        plot.CropRenderer != null),
+                    plots.All(plot => plot.SoilRenderer != null && plot.CropRenderer != null),
                     Is.True);
                 Assert.That(
                     plots.All(plot => !plot.SoilRenderer.enabled),
                     Is.True,
                     "Untilled plots should visually merge with grass.");
 
-                FarmTilemapLayers layers =
-                    scene.GetRootGameObjects()
-                        .SelectMany(root =>
-                            root.GetComponentsInChildren<
-                                FarmTilemapLayers>(true))
-                        .Single();
+                FarmTilemapLayers layers = scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<FarmTilemapLayers>(true))
+                    .Single();
 
                 Assert.That(layers.Ground, Is.Not.Null);
                 Assert.That(layers.Paths, Is.Not.Null);
-                Assert.That(layers.Farming, Is.Not.Null);
+                Assert.That(layers.Soil, Is.Not.Null);
+                Assert.That(layers.Crops, Is.Not.Null);
                 Assert.That(layers.Decoration, Is.Not.Null);
+                Assert.That(layers.Soil, Is.Not.SameAs(layers.Crops));
+                Assert.That(layers.Ground.GetUsedTilesCount(), Is.EqualTo(1));
+                Assert.That(layers.Paths.GetUsedTilesCount(), Is.EqualTo(1));
+                Assert.That(CountOccupiedCells(layers.Ground), Is.EqualTo(15 * 9));
+                Assert.That(CountOccupiedCells(layers.Paths), Is.EqualTo(3 * 6));
+                Assert.That(CountOccupiedCells(layers.Soil), Is.Zero);
+                Assert.That(CountOccupiedCells(layers.Crops), Is.Zero);
+
+                TilemapRenderer soilRenderer = layers.Soil.GetComponent<TilemapRenderer>();
+                TilemapRenderer cropRenderer = layers.Crops.GetComponent<TilemapRenderer>();
                 Assert.That(
-                    layers.Ground.GetUsedTilesCount(),
-                    Is.EqualTo(1));
-                Assert.That(
-                    layers.Paths.GetUsedTilesCount(),
-                    Is.EqualTo(1));
-                Assert.That(
-                    CountOccupiedCells(layers.Ground),
-                    Is.EqualTo(15 * 9));
-                Assert.That(
-                    CountOccupiedCells(layers.Paths),
-                    Is.EqualTo(3 * 6));
+                    cropRenderer.sortingOrder,
+                    Is.GreaterThan(soilRenderer.sortingOrder));
             }
             finally
             {
@@ -101,59 +90,77 @@ namespace FarmSimulator.Tests.EditMode
         }
 
         [Test]
-        public void CozyStarterTileCatalogContainsPaintableAssetsAndPalettes()
+        public void CozyStarterTileCatalogContainsPaintableAssetsAndSeparatedPalettes()
         {
             CozyFarmTileCatalog.Rebuild();
 
             Assert.That(
-                AssetDatabase.LoadAssetAtPath<Tile>(
-                    CozyFarmTileCatalog.GrassTilePath),
+                AssetDatabase.LoadAssetAtPath<Tile>(CozyFarmTileCatalog.GrassTilePath),
                 Is.Not.Null);
             Assert.That(
-                AssetDatabase.LoadAssetAtPath<Tile>(
-                    CozyFarmTileCatalog.DirtTilePath),
+                AssetDatabase.LoadAssetAtPath<Tile>(CozyFarmTileCatalog.DirtTilePath),
                 Is.Not.Null);
             Assert.That(
-                AssetDatabase.LoadAssetAtPath<Tile>(
-                    CozyFarmTileCatalog.WaterTilePath),
+                AssetDatabase.LoadAssetAtPath<Tile>(CozyFarmTileCatalog.WaterTilePath),
                 Is.Not.Null);
             Assert.That(
-                AssetDatabase.LoadAssetAtPath<Tile>(
-                    CozyFarmTileCatalog.TilledSoilTilePath),
+                AssetDatabase.LoadAssetAtPath<Tile>(CozyFarmTileCatalog.TilledSoilTilePath),
                 Is.Not.Null);
 
             AssertPalette(
-                CozyFarmTileCatalog.GetPalettePath(
-                    CozyPaletteCategory.Ground),
+                CozyFarmTileCatalog.GetPalettePath(CozyPaletteCategory.Ground),
                 minimumOccupiedCells: 2);
             AssertPalette(
-                CozyFarmTileCatalog.GetPalettePath(
-                    CozyPaletteCategory.Paths),
+                CozyFarmTileCatalog.GetPalettePath(CozyPaletteCategory.Paths),
                 minimumOccupiedCells: 2);
             AssertPalette(
-                CozyFarmTileCatalog.GetPalettePath(
-                    CozyPaletteCategory.Farming),
-                minimumOccupiedCells: 19);
+                CozyFarmTileCatalog.GetPalettePath(CozyPaletteCategory.Soil),
+                minimumOccupiedCells: 1);
             AssertPalette(
-                CozyFarmTileCatalog.GetPalettePath(
-                    CozyPaletteCategory.Decoration),
+                CozyFarmTileCatalog.GetPalettePath(CozyPaletteCategory.Crops),
+                minimumOccupiedCells: 18);
+            AssertPalette(
+                CozyFarmTileCatalog.GetPalettePath(CozyPaletteCategory.Decoration),
                 minimumOccupiedCells: 4);
+        }
+
+        [Test]
+        public void GeneratedCropSpritesUseTransparencyAndBottomCenteredPivots()
+        {
+            CozyFarmTileCatalog.Rebuild();
+
+            string[] guids = AssetDatabase.FindAssets(
+                "t:Sprite",
+                new[] { CozyFarmTileCatalog.GeneratedCropRoot });
+            Assert.That(guids.Length, Is.EqualTo(18));
+
+            foreach (string guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+
+                Assert.That(sprite, Is.Not.Null, path);
+                Assert.That(importer, Is.Not.Null, path);
+                Assert.That(importer.alphaIsTransparency, Is.True, path);
+                Assert.That(importer.spritePixelsPerUnit, Is.EqualTo(16f), path);
+                Assert.That(importer.spritePivot.x, Is.EqualTo(0.5f).Within(0.001f), path);
+                Assert.That(importer.spritePivot.y, Is.Zero.Within(0.001f), path);
+            }
         }
 
         private static void AssertPalette(
             string palettePath,
             int minimumOccupiedCells)
         {
-            GameObject palette =
-                AssetDatabase.LoadAssetAtPath<GameObject>(palettePath);
+            GameObject palette = AssetDatabase.LoadAssetAtPath<GameObject>(palettePath);
             Assert.That(
                 palette,
                 Is.Not.Null,
                 $"Expected generated palette at '{palettePath}'.");
             Assert.That(palette.GetComponent<Grid>(), Is.Not.Null);
 
-            Tilemap tilemap =
-                palette.GetComponentInChildren<Tilemap>(true);
+            Tilemap tilemap = palette.GetComponentInChildren<Tilemap>(true);
             Assert.That(tilemap, Is.Not.Null);
             Assert.That(
                 CountOccupiedCells(tilemap),
