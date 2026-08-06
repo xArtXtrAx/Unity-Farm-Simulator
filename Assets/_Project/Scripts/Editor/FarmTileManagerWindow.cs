@@ -17,12 +17,9 @@ namespace FarmSimulator.Editor
 
         private void OnGUI()
         {
-            EditorGUILayout.LabelField(
-                "Farm Tile Manager",
-                EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Farm Tile Manager", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "Each button now loads a different categorized palette and " +
-                "sets the matching Farm Tilemap as the active paint target.",
+                "Each button loads its categorized palette and sets the matching Farm Tilemap as the active paint target. Soil and Crops are separate so both can occupy the same grid cell.",
                 MessageType.Info);
 
             EditorGUILayout.Space();
@@ -58,20 +55,23 @@ namespace FarmSimulator.Editor
             using (new EditorGUILayout.HorizontalScope())
             {
                 LayerButton(
-                    "Farming",
-                    CozyPaletteCategory.Farming,
-                    layers => layers.Farming);
+                    "Soil",
+                    CozyPaletteCategory.Soil,
+                    layers => layers.Soil);
                 LayerButton(
-                    "Decoration",
-                    CozyPaletteCategory.Decoration,
-                    layers => layers.Decoration);
+                    "Crops",
+                    CozyPaletteCategory.Crops,
+                    layers => layers.Crops);
             }
+
+            LayerButton(
+                "Decoration",
+                CozyPaletteCategory.Decoration,
+                layers => layers.Decoration);
 
             EditorGUILayout.Space();
             EditorGUILayout.HelpBox(
-                "Ground shows grass and water. Paths shows dirt and bridge. " +
-                "Farming shows tilled soil and crop stages. Decoration shows " +
-                "lamp, bench, rocks and fence.",
+                "Ground: grass/water. Paths: dirt/bridge. Soil: tilled ground. Crops: transparent growth stages. Decoration: lamp, bench, rocks and fence.",
                 MessageType.None);
         }
 
@@ -106,8 +106,7 @@ namespace FarmSimulator.Editor
             {
                 EditorUtility.DisplayDialog(
                     "Farm Tile Manager",
-                    "Unity could not activate the categorized Tile Palette. " +
-                    "Confirm that 2D Tilemap Editor is installed, then rebuild the catalog.",
+                    "Unity could not activate the categorized Tile Palette. Confirm that 2D Tilemap Editor is installed, then rebuild the catalog.",
                     "OK");
             }
         }
@@ -117,8 +116,7 @@ namespace FarmSimulator.Editor
             Scene activeScene = SceneManager.GetActiveScene();
             return Resources.FindObjectsOfTypeAll<FarmTilemapLayers>()
                 .FirstOrDefault(candidate =>
-                    candidate != null &&
-                    candidate.gameObject.scene == activeScene);
+                    candidate != null && candidate.gameObject.scene == activeScene);
         }
     }
 }
