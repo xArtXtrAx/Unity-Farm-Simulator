@@ -14,17 +14,19 @@ namespace FarmSimulator.Editor
         [MenuItem("Tools/Farm Simulator/Farm Development Kit/Snap Selected Building To Grid")]
         public static void SnapSelectedToGrid()
         {
-            GameObject selected = Selection.activeGameObject;
-            if (selected == null || selected.GetComponent<GridBuildingFootprint>() == null)
+            GridBuildingFootprint footprint = ResolveSelectedFootprint();
+            if (footprint == null)
             {
                 EditorUtility.DisplayDialog(
                     "Farm Development Kit",
-                    "Select a generated building instance first.",
+                    "Select a generated building instance or any of its children first.",
                     "OK");
                 return;
             }
 
-            if (!SnapToNearestCell(selected))
+            GameObject buildingRoot = footprint.gameObject;
+            Selection.activeGameObject = buildingRoot;
+            if (!SnapToNearestCell(buildingRoot))
             {
                 EditorUtility.DisplayDialog(
                     "Farm Development Kit",
@@ -145,6 +147,17 @@ namespace FarmSimulator.Editor
             }
 
             return false;
+        }
+
+        private static GridBuildingFootprint ResolveSelectedFootprint()
+        {
+            GameObject selected = Selection.activeGameObject;
+            if (selected == null) return null;
+
+            GridBuildingFootprint footprint = selected.GetComponent<GridBuildingFootprint>();
+            return footprint != null
+                ? footprint
+                : selected.GetComponentInParent<GridBuildingFootprint>();
         }
 
         private static Grid FindGrid()
