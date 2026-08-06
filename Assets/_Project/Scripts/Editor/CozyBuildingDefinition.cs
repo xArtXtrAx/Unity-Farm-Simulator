@@ -29,6 +29,8 @@ namespace FarmSimulator.Editor
         [SerializeField] private Vector2Int gridSize = Vector2Int.one;
         [SerializeField] private Vector2Int[] footprintOffsets = { Vector2Int.zero };
         [SerializeField] private bool footprintAuthored;
+        [SerializeField] private Vector2 footprintAnchorOffset;
+        [SerializeField] private bool footprintAnchorAuthored;
         [SerializeField] private Vector2 doorAnchor;
         [SerializeField] private Vector2 portalOffset;
         [SerializeField] private Vector2 spawnOffset;
@@ -51,6 +53,7 @@ namespace FarmSimulator.Editor
         public Vector2Int GridSize => gridSize;
         public IReadOnlyList<Vector2Int> FootprintOffsets => footprintOffsets;
         public bool FootprintAuthored => footprintAuthored;
+        public Vector2 FootprintAnchorOffset => footprintAnchorOffset;
         public Vector2 DoorAnchor => doorAnchor;
         public Vector2 PortalOffset => portalOffset;
         public Vector2 SpawnOffset => spawnOffset;
@@ -70,10 +73,7 @@ namespace FarmSimulator.Editor
             CozyFarmBuildingCatalog.HouseVariant house,
             Sprite sprite)
         {
-            if (house == null)
-            {
-                throw new ArgumentNullException(nameof(house));
-            }
+            if (house == null) throw new ArgumentNullException(nameof(house));
 
             id = house.Id;
             displayName = house.DisplayName;
@@ -85,6 +85,10 @@ namespace FarmSimulator.Editor
                     new Vector2Int(4, 3),
                     CreateDefaultHouseFootprint(),
                     authored: false);
+            }
+            if (!footprintAnchorAuthored)
+            {
+                footprintAnchorOffset = house.PortalOffset;
             }
             doorAnchor = house.DoorAnchor;
             portalOffset = house.PortalOffset;
@@ -106,8 +110,16 @@ namespace FarmSimulator.Editor
             SetFootprintInternal(size, offsets, authored: true);
         }
 
+        public void SetFootprintAnchor(Vector2 localOffset)
+        {
+            footprintAnchorOffset = localOffset;
+            footprintAnchorAuthored = true;
+        }
+
         public void ResetFootprintToCategoryDefault()
         {
+            footprintAnchorAuthored = false;
+            footprintAnchorOffset = portalOffset;
             if (category == CozyBuildingCategory.House)
             {
                 SetFootprintInternal(
