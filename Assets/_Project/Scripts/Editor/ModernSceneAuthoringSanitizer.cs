@@ -24,7 +24,7 @@ namespace FarmSimulator.Editor
                 {
                     if (marker != null)
                     {
-                        Object.DestroyImmediate(marker);
+                        Object.DestroyImmediate(marker.gameObject);
                     }
                 }
             }
