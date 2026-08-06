@@ -12,21 +12,34 @@ namespace FarmSimulator.Presentation.Buildings
         [SerializeField] private Vector2Int gridSize = Vector2Int.one;
         [SerializeField] private Vector2Int anchorCell;
         [SerializeField] private Vector2Int[] occupiedOffsets = { Vector2Int.zero };
+        [SerializeField] private Transform footprintAnchor;
 
         public string BuildingId => buildingId;
         public Vector2Int GridSize => gridSize;
         public Vector2Int AnchorCell => anchorCell;
         public IReadOnlyList<Vector2Int> OccupiedOffsets => occupiedOffsets;
+        public Transform FootprintAnchor => footprintAnchor;
+        public Vector3 AnchorWorldPosition =>
+            footprintAnchor == null ? transform.position : footprintAnchor.position;
 
         public void Configure(string id, Vector2Int size)
         {
-            Configure(id, size, CreateRectangleOffsets(size));
+            Configure(id, size, CreateRectangleOffsets(size), null);
         }
 
         public void Configure(
             string id,
             Vector2Int size,
             IEnumerable<Vector2Int> offsets)
+        {
+            Configure(id, size, offsets, null);
+        }
+
+        public void Configure(
+            string id,
+            Vector2Int size,
+            IEnumerable<Vector2Int> offsets,
+            Transform anchor)
         {
             if (string.IsNullOrWhiteSpace(id))
             {
@@ -40,6 +53,7 @@ namespace FarmSimulator.Presentation.Buildings
             {
                 occupiedOffsets = new[] { Vector2Int.zero };
             }
+            footprintAnchor = anchor;
         }
 
         public void SetAnchorCell(Vector2Int cell)
@@ -71,12 +85,11 @@ namespace FarmSimulator.Presentation.Buildings
         {
             size = new Vector2Int(Mathf.Max(1, size.x), Mathf.Max(1, size.y));
             int startX = -((size.x - 1) / 2);
-            int startY = 0;
             for (int y = 0; y < size.y; y++)
             {
                 for (int x = 0; x < size.x; x++)
                 {
-                    yield return new Vector2Int(startX + x, startY + y);
+                    yield return new Vector2Int(startX + x, y);
                 }
             }
         }
@@ -84,12 +97,11 @@ namespace FarmSimulator.Presentation.Buildings
         private static IEnumerable<Vector2Int> NormalizeOffsets(
             IEnumerable<Vector2Int> offsets)
         {
-            if (offsets == null)
-            {
-                yield break;
-            }
-
-            foreach (Vector2Int offset in offsets.Distinct().OrderBy(value => value.y).ThenBy(value => value.x))
+            if (offsets == null) yield break;
+            foreach (Vector2Int offset in offsets
+                         .Distinct()
+                         .OrderBy(value => value.y)
+                         .ThenBy(value => value.x))
             {
                 yield return offset;
             }
