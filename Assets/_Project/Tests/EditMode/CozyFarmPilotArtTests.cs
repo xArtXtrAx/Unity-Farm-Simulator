@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using FarmSimulator.Editor;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -18,7 +19,7 @@ namespace FarmSimulator.Tests.EditMode
                 { SourceRoot + "seeds.png", new Vector2Int(112, 96) },
                 { SourceRoot + "tools.png", new Vector2Int(592, 64) },
                 { SourceRoot + "crops.png", new Vector2Int(96, 592) },
-                { SourceRoot + "tiles.png", new Vector2Int(864, 800) }
+                { SourceRoot + "tiles.png", new Vector2Int(864, 800) },
             };
 
         [Test]
@@ -42,6 +43,8 @@ namespace FarmSimulator.Tests.EditMode
         [Test]
         public void AllPilotSheetsUsePixelArtImportSettings()
         {
+            CozyFarmHouseArtPipeline.EnsureAssets();
+
             foreach (string path in SourceDimensions.Keys)
             {
                 TextureImporter importer =
@@ -95,7 +98,7 @@ namespace FarmSimulator.Tests.EditMode
                 {
                     "cozy_turnip",
                     "cozy_carrot",
-                    "cozy_cabbage"
+                    "cozy_cabbage",
                 });
 
             AssertSpriteSet(
@@ -104,7 +107,7 @@ namespace FarmSimulator.Tests.EditMode
                 {
                     "cozy_turnip_seeds",
                     "cozy_carrot_seeds",
-                    "cozy_cabbage_seeds"
+                    "cozy_cabbage_seeds",
                 });
         }
 
@@ -123,17 +126,58 @@ namespace FarmSimulator.Tests.EditMode
         }
 
         [Test]
-        public void TileSheetExposesOnlyTheFourPilotTerrainTiles()
+        public void TileSheetExposesApprovedTerrainAndCabinMappings()
         {
-            AssertSpriteSet(
-                SourceRoot + "tiles.png",
-                new[]
-                {
-                    "cozy_grass",
-                    "cozy_dirt",
-                    "cozy_water",
-                    "cozy_tilled_soil"
-                });
+            CozyFarmHouseArtPipeline.EnsureAssets();
+
+            TextureImporter importer =
+                AssetImporter.GetAtPath(
+                    CozyFarmHouseArtPipeline.TileSheetAssetPath)
+                    as TextureImporter;
+            Sprite[] sprites =
+                AssetDatabase.LoadAllAssetRepresentationsAtPath(
+                        CozyFarmHouseArtPipeline.TileSheetAssetPath)
+                    .OfType<Sprite>()
+                    .ToArray();
+            IReadOnlyDictionary<string, Rect> expected =
+                CozyFarmHouseArtPipeline.CuratedSpriteRects;
+
+            Assert.That(importer, Is.Not.Null);
+            Assert.That(
+                importer.userData,
+                Is.EqualTo(CozyFarmHouseArtPipeline.ImportSignature));
+            Assert.That(
+                importer.spriteImportMode,
+                Is.EqualTo(SpriteImportMode.Multiple));
+            Assert.That(sprites, Has.Length.EqualTo(expected.Count));
+            CollectionAssert.AreEquivalent(
+                expected.Keys,
+                sprites.Select(sprite => sprite.name).ToArray());
+
+            foreach (Sprite sprite in sprites)
+            {
+                Rect expectedRect = expected[sprite.name];
+                Assert.That(
+                    sprite.rect.x,
+                    Is.EqualTo(expectedRect.x).Within(0.001f),
+                    sprite.name);
+                Assert.That(
+                    sprite.rect.y,
+                    Is.EqualTo(expectedRect.y).Within(0.001f),
+                    sprite.name);
+                Assert.That(
+                    sprite.rect.width,
+                    Is.EqualTo(expectedRect.width).Within(0.001f),
+                    sprite.name);
+                Assert.That(
+                    sprite.rect.height,
+                    Is.EqualTo(expectedRect.height).Within(0.001f),
+                    sprite.name);
+                Assert.That(
+                    sprite.pixelsPerUnit,
+                    Is.EqualTo(16f).Within(0.001f),
+                    sprite.name);
+            }
         }
 
         private static void AssertSpriteSet(

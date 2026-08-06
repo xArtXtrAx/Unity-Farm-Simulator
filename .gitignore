@@ -62,4 +62,12 @@ crashlytics-build.properties
 /Assets/_Project/Scenes/CozyFarmShowcase.unity
 /Assets/_Project/Scenes/CozyFarmShowcase.unity.meta
 
+# Licensed Cozy Farm and Cozy Interior full packs.
+# Imported locally through Unity Editor tools and not redistributed.
+/Assets/_Project/Art/ThirdParty/CozyFarm/Full/
+/Assets/_Project/Art/ThirdParty/CozyFarm/Full.meta
+/Assets/_Project/Art/ThirdParty/CozyInterior/Full/
+/Assets/_Project/Art/ThirdParty/CozyInterior/Full.meta
+/LocalAssets/
+
 # Do not ignore other Unity .meta files: they preserve asset references.
