@@ -24,6 +24,40 @@ Registro histórico de errores detectados, investigados y corregidos durante el 
 
 ## Bugs activos
 
+## BUG-0011 — Regresión de compilación por uso de LINQ en `FarmPlotBehaviour`
+
+- **Estado:** CORREGIDO
+- **Severidad:** S0 — Bloqueante
+- **Detectado:** 2026-08-06
+- **Sistema:** agricultura runtime / validación de sprites
+- **Rama afectada:** `agent/cozy-art-pipeline`
+- **Corrección funcional:** `02d1d696137a2692983e02d342ded5a7f41020df`
+- **Reportado por:** Arturo
+
+### Comportamiento observado
+
+Unity detenía la compilación con:
+
+```text
+CS1061: 'Sprite[]' does not contain a definition for 'Any'
+```
+
+El error aparecía en `FarmPlotBehaviour.ValidateStages()` después de migrar los cultivos desde Tilemap a entidades visuales con `SpriteRenderer`.
+
+### Causa raíz
+
+La validación utilizaba `copy.Any(sprite => sprite == null)` sin importar `System.Linq`. El código dependía implícitamente de LINQ dentro de un ensamblado que no tenía esa extensión disponible.
+
+### Solución aplicada
+
+Se reemplazó `Any()` por un ciclo explícito que recorre el arreglo y lanza la misma excepción cuando encuentra una etapa nula. La solución elimina la dependencia de LINQ y evita asignaciones innecesarias.
+
+### Validación pendiente
+
+Confirmar que Unity compila sin errores y ejecutar las suites completas EditMode y PlayMode. El bug pasará a **VERIFICADO** después de esa validación local.
+
+---
+
 ## BUG-0010 — Los cultivos no conservan transparencia ni una base visual común
 
 - **Estado:** CORREGIDO
@@ -45,15 +79,11 @@ Los tiles usaban directamente los recortes de `crops.png`. Algunas regiones cons
 
 ### Solución aplicada
 
-- El catálogo genera 18 PNG derivados en `Assets/_Project/Tiles/Generated/Crops`.
-- El color de la esquina inferior izquierda se utiliza como máscara cromática cuando es opaco.
-- Los PNG derivados se importan como Sprite Single, 16 PPU, Point, sin mipmaps, sin compresión y con transparencia.
-- Todos usan pivote inferior centrado `(0.5, 0.0)`.
-- Los `Tile` agrícolas referencian estos sprites generados, no los recortes opacos originales.
+La solución final abandona los cultivos como tiles pintables. El catálogo genera 18 sprites transparentes para runtime y cada parcela los representa mediante `Crop Entity Visual`, un `SpriteRenderer` controlado por `FarmPlotBehaviour`. El cultivo ya no puede sustituir el suelo porque no ocupa una celda del Tilemap.
 
 ### Validación pendiente
 
-Regenerar el catálogo, comprobar visualmente semillas y etapas sobre tierra arada y ejecutar EditMode/PlayMode completos.
+Arar, sembrar, dormir y cosechar en Play Mode; confirmar que el suelo permanece visible y que las etapas cambian sobre la parcela sin cuadros opacos.
 
 ---
 
@@ -78,22 +108,24 @@ La escena y el Tile Manager utilizaban un único Tilemap `Farming`. Unity permit
 
 ### Solución aplicada
 
-La jerarquía de autoría pasa a ser:
+La solución final separa responsabilidades:
 
 ```text
 Farm Authoring Grid
 ├── Ground
 ├── Paths
 ├── Soil
-├── Crops
 └── Decoration
+
+Farm Plot Field
+└── Crop Entity Visual (SpriteRenderer)
 ```
 
-`Soil` y `Crops` tienen órdenes de render independientes; `Crops` se dibuja sobre `Soil`. El Tile Manager expone botones y paletas separadas para ambas capas.
+El suelo permanece en Tilemap y los cultivos son entidades runtime. Ya no existe una paleta ni un Tilemap `Crops`.
 
 ### Validación pendiente
 
-Pintar tierra y cultivo en la misma coordenada, guardar, reabrir la escena y confirmar que ambos persisten.
+Comprobar el ciclo agrícola completo y verificar que sembrar nunca modifica el Tilemap de suelo.
 
 ---
 
@@ -220,6 +252,8 @@ Se separaron el suelo lógico 2D y su representación visual.
 
 ### 2026-08-06
 
+- Se registró `BUG-0011` por la regresión de compilación en `FarmPlotBehaviour` y quedó corregido pendiente de validación local.
+- Se documentó la decisión de representar cultivos como entidades runtime con `SpriteRenderer` y reservar Tilemaps para el mundo.
 - Se verificaron `BUG-0007` y `BUG-0008`.
 - Se registraron `BUG-0009` y `BUG-0010` como corregidos pendientes de validación local.
 - Se separaron las capas agrícolas y se añadió generación de sprites transparentes.
