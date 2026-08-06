@@ -10,20 +10,17 @@ namespace FarmSimulator.Presentation.Farming
         [SerializeField] private Tilemap ground;
         [SerializeField] private Tilemap paths;
         [SerializeField] private Tilemap soil;
-        [SerializeField] private Tilemap crops;
         [SerializeField] private Tilemap decoration;
 
         public Tilemap Ground => ground;
         public Tilemap Paths => paths;
         public Tilemap Soil => soil;
-        public Tilemap Crops => crops;
         public Tilemap Decoration => decoration;
 
         public void Configure(
             Tilemap groundLayer,
             Tilemap pathLayer,
             Tilemap soilLayer,
-            Tilemap cropLayer,
             Tilemap decorationLayer)
         {
             ground = groundLayer ??
@@ -32,8 +29,6 @@ namespace FarmSimulator.Presentation.Farming
                 throw new ArgumentNullException(nameof(pathLayer));
             soil = soilLayer ??
                 throw new ArgumentNullException(nameof(soilLayer));
-            crops = cropLayer ??
-                throw new ArgumentNullException(nameof(cropLayer));
             decoration = decorationLayer ??
                 throw new ArgumentNullException(nameof(decorationLayer));
         }
