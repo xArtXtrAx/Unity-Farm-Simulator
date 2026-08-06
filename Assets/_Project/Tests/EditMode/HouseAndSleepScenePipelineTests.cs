@@ -151,9 +151,6 @@ namespace FarmSimulator.Tests.EditMode
                     CozyFarmBuildingCatalog.DefaultHouseId);
             }
 
-            // Scene generation owns the functional baseline and intentionally
-            // rebuilds the legacy placeholder. Apply the selected catalog style
-            // before validating the authored exterior composition.
             CozyFarmHouseExteriorUpgrader.ApplyVariant(selectedVariant.Id);
 
             Scene farm =
@@ -168,10 +165,9 @@ namespace FarmSimulator.Tests.EditMode
                     new[]
                     {
                         selectedVariant.Id,
-                        "cozy_flower_crates",
+                        "cozy_crates_dark",
                         "cozy_bridge_wood",
                         "cozy_tree_spring",
-                        "cozy_bench_light",
                         "cozy_lamp_green",
                     },
                     farmSprites);
