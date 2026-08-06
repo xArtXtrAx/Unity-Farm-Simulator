@@ -9,6 +9,7 @@ namespace FarmSimulator.Editor
     {
         private CozyBuildingDefinition definition;
         private Vector2Int size = new Vector2Int(4, 3);
+        private Vector2 anchorOffset;
         private HashSet<Vector2Int> occupied = new HashSet<Vector2Int>();
 
         [MenuItem("Tools/Farm Simulator/Farm Development Kit/Footprint Editor")]
@@ -21,7 +22,7 @@ namespace FarmSimulator.Editor
         {
             var window = GetWindow<CozyBuildingFootprintWindow>();
             window.titleContent = new GUIContent("Footprint Editor");
-            window.minSize = new Vector2(420f, 360f);
+            window.minSize = new Vector2(520f, 500f);
             window.SetDefinition(selected);
             window.Show();
         }
@@ -38,10 +39,10 @@ namespace FarmSimulator.Editor
         private void OnGUI()
         {
             EditorGUILayout.LabelField(
-                "Farm Development Kit — Footprint Editor",
+                "Farm Development Kit — Building Authoring",
                 EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "Paint the logical ground cells occupied by the building. The anchor cell is marked A and should normally coincide with the doorway/base of the building. Visual roof overhangs do not need occupied cells.",
+                "The Footprint Anchor is the single origin used by the prefab, Scene preview, snapping and collision checks. Place it at the doorway/base, then paint only the ground cells that the building truly occupies.",
                 MessageType.Info);
 
             CozyBuildingDefinition next = (CozyBuildingDefinition)EditorGUILayout.ObjectField(
@@ -49,10 +50,7 @@ namespace FarmSimulator.Editor
                 definition,
                 typeof(CozyBuildingDefinition),
                 false);
-            if (next != definition)
-            {
-                SetDefinition(next);
-            }
+            if (next != definition) SetDefinition(next);
 
             if (definition == null)
             {
@@ -60,6 +58,25 @@ namespace FarmSimulator.Editor
                     "Select a CozyBuildingDefinition asset from the Building Browser.",
                     MessageType.Warning);
                 return;
+            }
+
+            DrawSpritePreview();
+
+            anchorOffset = EditorGUILayout.Vector2Field(
+                new GUIContent(
+                    "Footprint Anchor",
+                    "Local position of the grid origin relative to the prefab root."),
+                anchorOffset);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("Use portal/door position"))
+                {
+                    anchorOffset = definition.PortalOffset;
+                }
+                if (GUILayout.Button("Reset anchor to root"))
+                {
+                    anchorOffset = Vector2.zero;
+                }
             }
 
             Vector2Int nextSize = EditorGUILayout.Vector2IntField("Canvas size", size);
@@ -98,32 +115,63 @@ namespace FarmSimulator.Editor
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                if (GUILayout.Button("Save footprint", GUILayout.Height(30f)))
+                if (GUILayout.Button("Save authoring", GUILayout.Height(30f))) Save();
+                if (GUILayout.Button("Save + regenerate prefab", GUILayout.Height(30f)))
                 {
                     Save();
-                }
-                using (new EditorGUI.DisabledScope(definition.GeneratedPrefab == null))
-                {
-                    if (GUILayout.Button("Save + regenerate prefab", GUILayout.Height(30f)))
-                    {
-                        Save();
-                        CozyFarmBuildingPrefabGenerator.Generate(definition);
-                    }
+                    CozyFarmBuildingPrefabGenerator.Generate(definition);
                 }
             }
 
             EditorGUILayout.LabelField(
-                $"Occupied cells: {occupied.Count} · Anchor: (0, 0)",
+                $"Occupied cells: {occupied.Count} · Logical anchor cell: (0, 0) · Local anchor: {anchorOffset}",
+                EditorStyles.miniLabel);
+        }
+
+        private void DrawSpritePreview()
+        {
+            Rect rect = GUILayoutUtility.GetRect(200f, 180f, GUILayout.ExpandWidth(true));
+            EditorGUI.DrawRect(rect, new Color(0.12f, 0.12f, 0.12f, 1f));
+            if (definition.GeneratedSprite == null)
+            {
+                GUI.Label(rect, "Generate the building sprite to preview it.", EditorStyles.centeredGreyMiniLabel);
+                return;
+            }
+
+            Texture texture = definition.GeneratedSprite.texture;
+            Rect source = definition.GeneratedSprite.textureRect;
+            Rect uv = new Rect(
+                source.x / texture.width,
+                source.y / texture.height,
+                source.width / texture.width,
+                source.height / texture.height);
+            float aspect = source.width / source.height;
+            Rect imageRect = rect;
+            if (rect.width / rect.height > aspect)
+            {
+                imageRect.width = rect.height * aspect;
+                imageRect.x += (rect.width - imageRect.width) * 0.5f;
+            }
+            else
+            {
+                imageRect.height = rect.width / aspect;
+                imageRect.y += (rect.height - imageRect.height) * 0.5f;
+            }
+            GUI.DrawTextureWithTexCoords(imageRect, texture, uv, true);
+            EditorGUI.DrawRect(
+                new Rect(rect.center.x - 1f, rect.yMax - 18f, 2f, 18f),
+                Color.cyan);
+            GUI.Label(
+                new Rect(rect.center.x + 4f, rect.yMax - 20f, 130f, 18f),
+                "Footprint anchor",
                 EditorStyles.miniLabel);
         }
 
         private void DrawGrid()
         {
-            float cellSize = Mathf.Clamp((position.width - 60f) / size.x, 28f, 56f);
+            float cellSize = Mathf.Clamp((position.width - 80f) / size.x, 28f, 54f);
             int minX = -((size.x - 1) / 2);
-            int maxY = size.y - 1;
-
-            for (int y = maxY; y >= 0; y--)
+            for (int y = size.y - 1; y >= 0; y--)
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
@@ -154,8 +202,9 @@ namespace FarmSimulator.Editor
         private void Save()
         {
             occupied.Add(Vector2Int.zero);
-            Undo.RecordObject(definition, "Edit building footprint");
+            Undo.RecordObject(definition, "Edit building authoring");
             definition.SetFootprint(size, occupied);
+            definition.SetFootprintAnchor(anchorOffset);
             EditorUtility.SetDirty(definition);
             AssetDatabase.SaveAssets();
         }
@@ -175,6 +224,7 @@ namespace FarmSimulator.Editor
             }
 
             size = definition.GridSize;
+            anchorOffset = definition.FootprintAnchorOffset;
             occupied = new HashSet<Vector2Int>(definition.FootprintOffsets);
             occupied.Add(Vector2Int.zero);
         }
