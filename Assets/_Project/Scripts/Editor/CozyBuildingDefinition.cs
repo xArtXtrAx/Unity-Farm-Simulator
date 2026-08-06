@@ -22,6 +22,9 @@ namespace FarmSimulator.Editor
         menuName = "Farm Simulator/Cozy Building Definition")]
     public sealed class CozyBuildingDefinition : ScriptableObject
     {
+        public static readonly Vector2 DefaultHouseFootprintAnchor =
+            new Vector2(0f, 0.5f);
+
         [SerializeField] private string id;
         [SerializeField] private string displayName;
         [SerializeField] private CozyBuildingCategory category;
@@ -89,12 +92,14 @@ namespace FarmSimulator.Editor
 
             bool legacyPortalAnchor =
                 (footprintAnchorOffset - house.PortalOffset).sqrMagnitude < 0.0001f;
-            if (!footprintAnchorAuthored || legacyPortalAnchor)
+            bool legacyCentreAnchor = footprintAnchorOffset.sqrMagnitude < 0.0001f;
+            if (!footprintAnchorAuthored || legacyPortalAnchor || legacyCentreAnchor)
             {
-                // Generated sprites use a bottom-centre pivot, so the prefab root is the
-                // stable ground/base origin. Portal offsets are interaction points and
-                // must not be reused as occupancy origins.
-                footprintAnchorOffset = Vector2.zero;
+                // Grid offsets identify cell centres. Moving the footprint origin half
+                // a cell upward makes the lower edge of row zero coincide exactly with
+                // the sprite's bottom-centre visual base. The next cell below remains
+                // free for paths, steps and other entrance decoration.
+                footprintAnchorOffset = DefaultHouseFootprintAnchor;
                 footprintAnchorAuthored = false;
             }
 
@@ -120,14 +125,19 @@ namespace FarmSimulator.Editor
 
         public void SetFootprintAnchor(Vector2 localOffset)
         {
-            footprintAnchorOffset = localOffset;
+            footprintAnchorOffset =
+                category == CozyBuildingCategory.House && localOffset.sqrMagnitude < 0.0001f
+                    ? DefaultHouseFootprintAnchor
+                    : localOffset;
             footprintAnchorAuthored = true;
         }
 
         public void ResetFootprintToCategoryDefault()
         {
             footprintAnchorAuthored = false;
-            footprintAnchorOffset = Vector2.zero;
+            footprintAnchorOffset = category == CozyBuildingCategory.House
+                ? DefaultHouseFootprintAnchor
+                : Vector2.zero;
             if (category == CozyBuildingCategory.House)
             {
                 SetFootprintInternal(
