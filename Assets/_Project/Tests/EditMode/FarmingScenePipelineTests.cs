@@ -55,8 +55,14 @@ namespace FarmSimulator.Tests.EditMode
                     Is.True,
                     "Each crop must be a plot-owned SpriteRenderer entity.");
                 Assert.That(
-                    plots.All(plot => !plot.SoilRenderer.enabled),
-                    Is.True);
+                    plots.All(plot => plot.SoilRenderer.enabled),
+                    Is.True,
+                    "Untilled plots should expose a subtle visible guide.");
+                Assert.That(
+                    plots.All(plot => plot.SoilRenderer.color.a > 0f &&
+                                      plot.SoilRenderer.color.a < 1f),
+                    Is.True,
+                    "Untilled guides should be translucent rather than worked soil.");
 
                 FarmTilemapLayers layers = scene.GetRootGameObjects()
                     .SelectMany(root => root.GetComponentsInChildren<FarmTilemapLayers>(true))
