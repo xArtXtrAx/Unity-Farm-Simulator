@@ -155,3 +155,26 @@ Commits publicados:
 - `255c64b56574e9d05b005b7f162269665e19369f` — limpieza de un archivo placeholder accidental.
 
 Estado: **IMPLEMENTADO, pendiente de compilación y validación en Unity**. No se marca ningún bug como `VERIFICADO` hasta recibir confirmación de compilación, seguimiento correcto, límites de cámara y pruebas.
+
+## Incremento — autoría editable del collider de edificios
+
+Rama activa: `dev/seasonal-tile-browser`.
+
+El `Footprint Editor` ahora permite autorizar también el `BoxCollider2D` físico de cada edificio:
+
+- edición numérica de centro y tamaño en el espacio normalizado del prefab;
+- `(0, 0)` corresponde a la base visual inferior central del sprite;
+- controles de desplazamiento fino para mover el collider;
+- controles para ampliar o reducir ancho y alto;
+- alineación rápida del borde inferior con la base visual;
+- previsualización naranja inmediata con marca del centro;
+- restauración explícita al collider predeterminado del catálogo;
+- persistencia de colliders personalizados al reconstruir definiciones;
+- `Save + regenerate prefab` aplica la geometría al `BoxCollider2D` reutilizable.
+
+Commits publicados:
+
+- `19bb965b15541819062340eb5a93e8f3e0427b72` — persistencia de collider personalizado y valores predeterminados del catálogo;
+- `8d33e728bd8e12f89c0fb03413b3effcf3c90cb7` — controles de autoría y preview del collider en `Footprint Editor`.
+
+Estado: **IMPLEMENTADO, pendiente de compilación y validación visual/física en Unity**. No se marca como verificado hasta confirmar que el prefab regenerado bloquea correctamente paredes, respeta la puerta y que EditMode continúa pasando.
