@@ -20,15 +20,15 @@ Documento maestro de continuidad. Debe permitir reanudar el proyecto sin depende
 - **Control prioritario:** DualSense, además de teclado y mouse
 - **Ruta local habitual:** `D:\Git\Unity-Farm-Simulator`
 - **Rama estable:** `main`
-- **Head integrado más reciente:** `794aab44916f974bc885aec0a203823041c72f8f`
-- **Integración más reciente:** PR #15 — `Consolidate seasonal tiles, scene sizing and collider authoring`
+- **Head integrado más reciente:** `6b38b2b9c71d5c1ac5d7db12ff4caf82811d449d`
+- **Integración más reciente:** PR #16 — `Synchronize project continuity documentation`
 - **Rama activa:** `dev/farm-scene-authoring`
-- **Base de la rama activa:** `main` después del merge del PR #15
+- **Base histórica de la rama activa:** `main` después del merge del PR #15
 - **Proyecto fuente de reglas:** `xArtXtrAx/farming-game-A`
 - **Commit fuente congelado:** `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
 - **Identidad Unity:** `jarturoga` / `Unity Farm Simulator` / `com.jarturoga.unityfarmsimulator`
 
-`CONTINUIDAD_GPT.md` continúa desactualizado y todavía describe el cierre de la hotbar como estado presente. Hasta corregirlo, esta bitácora y el estado real de GitHub tienen prioridad operativa para los incrementos posteriores al PR #8.
+`CONTINUIDAD_GPT.md` quedó sincronizado con el estado posterior al PR #15 mediante el PR #16. Desde ese merge vuelve a ser el punto de entrada operativo válido leído desde `main`, mientras esta bitácora conserva el detalle transaccional.
 
 ---
 
@@ -399,7 +399,30 @@ No afirmar que todos los cambios del PR #15 están verificados hasta cerrar esas
 
 ---
 
-## 10. Bugs y documentación relacionada
+## 10. Sincronización documental — PR #16
+
+PR:
+
+```text
+#16 — Synchronize project continuity documentation
+```
+
+Merge commit:
+
+```text
+6b38b2b9c71d5c1ac5d7db12ff4caf82811d449d
+```
+
+Resultado:
+
+- `CONTINUIDAD_GPT.md` en `main` refleja el estado posterior al PR #15;
+- `BITÁCORA_GPT.MD` conserva el estado maestro y los pendientes reales;
+- se eliminó la instrucción operativa de tratar el punto de entrada como obsoleto;
+- no hubo cambios de código, escenas, assets ni configuración de Unity.
+
+---
+
+## 11. Bugs y documentación relacionada
 
 `BUGS.MD` contiene actualmente:
 
@@ -410,14 +433,13 @@ Los problemas recientes que deben quedar reflejados o conciliados en el reporte 
 
 - reset automático heredado capaz de sobrescribir `Farm`;
 - límites físicos que no acompañaban el tamaño autorizado;
-- tinte rosa de Tile Palette en Play;
-- documentación maestra desactualizada después del PR #15.
+- tinte rosa de Tile Palette en Play.
 
 La integración del PR #15 no actualizó completamente `BUGS.MD` ni `BUGS_TILE_PIPELINE_2026-08-06.md`. Esto sigue siendo deuda documental y no debe ocultarse.
 
 ---
 
-## 11. Rama activa actual
+## 12. Rama activa actual
 
 Después del merge del PR #15 se creó:
 
@@ -425,7 +447,7 @@ Después del merge del PR #15 se creó:
 dev/farm-scene-authoring
 ```
 
-Esta rama parte del `main` integrado en `794aab44916f974bc885aec0a203823041c72f8f`.
+Esta rama fue creada desde el `main` integrado en `794aab44916f974bc885aec0a203823041c72f8f` y se mantiene como rama activa para el siguiente incremento.
 
 Propósito general:
 
@@ -434,11 +456,9 @@ Propósito general:
 - conservar las escenas existentes y aplicar cambios específicos con Undo;
 - registrar cada incremento en esta bitácora antes de considerarlo cerrado.
 
-La actualización presente de `BITÁCORA_GPT.MD` es el primer commit documental de esta rama.
-
 ---
 
-## 12. Estado comprobado, pendiente y siguiente paso exacto
+## 13. Estado comprobado, pendiente y siguiente paso exacto
 
 ### Comprobado
 
@@ -448,7 +468,8 @@ La actualización presente de `BITÁCORA_GPT.MD` es el primer commit documental 
 - Footprint Editor permite modificar visualmente centro y tamaño del collider.
 - El reset antiguo dejó de ejecutarse automáticamente.
 - El PR #15 está fusionado en `main`.
-- La nueva rama `dev/farm-scene-authoring` existe desde el estado integrado.
+- `CONTINUIDAD_GPT.md` y esta bitácora quedaron sincronizados mediante el PR #16.
+- La rama `dev/farm-scene-authoring` permanece como rama de trabajo.
 
 ### Pendiente
 
@@ -458,12 +479,11 @@ La actualización presente de `BITÁCORA_GPT.MD` es el primer commit documental 
 - Confirmar que `Rebuild definitions` conserva el collider autorizado.
 - Confirmar que `Reset collider to catalog default` restaura correctamente el valor original.
 - Conciliar `BUGS.MD` y `BUGS_TILE_PIPELINE_2026-08-06.md` con los incidentes recientes.
-- Actualizar `CONTINUIDAD_GPT.md` cuando se realice el siguiente cierre de integración.
 
 ### Siguiente paso exacto
 
 1. Permanecer en `dev/farm-scene-authoring`.
-2. Hacer Pull de la actualización documental.
+2. Sincronizar la rama local con el `main` posterior al PR #16 antes de implementar.
 3. Abrir Unity y confirmar compilación sin errores.
 4. Ejecutar EditMode completo y registrar el conteo real.
 5. Ejecutar PlayMode completo y registrar el conteo real.
@@ -475,6 +495,6 @@ La actualización presente de `BITÁCORA_GPT.MD` es el primer commit documental 
 
 ---
 
-## 13. Prompt vigente para un chat nuevo
+## 14. Prompt vigente para un chat nuevo
 
-> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`, pero considera que está desactualizado después del PR #8. Después lee `BITÁCORA_GPT.MD` desde `dev/farm-scene-authoring`, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, `BITÁCORA_TILE_PIPELINE_2026-08-06.md` y los commits recientes. El PR #15 fue fusionado en `main` mediante `794aab44916f974bc885aec0a203823041c72f8f`. Están integrados el selector estacional de tiles, protección de Tile Palette, Scene Size, cámara de seguimiento, límites físicos sincronizados y edición persistente del collider. Arturo validó la expansión del área jugable y el editor visual del collider. Las suites completas posteriores al PR #15 y la validación física exhaustiva del collider siguen pendientes. La rama activa es `dev/farm-scene-authoring`. No uses regeneradores antiguos para reparar escenas y no marques bugs como verificados sin confirmación local.
+> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`; está sincronizado mediante el PR #16. Después lee `BITÁCORA_GPT.MD` desde `dev/farm-scene-authoring`, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, `BITÁCORA_TILE_PIPELINE_2026-08-06.md` y los commits recientes. El PR #15 fue fusionado mediante `794aab44916f974bc885aec0a203823041c72f8f` e integra el selector estacional de tiles, protección de Tile Palette, Scene Size, cámara de seguimiento, límites físicos sincronizados y edición persistente del collider. El PR #16 sincronizó la documentación maestra mediante `6b38b2b9c71d5c1ac5d7db12ff4caf82811d449d`. Arturo validó la expansión del área jugable y el editor visual del collider. Las suites completas posteriores al PR #15 y la validación física exhaustiva del collider siguen pendientes. La rama activa es `dev/farm-scene-authoring`. No uses regeneradores antiguos para reparar escenas y no marques bugs como verificados sin confirmación local.
