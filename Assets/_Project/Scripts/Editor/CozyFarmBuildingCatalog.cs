@@ -19,10 +19,12 @@ namespace FarmSimulator.Editor
         public const string StarterHousePath =
             GeneratedRoot + "/starter-green-gable-house.png";
 
-        // Coordinates use Texture2D's bottom-left origin. This preset selects
-        // one complete green-roof cottage from the full 1503x1072 atlas.
+        // Coordinates use Texture2D's bottom-left origin. The previous preset
+        // pointed at the empty/prop strip above the green-house row. This region
+        // isolates the first complete green gable cottage in the Full-Pack atlas
+        // without including the neighbouring alternate facade or loose parts.
         public static readonly RectInt StarterHouseSource =
-            new RectInt(768, 609, 76, 73);
+            new RectInt(681, 548, 68, 86);
 
         [MenuItem("Tools/Farm Simulator/Generate Cozy Full-Pack Building Sprites")]
         public static void GenerateFromMenu()
