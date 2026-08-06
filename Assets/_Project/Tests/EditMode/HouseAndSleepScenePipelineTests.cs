@@ -223,7 +223,7 @@ namespace FarmSimulator.Tests.EditMode
             foreach (SpriteRenderer renderer in
                      ComponentsInScene<SpriteRenderer>(scene))
             {
-                if (renderer.gameObject.name == "Entrance Grounding Shadow")
+                if (UsesIntentionalTint(renderer))
                 {
                     continue;
                 }
@@ -233,6 +233,13 @@ namespace FarmSimulator.Tests.EditMode
                     Is.EqualTo(Color.white),
                     renderer.gameObject.name);
             }
+        }
+
+        private static bool UsesIntentionalTint(SpriteRenderer renderer)
+        {
+            string objectName = renderer.gameObject.name;
+            return objectName == "Entrance Grounding Shadow" ||
+                   objectName == "Soil Visual";
         }
 
         private static string[] SpriteNames(Scene scene)
