@@ -8,17 +8,21 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Tilemaps;
 
 namespace FarmSimulator.Editor
 {
     [InitializeOnLoad]
     public static class FarmSceneFarmingUpgrader
     {
-        public const string UpgradeRootName = "Farming Core Loop v1";
+        public const string UpgradeRootName = "Farming Core Loop v2";
         public const string FieldRootName = "Farm Plot Field";
+        public const string GridRootName = "Farm Authoring Grid";
         public const int Columns = 3;
         public const int Rows = 3;
 
+        private const string LegacyUpgradeRootName =
+            "Farming Core Loop v1";
         private const string TileSheetPath =
             "Assets/_Project/Art/ThirdParty/CozyFarm/" +
             "Pilot/Source/tiles.png";
@@ -86,11 +90,8 @@ namespace FarmSimulator.Editor
                     return;
                 }
 
-                if (existing != null)
-                {
-                    UnityEngine.Object.DestroyImmediate(existing.gameObject);
-                }
-
+                DestroyIfPresent(scene, UpgradeRootName);
+                DestroyIfPresent(scene, LegacyUpgradeRootName);
                 BuildField(scene, sprites);
 
                 if (!EditorSceneManager.SaveScene(
@@ -121,7 +122,8 @@ namespace FarmSimulator.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log(
-                "Applied Farming Core Loop v1: 3x3 persistent plot field.");
+                "Applied Farming Core Loop v2: layered Tilemap ground, " +
+                "normalized crops and a 3x3 persistent plot field.");
         }
 
         private static void BuildField(
@@ -135,40 +137,44 @@ namespace FarmSimulator.Editor
                     "Farm scene is missing 'Farm World'.");
             }
 
+            // Replace the generated SpriteRenderer patches with real
+            // Tilemaps that can be painted through Unity's Tile Palette.
+            DestroyIfPresent(scene, "Farm Grass");
+            DestroyIfPresent(scene, "House Path");
+
             var upgradeRoot = new GameObject(UpgradeRootName);
             upgradeRoot.transform.SetParent(parent.transform, false);
 
+            FarmTilemapLayers layers = CreateTilemapLayers(
+                upgradeRoot.transform,
+                sprites);
+
             var fieldRoot = new GameObject(FieldRootName);
             fieldRoot.transform.SetParent(upgradeRoot.transform, false);
-            fieldRoot.transform.localPosition =
-                new Vector3(-3.1f, -1.15f, 0f);
 
-            const float spacing = 0.82f;
-            float startX = -(Columns - 1) * spacing * 0.5f;
-            float startY = -(Rows - 1) * spacing * 0.5f;
-
+            Vector3Int firstCell = new Vector3Int(-5, -2, 0);
             for (int row = 0; row < Rows; row++)
             {
                 for (int column = 0; column < Columns; column++)
                 {
+                    Vector3Int cell = firstCell +
+                        new Vector3Int(column, row, 0);
                     string plotId = $"farm-plot-{column}-{row}";
                     var plot =
                         new GameObject($"Plot {column + 1}-{row + 1}");
                     plot.transform.SetParent(fieldRoot.transform, false);
-                    plot.transform.localPosition =
-                        new Vector3(
-                            startX + column * spacing,
-                            startY + row * spacing,
-                            0f);
+                    plot.transform.position =
+                        layers.Ground.GetCellCenterWorld(cell);
 
                     SpriteRenderer soil = CreateRenderer(
                         "Soil",
                         plot.transform,
-                        sprites.Grass,
+                        sprites.TilledSoil,
                         TopDownSortingLayers.Ground,
                         -72);
                     soil.transform.localScale =
-                        new Vector3(0.78f, 0.78f, 1f);
+                        new Vector3(0.9f, 0.9f, 1f);
+                    soil.enabled = false;
 
                     SpriteRenderer crop = CreateRenderer(
                         "Crop",
@@ -177,9 +183,11 @@ namespace FarmSimulator.Editor
                         TopDownSortingLayers.World,
                         18);
                     crop.transform.localPosition =
-                        new Vector3(0f, -0.18f, 0f);
-                    crop.transform.localScale =
-                        new Vector3(1.35f, 1.35f, 1f);
+                        new Vector3(
+                            0f,
+                            FarmPlotBehaviour.CropBaseline,
+                            0f);
+                    crop.transform.localScale = Vector3.one;
                     crop.enabled = false;
 
                     FarmPlotBehaviour behaviour =
@@ -199,11 +207,97 @@ namespace FarmSimulator.Editor
             MoveIfPresent(
                 scene,
                 "Garden Lamp",
-                new Vector3(-5.1f, -0.5f, 0f));
+                new Vector3(-5.8f, -0.5f, 0f));
             MoveIfPresent(
                 scene,
                 "Rock Border",
-                new Vector3(-5.2f, -2.75f, 0f));
+                new Vector3(-5.2f, -3.35f, 0f));
+        }
+
+        private static FarmTilemapLayers CreateTilemapLayers(
+            Transform parent,
+            SpriteLibrary sprites)
+        {
+            var gridObject = new GameObject(
+                GridRootName,
+                typeof(Grid),
+                typeof(FarmTilemapLayers));
+            gridObject.transform.SetParent(parent, false);
+
+            Grid grid = gridObject.GetComponent<Grid>();
+            grid.cellLayout = GridLayout.CellLayout.Rectangle;
+            grid.cellSize = Vector3.one;
+            grid.cellGap = Vector3.zero;
+
+            Tilemap ground = CreateTilemap(
+                "Ground",
+                gridObject.transform,
+                TopDownSortingLayers.Ground,
+                -110);
+            Tilemap paths = CreateTilemap(
+                "Paths",
+                gridObject.transform,
+                TopDownSortingLayers.Ground,
+                -100);
+            Tilemap farming = CreateTilemap(
+                "Farming",
+                gridObject.transform,
+                TopDownSortingLayers.Ground,
+                -80);
+            Tilemap decoration = CreateTilemap(
+                "Decoration",
+                gridObject.transform,
+                TopDownSortingLayers.World,
+                0);
+
+            for (int y = -4; y <= 4; y++)
+            {
+                for (int x = -7; x <= 7; x++)
+                {
+                    ground.SetTile(
+                        new Vector3Int(x, y, 0),
+                        sprites.GrassTile);
+                }
+            }
+
+            for (int y = -4; y <= 1; y++)
+            {
+                for (int x = -1; x <= 1; x++)
+                {
+                    paths.SetTile(
+                        new Vector3Int(x, y, 0),
+                        sprites.DirtTile);
+                }
+            }
+
+            FarmTilemapLayers registry =
+                gridObject.GetComponent<FarmTilemapLayers>();
+            registry.Configure(
+                ground,
+                paths,
+                farming,
+                decoration);
+            return registry;
+        }
+
+        private static Tilemap CreateTilemap(
+            string name,
+            Transform parent,
+            string sortingLayer,
+            int sortingOrder)
+        {
+            var go = new GameObject(
+                name,
+                typeof(Tilemap),
+                typeof(TilemapRenderer));
+            go.transform.SetParent(parent, false);
+
+            TilemapRenderer renderer =
+                go.GetComponent<TilemapRenderer>();
+            renderer.mode = TilemapRenderer.Mode.Chunk;
+            renderer.sortingLayerName = sortingLayer;
+            renderer.sortingOrder = sortingOrder;
+            return go.GetComponent<Tilemap>();
         }
 
         private static SpriteRenderer CreateRenderer(
@@ -225,6 +319,8 @@ namespace FarmSimulator.Editor
 
         private static SpriteLibrary LoadSprites()
         {
+            CozyFarmTileCatalog.EnsureAssets();
+
             Dictionary<string, Sprite> tiles =
                 LoadRepresentations(TileSheetPath);
             Dictionary<string, Sprite> crops =
@@ -235,7 +331,11 @@ namespace FarmSimulator.Editor
                 Get(tiles, "cozy_tilled_soil"),
                 Stages(crops, "cozy_turnip_stage_"),
                 Stages(crops, "cozy_carrot_stage_"),
-                Stages(crops, "cozy_cabbage_stage_"));
+                Stages(crops, "cozy_cabbage_stage_"),
+                AssetDatabase.LoadAssetAtPath<TileBase>(
+                    CozyFarmTileCatalog.GrassTilePath),
+                AssetDatabase.LoadAssetAtPath<TileBase>(
+                    CozyFarmTileCatalog.DirtTilePath));
         }
 
         private static Dictionary<string, Sprite> LoadRepresentations(
@@ -292,6 +392,17 @@ namespace FarmSimulator.Editor
             return null;
         }
 
+        private static void DestroyIfPresent(
+            Scene scene,
+            string name)
+        {
+            Transform target = Find(scene, name);
+            if (target != null)
+            {
+                UnityEngine.Object.DestroyImmediate(target.gameObject);
+            }
+        }
+
         private static void MoveIfPresent(
             Scene scene,
             string name,
@@ -311,13 +422,17 @@ namespace FarmSimulator.Editor
                 Sprite tilledSoil,
                 Sprite[] turnipStages,
                 Sprite[] carrotStages,
-                Sprite[] cabbageStages)
+                Sprite[] cabbageStages,
+                TileBase grassTile,
+                TileBase dirtTile)
             {
                 Grass = grass;
                 TilledSoil = tilledSoil;
                 TurnipStages = turnipStages;
                 CarrotStages = carrotStages;
                 CabbageStages = cabbageStages;
+                GrassTile = grassTile;
+                DirtTile = dirtTile;
             }
 
             public Sprite Grass { get; }
@@ -325,13 +440,17 @@ namespace FarmSimulator.Editor
             public Sprite[] TurnipStages { get; }
             public Sprite[] CarrotStages { get; }
             public Sprite[] CabbageStages { get; }
+            public TileBase GrassTile { get; }
+            public TileBase DirtTile { get; }
 
             public bool IsComplete =>
                 Grass != null &&
                 TilledSoil != null &&
                 Complete(TurnipStages) &&
                 Complete(CarrotStages) &&
-                Complete(CabbageStages);
+                Complete(CabbageStages) &&
+                GrassTile != null &&
+                DirtTile != null;
 
             private static bool Complete(Sprite[] sprites)
             {
