@@ -70,6 +70,10 @@ namespace FarmSimulator.Presentation.Inventory
         public static readonly Color NormalNumberColor = new Color32(216, 207, 170, 255);
         public static readonly Color SelectedNumberColor = new Color32(255, 242, 168, 255);
 
+        private const float CycleInputDebounceSeconds = 0.12f;
+        private static int lastConsumedCycleFrame = -1;
+        private static float lastConsumedCycleTime = float.NegativeInfinity;
+
         [SerializeField] private Text selectedItemText;
         [SerializeField] private InventoryHotbarSlotView[] slots;
         [SerializeField] private string[] iconItemIds;
@@ -107,7 +111,7 @@ namespace FarmSimulator.Presentation.Inventory
             }
 
             int cycle = ReadCycleInput();
-            if (cycle != 0)
+            if (cycle != 0 && TryConsumeCycleInput())
             {
                 CycleSelection(cycle);
             }
@@ -266,6 +270,21 @@ namespace FarmSimulator.Presentation.Inventory
             float scroll = mouse.scroll.ReadValue().y;
             if (scroll > 0.01f) return -1;
             return scroll < -0.01f ? 1 : 0;
+        }
+
+        private static bool TryConsumeCycleInput()
+        {
+            int frame = Time.frameCount;
+            float now = Time.unscaledTime;
+            if (lastConsumedCycleFrame == frame ||
+                now - lastConsumedCycleTime < CycleInputDebounceSeconds)
+            {
+                return false;
+            }
+
+            lastConsumedCycleFrame = frame;
+            lastConsumedCycleTime = now;
+            return true;
         }
 
         private void EnsureInitialized()
