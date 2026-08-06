@@ -20,8 +20,10 @@ namespace FarmSimulator.Editor
             TileAssetRoot + "/Crops";
         public const string PaletteRoot =
             CatalogRoot + "/Palettes";
+        public const string PaletteName =
+            "Cozy Farm Starter Palette";
         public const string PalettePrefabPath =
-            PaletteRoot + "/Cozy Farm Starter Palette.prefab";
+            PaletteRoot + "/" + PaletteName + ".prefab";
 
         public const string GrassTilePath =
             GroundTileRoot + "/Grass.asset";
@@ -60,7 +62,7 @@ namespace FarmSimulator.Editor
             Rebuild();
             EditorUtility.DisplayDialog(
                 "Cozy Tile Catalog",
-                "The starter tile catalog and palette prefab are ready.",
+                "The tile catalog and Unity Tile Palette are ready.",
                 "OK");
         }
 
@@ -76,7 +78,7 @@ namespace FarmSimulator.Editor
             Rebuild();
         }
 
-        public static void Rebuild()
+        public static GameObject Rebuild()
         {
             EnsureFolder(GroundTileRoot);
             EnsureFolder(CropTileRoot);
@@ -124,36 +126,33 @@ namespace FarmSimulator.Editor
                 cropRows.Add(stages);
             }
 
-            BuildPalettePrefab(
-                new[] { grass, dirt, water, tilled },
-                cropRows);
+            AssetDatabase.SaveAssets();
+
+            GameObject palette = UnityTilePaletteBridge.CreateOrReplacePalette(
+                PaletteRoot,
+                PaletteName,
+                tilemap => PopulatePalette(
+                    tilemap,
+                    new[] { grass, dirt, water, tilled },
+                    cropRows));
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+            return palette;
         }
 
-        private static void BuildPalettePrefab(
+        public static GameObject LoadPalette()
+        {
+            EnsureAssets();
+            return AssetDatabase.LoadAssetAtPath<GameObject>(
+                PalettePrefabPath);
+        }
+
+        private static void PopulatePalette(
+            Tilemap tilemap,
             IReadOnlyList<Tile> groundTiles,
             IReadOnlyList<Tile[]> cropRows)
         {
-            var root = new GameObject(
-                "Cozy Farm Starter Palette",
-                typeof(Grid));
-            Grid grid = root.GetComponent<Grid>();
-            grid.cellLayout = GridLayout.CellLayout.Rectangle;
-            grid.cellSize = Vector3.one;
-            grid.cellGap = Vector3.zero;
-
-            var layerObject = new GameObject(
-                "Catalog",
-                typeof(Tilemap),
-                typeof(TilemapRenderer));
-            layerObject.transform.SetParent(root.transform, false);
-            Tilemap tilemap = layerObject.GetComponent<Tilemap>();
-            TilemapRenderer renderer =
-                layerObject.GetComponent<TilemapRenderer>();
-            renderer.mode = TilemapRenderer.Mode.Chunk;
-
             for (int index = 0; index < groundTiles.Count; index++)
             {
                 tilemap.SetTile(
@@ -170,17 +169,6 @@ namespace FarmSimulator.Editor
                         new Vector3Int(stage, -(row + 2), 0),
                         stages[stage]);
                 }
-            }
-
-            try
-            {
-                PrefabUtility.SaveAsPrefabAsset(
-                    root,
-                    PalettePrefabPath);
-            }
-            finally
-            {
-                UnityEngine.Object.DestroyImmediate(root);
             }
         }
 
