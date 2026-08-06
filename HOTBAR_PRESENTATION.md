@@ -1,15 +1,15 @@
 # Inventario y hotbar — fase de presentación
 
-## Estado actual
+## Estado final
 
-- Rama: `feature/inventory-hotbar-presentation`.
-- Base original: `main` en `57d7d165cfba47dcc753a6fc9c484a7191ab068a`.
-- Commit funcional inicial: `9084ab05874ae8e7f013d701135d8e9ce1cef762`.
-- Corrección de compatibilidad NUnit: `6cb50b63a91cc35463419e9ad0b594036a56165c`.
-- Prefab generado: `a6e84425b72d9cfa656adf756bb69bfdbf6e599b`.
-- Merge automático de GitHub Desktop: `85e0365bad0df07c2d3b79a51b3de3047ecb6226`.
-- Estado: **fase cerrada y lista para PR**.
-- Línea base validada: **166/166 EditMode**, **8/8 PlayMode**, **0 errores**.
+- Rama de desarrollo: `feature/inventory-hotbar-presentation`.
+- Head validado: `e1898756cb28a0049b6a45b11367d94d617b1ad9`.
+- PR integrado: #8 — `Add inventory hotbar presentation foundation`.
+- Método de integración: **Squash and merge**.
+- Commit integrado en `main`: `bf89a9a5ee9ea8f45e9e48b751b9b027922dbe3a`.
+- Validación final: **166/166 EditMode**, **8/8 PlayMode**, **0 errores**.
+- Validación manual: teclado, teclado numérico, rueda, L1/R1, presentación visual y movimiento del héroe aprobados.
+- Arturo confirmó que su `main` local quedó sincronizado después de la fusión.
 
 ## Fuente congelada estudiada
 
@@ -35,7 +35,7 @@ Contrato conservado:
 - selección visual distinta;
 - etiqueta explícita para manos vacías.
 
-## Implementación
+## Implementación integrada
 
 ### Application
 
@@ -84,14 +84,15 @@ Comando manual:
 Tools > Farm Simulator > Rebuild Inventory Hotbar
 ```
 
-El prefab quedó versionado junto con:
+Assets versionados:
 
 ```text
 Assets/_Project/Resources/Prefabs/UI.meta
+Assets/_Project/Resources/Prefabs/UI/InventoryHotbar.prefab
 Assets/_Project/Resources/Prefabs/UI/InventoryHotbar.prefab.meta
 ```
 
-Su metadata conserva la firma:
+Firma de metadata:
 
 ```text
 inventory-hotbar-prefab-v1
@@ -125,41 +126,25 @@ No se asignaron imágenes falsas a:
 
 - 22 casos del modelo de presentación;
 - 6 casos del prefab/pipeline y su render inicial;
-- total nuevo: **28 casos**.
-
-Resultado local confirmado por Arturo el 5 de agosto de 2026:
-
-```text
-166/166 EditMode
-0 errores
-```
+- total nuevo: **28 casos**;
+- resultado final: **166/166**, **0 errores**.
 
 ### PlayMode
 
 - instalación de la hotbar en `Lab`;
-- cambio de selección sin reemplazar al jugador.
-
-Resultado local confirmado por Arturo:
-
-```text
-8/8 PlayMode
-0 errores
-```
+- cambio de selección sin reemplazar al jugador;
+- resultado final: **8/8**, **0 errores**.
 
 ## Incidencia de NUnit — resuelta
 
-Primera ejecución local:
+La primera ejecución local obtuvo **165/166 EditMode**. El único fallo fue:
 
-- EditMode: **165/166**;
-- único fallo: `HotbarMapsOnlyApprovedCozyFarmIcons`;
-- excepción: `System.ArgumentException: Property Count was not found`;
-- línea afectada: aserción `Has.Count` sobre `Sprite[]`.
+```text
+HotbarMapsOnlyApprovedCozyFarmIcons
+System.ArgumentException: Property Count was not found
+```
 
-Diagnóstico:
-
-- no falló el mapeo de iconos;
-- no falló la hotbar ni el prefab;
-- la versión de NUnit incluida en Unity intentó resolver una propiedad reflectiva `Count` sobre un arreglo.
+No fallaron el mapeo, la hotbar ni el prefab. La versión de NUnit incluida en Unity intentó aplicar `Has.Count` sobre `Sprite[]`.
 
 Corrección:
 
@@ -167,38 +152,17 @@ Corrección:
 Assert.That(view.IconSprites.Count, Is.EqualTo(expectedIds.Length));
 ```
 
-Después de la corrección, Arturo confirmó todas las suites sin errores.
-
-## Validación visual y manual — aprobada
-
-Arturo confirmó el 5 de agosto de 2026 que:
-
-- la hotbar aparece abajo y centrada;
-- el slot 1 muestra `AZ` y comienza seleccionado;
-- el slot 2 muestra `RG`;
-- el slot 3 muestra el icono de semillas de nabo y `×20`;
-- los slots 4–8 aparecen vacíos;
-- el nombre seleccionado es legible;
-- funcionan las teclas 1–8 y el teclado numérico;
-- funciona la rueda del mouse;
-- funcionan L1/R1 con DualSense;
-- el movimiento y comportamiento del héroe permanecen intactos;
-- no se observaron errores adicionales.
+Después de la corrección pasaron todas las suites.
 
 ## Pull previo al push del prefab
 
-GitHub Desktop solicitó un Pull porque la documentación remota avanzó mientras el prefab se preparaba localmente. La integración automática creó el merge commit:
+GitHub Desktop solicitó un Pull porque la documentación remota avanzó mientras el prefab se preparaba localmente. La integración automática creó:
 
 ```text
 85e0365bad0df07c2d3b79a51b3de3047ecb6226
 ```
 
-No hubo conflictos manuales ni pérdida de archivos. El merge combinó:
-
-- `a6e84425b72d9cfa656adf756bb69bfdbf6e599b`: prefab y metadatos;
-- `f2c79fb6f5fb74c7c837602f427392e8c328176d`: validación documental.
-
-El historial intermedio se limpiará mediante **Squash and merge** al integrar el PR.
+No hubo conflictos manuales ni pérdida de archivos. El historial intermedio quedó consolidado por el squash del PR #8.
 
 ## Exclusiones
 
@@ -216,8 +180,8 @@ No se implementaron:
 - cambios a `InputSystem_Actions.inputactions`;
 - escala 1.5 en el prefab real del héroe.
 
-El prefab, collider, spritesheet, animaciones y movimiento del héroe siguen intactos.
+El prefab, collider, spritesheet, animaciones y movimiento del héroe permanecen intactos.
 
-## Criterio de integración
+## Cierre
 
-La rama está lista para PR hacia `main` con **Squash and merge**. No requiere nuevas pruebas locales mientras el head funcional no cambie.
+La fase está integrada y cerrada. Cualquier ampliación del inventario, agricultura, herramientas o Tilemaps debe comenzar desde `main` actualizado en una rama nueva y con alcance independiente.
