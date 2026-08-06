@@ -11,12 +11,11 @@ namespace FarmSimulator.Presentation.Interaction
         [SerializeField]
         private int priority;
 
-        public string InteractionPrompt => interactionPrompt;
+        public virtual string InteractionPrompt => interactionPrompt;
 
         public int Priority => priority;
 
-        public virtual Vector2 InteractionPosition =>
-            transform.position;
+        public virtual Vector2 InteractionPosition => transform.position;
 
         public virtual bool CanInteract(GameObject interactor)
         {

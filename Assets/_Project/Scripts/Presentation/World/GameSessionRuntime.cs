@@ -1,4 +1,6 @@
 using System;
+using FarmSimulator.Domain.Farming;
+using FarmSimulator.Domain.Inventory;
 using FarmSimulator.Domain.Time;
 using UnityEngine;
 
@@ -10,6 +12,8 @@ namespace FarmSimulator.Presentation.World
         private static GameSessionRuntime instance;
 
         private GameCalendarState calendar;
+        private InventoryState inventory;
+        private FarmState farm;
         private string pendingSpawnId;
 
         public static GameSessionRuntime Instance
@@ -22,6 +26,12 @@ namespace FarmSimulator.Presentation.World
         }
 
         public GameDate CurrentDate => Calendar.CurrentDate;
+
+        public InventoryState Inventory =>
+            inventory ??= InventoryState.CreateInitialPlayerInventory();
+
+        public FarmState Farm =>
+            farm ??= new FarmState();
 
         public event Action<GameDate> DayChanged;
 
@@ -42,6 +52,12 @@ namespace FarmSimulator.Presentation.World
             EnsureInstance();
         }
 
+        public static bool TryGetExisting(out GameSessionRuntime session)
+        {
+            session = instance;
+            return session != null;
+        }
+
         private static void EnsureInstance()
         {
             if (instance != null)
@@ -50,18 +66,15 @@ namespace FarmSimulator.Presentation.World
             }
 
             GameSessionRuntime existing =
-                UnityEngine.Object.FindFirstObjectByType<
-                    GameSessionRuntime>();
+                UnityEngine.Object.FindFirstObjectByType<GameSessionRuntime>();
             if (existing != null)
             {
                 instance = existing;
                 return;
             }
 
-            var sessionObject =
-                new GameObject(nameof(GameSessionRuntime));
-            instance =
-                sessionObject.AddComponent<GameSessionRuntime>();
+            var sessionObject = new GameObject(nameof(GameSessionRuntime));
+            instance = sessionObject.AddComponent<GameSessionRuntime>();
         }
 
         private void Awake()
@@ -74,11 +87,14 @@ namespace FarmSimulator.Presentation.World
 
             instance = this;
             calendar ??= new GameCalendarState();
+            inventory ??= InventoryState.CreateInitialPlayerInventory();
+            farm ??= new FarmState();
             DontDestroyOnLoad(gameObject);
         }
 
         public GameDate AdvanceDay()
         {
+            Farm.AdvanceDay();
             GameDate nextDate = Calendar.AdvanceDay();
             DayChanged?.Invoke(nextDate);
             Debug.Log(
@@ -104,6 +120,8 @@ namespace FarmSimulator.Presentation.World
         public void ResetSession()
         {
             calendar = new GameCalendarState();
+            inventory = InventoryState.CreateInitialPlayerInventory();
+            farm = new FarmState();
             pendingSpawnId = null;
             DayChanged?.Invoke(calendar.CurrentDate);
         }

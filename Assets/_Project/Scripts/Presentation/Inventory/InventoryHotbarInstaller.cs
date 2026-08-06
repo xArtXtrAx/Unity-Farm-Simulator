@@ -1,5 +1,5 @@
 using FarmSimulator.Application.Scenes;
-using FarmSimulator.Domain.Inventory;
+using FarmSimulator.Presentation.World;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -7,13 +7,15 @@ namespace FarmSimulator.Presentation.Inventory
 {
     internal static class InventoryHotbarInstaller
     {
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        [RuntimeInitializeOnLoadMethod(
+            RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetState()
         {
             SceneManager.sceneLoaded -= HandleSceneLoaded;
         }
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        [RuntimeInitializeOnLoadMethod(
+            RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Install()
         {
             SceneManager.sceneLoaded -= HandleSceneLoaded;
@@ -24,7 +26,11 @@ namespace FarmSimulator.Presentation.Inventory
             Scene scene,
             LoadSceneMode loadMode)
         {
-            if (scene.name != ProjectSceneNames.Lab ||
+            bool supportsHotbar =
+                scene.name == ProjectSceneNames.Lab ||
+                scene.name == ProjectSceneNames.Farm;
+
+            if (!supportsHotbar ||
                 Object.FindFirstObjectByType<InventoryHotbarView>() != null)
             {
                 return;
@@ -35,7 +41,8 @@ namespace FarmSimulator.Presentation.Inventory
             if (prefab == null)
             {
                 Debug.LogError(
-                    $"Could not load inventory hotbar prefab at Resources/{InventoryHotbarAssetCatalog.ResourcePath}.");
+                    $"Could not load inventory hotbar prefab at " +
+                    $"Resources/{InventoryHotbarAssetCatalog.ResourcePath}.");
                 return;
             }
 
@@ -48,12 +55,13 @@ namespace FarmSimulator.Presentation.Inventory
             if (view == null)
             {
                 Debug.LogError(
-                    "Inventory hotbar prefab does not contain InventoryHotbarView.");
+                    "Inventory hotbar prefab does not contain " +
+                    "InventoryHotbarView.");
                 Object.Destroy(instance);
                 return;
             }
 
-            view.Initialize(InventoryState.CreateInitialPlayerInventory());
+            view.Initialize(GameSessionRuntime.Instance.Inventory);
         }
     }
 }

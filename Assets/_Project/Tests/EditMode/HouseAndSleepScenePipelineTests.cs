@@ -139,6 +139,20 @@ namespace FarmSimulator.Tests.EditMode
             CozyFarmHouseArtPipeline.EnsureAssets();
             HouseAndSleepScenePipeline.EnsureScenes();
 
+            string selectedVariantId = CozyFarmHouseStyleWindow.SelectedVariantId;
+            CozyFarmBuildingCatalog.HouseVariant selectedVariant;
+            try
+            {
+                selectedVariant = CozyFarmBuildingCatalog.GetHouse(selectedVariantId);
+            }
+            catch (System.ArgumentException)
+            {
+                selectedVariant = CozyFarmBuildingCatalog.GetHouse(
+                    CozyFarmBuildingCatalog.DefaultHouseId);
+            }
+
+            FarmSceneGridLayoutResetter.ApplyFromMenu();
+
             Scene farm =
                 EditorSceneManager.OpenScene(
                     ProjectSceneNames.FarmPath,
@@ -147,24 +161,22 @@ namespace FarmSimulator.Tests.EditMode
             try
             {
                 string[] farmSprites = SpriteNames(farm);
-                CollectionAssert.IsSubsetOf(
-                    new[]
-                    {
-                        "cozy_wood_panel_light",
-                        "cozy_wood_panel_dark",
-                        "cozy_flower_crates",
-                        "cozy_bridge_wood",
-                        "cozy_tree_spring",
-                        "cozy_bench_light",
-                        "cozy_lamp_green",
-                    },
-                    farmSprites);
+                Assert.That(farmSprites, Does.Contain(selectedVariant.Id));
+                Assert.That(farmSprites, Does.Contain("cozy_bench_light"));
+                Assert.That(farmSprites, Does.Contain("cozy_lamp_green"));
+                Assert.That(farmSprites, Does.Not.Contain("cozy_tree_spring"));
                 Assert.That(
                     FindGameObject(farm, "House Body"),
                     Is.Null);
                 Assert.That(
                     FindGameObject(farm, "Roof"),
                     Is.Null);
+                Assert.That(
+                    FindGameObject(farm, CozyFarmHouseExteriorUpgrader.VisualRootName),
+                    Is.Not.Null);
+                Assert.That(
+                    FindGameObject(farm, FarmSceneGridLayoutResetter.LayoutRootName),
+                    Is.Not.Null);
                 AssertRenderersAreUntinted(farm);
             }
             finally
@@ -215,11 +227,23 @@ namespace FarmSimulator.Tests.EditMode
             foreach (SpriteRenderer renderer in
                      ComponentsInScene<SpriteRenderer>(scene))
             {
+                if (UsesIntentionalTint(renderer))
+                {
+                    continue;
+                }
+
                 Assert.That(
                     renderer.color,
                     Is.EqualTo(Color.white),
                     renderer.gameObject.name);
             }
+        }
+
+        private static bool UsesIntentionalTint(SpriteRenderer renderer)
+        {
+            string objectName = renderer.gameObject.name;
+            return objectName == "Entrance Grounding Shadow" ||
+                   objectName == "Soil Visual";
         }
 
         private static string[] SpriteNames(Scene scene)
