@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Linq;
 using FarmSimulator.Editor;
+using FarmSimulator.Presentation.Buildings;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -30,7 +32,7 @@ namespace FarmSimulator.Tests.EditMode
         }
 
         [Test]
-        public void GeneratedHousePrefabContainsVisualColliderAndAnchors()
+        public void GeneratedHousePrefabContainsVisualColliderAnchorsAndLogicalFootprint()
         {
             CozyBuildingDefinition definition =
                 CozyFarmBuildingRegistry.Get(
@@ -60,6 +62,17 @@ namespace FarmSimulator.Tests.EditMode
                     contents.transform.Find(
                         CozyFarmBuildingPrefabGenerator.SpawnAnchorName),
                     Is.Not.Null);
+
+                GridBuildingFootprint footprint =
+                    contents.GetComponent<GridBuildingFootprint>();
+                Assert.That(footprint, Is.Not.Null);
+                Assert.That(footprint.GridSize, Is.EqualTo(new Vector2Int(4, 3)));
+                Assert.That(
+                    footprint.OccupiedOffsets,
+                    Is.EquivalentTo(definition.FootprintOffsets));
+                Assert.That(
+                    footprint.GetOccupiedCells().Count(),
+                    Is.LessThan(footprint.GridSize.x * footprint.GridSize.y));
             }
             finally
             {
