@@ -22,8 +22,7 @@ namespace FarmSimulator.Editor
             CozyFarmFullPackImporter.FullAssetRoot + "/Tiles";
         public const string GeneratedRoot =
             "Assets/_Project/Art/Generated/CozyFarm/SeasonalTiles";
-        public const string PaletteRoot =
-            GeneratedRoot + "/Palettes";
+        public const string PaletteRoot = GeneratedRoot + "/Palettes";
         public const int TileSize = 16;
 
         private static readonly CozyTileSeason[] Seasons =
@@ -34,8 +33,16 @@ namespace FarmSimulator.Editor
             CozyTileSeason.Winter,
         };
 
+        private static readonly string[] LayerNames =
+        {
+            "Ground",
+            "Paths",
+            "Soil",
+            "Decoration",
+        };
+
         private CozyTileSeason season;
-        private string paintLayer = "Ground";
+        private int paintLayerIndex;
         private Vector2 scroll;
         private float thumbnailSize = 58f;
         private List<SpriteEntry> entries = new List<SpriteEntry>();
@@ -49,10 +56,7 @@ namespace FarmSimulator.Editor
             window.Show();
         }
 
-        private void OnEnable()
-        {
-            Reload();
-        }
+        private void OnEnable() => Reload();
 
         private void OnGUI()
         {
@@ -60,9 +64,8 @@ namespace FarmSimulator.Editor
                 "Farm Development Kit — Cozy Seasonal Tiles",
                 EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "Slices every non-empty 16×16 cell found under CozyFarm/Full/Tiles, " +
-                "classifies it by season and builds four Unity Tile Palettes. " +
-                "The purchased PNG files remain local and outside Git.",
+                "Slices every non-empty 16×16 cell under CozyFarm/Full/Tiles, " +
+                "separates the complete atlas into four seasons and builds four Unity Tile Palettes.",
                 MessageType.Info);
 
             using (new EditorGUILayout.HorizontalScope())
@@ -77,10 +80,7 @@ namespace FarmSimulator.Editor
                     RebuildAllPalettes();
                     Reload();
                 }
-                if (GUILayout.Button("Refresh", GUILayout.Height(28f)))
-                {
-                    Reload();
-                }
+                if (GUILayout.Button("Refresh", GUILayout.Height(28f))) Reload();
             }
 
             EditorGUILayout.Space();
@@ -95,34 +95,18 @@ namespace FarmSimulator.Editor
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                paintLayer = EditorGUILayout.Popup(
+                paintLayerIndex = EditorGUILayout.Popup(
                     "Paint target",
-                    Array.IndexOf(LayerNames, paintLayer),
+                    Mathf.Clamp(paintLayerIndex, 0, LayerNames.Length - 1),
                     LayerNames);
-                int layerIndex = Mathf.Clamp(
-                    EditorGUILayout.Popup(
-                        Array.IndexOf(LayerNames, paintLayer),
-                        LayerNames,
-                        GUILayout.Width(130f)),
-                    0,
-                    LayerNames.Length - 1);
-                paintLayer = LayerNames[layerIndex];
-
                 if (GUILayout.Button("Open season palette", GUILayout.Width(170f)))
                 {
-                    OpenPalette(season, paintLayer);
+                    OpenPalette(season, LayerNames[paintLayerIndex]);
                 }
             }
 
-            thumbnailSize = EditorGUILayout.Slider(
-                "Thumbnail size",
-                thumbnailSize,
-                36f,
-                96f);
-
-            List<SpriteEntry> visible = entries
-                .Where(entry => entry.Season == season)
-                .ToList();
+            thumbnailSize = EditorGUILayout.Slider("Thumbnail size", thumbnailSize, 36f, 96f);
+            List<SpriteEntry> visible = entries.Where(entry => entry.Season == season).ToList();
             EditorGUILayout.LabelField(
                 $"{DisplayName(season)}: {visible.Count} non-empty tiles",
                 EditorStyles.miniBoldLabel);
@@ -130,9 +114,9 @@ namespace FarmSimulator.Editor
             if (visible.Count == 0)
             {
                 EditorGUILayout.HelpBox(
-                    Directory.Exists(ToAbsolutePath(TileSourceRoot))
-                        ? "No sliced sprites were found for this season. Run 'Prepare / reslice all tile sheets'."
-                        : $"The local folder '{TileSourceRoot}' was not found. Import the Cozy Farm full pack first.",
+                    AssetDatabase.IsValidFolder(TileSourceRoot)
+                        ? "No sliced sprites were found. Run 'Prepare / reslice all tile sheets'."
+                        : $"Folder not found: {TileSourceRoot}. Import the full Cozy Farm pack first.",
                     MessageType.Warning);
                 return;
             }
@@ -140,8 +124,7 @@ namespace FarmSimulator.Editor
             float cellWidth = thumbnailSize + 12f;
             int columns = Mathf.Max(1, Mathf.FloorToInt((position.width - 24f) / cellWidth));
             scroll = EditorGUILayout.BeginScrollView(scroll);
-            int index = 0;
-            while (index < visible.Count)
+            for (int index = 0; index < visible.Count;)
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
@@ -154,14 +137,6 @@ namespace FarmSimulator.Editor
             }
             EditorGUILayout.EndScrollView();
         }
-
-        private static readonly string[] LayerNames =
-        {
-            "Ground",
-            "Paths",
-            "Soil",
-            "Decoration",
-        };
 
         private void DrawSpriteButton(SpriteEntry entry)
         {
@@ -177,9 +152,8 @@ namespace FarmSimulator.Editor
                     Selection.activeObject = entry.Sprite;
                     EditorGUIUtility.PingObject(entry.Sprite);
                 }
-
                 GUILayout.Label(
-                    entry.ShortName,
+                    entry.Sprite.name,
                     EditorStyles.centeredGreyMiniLabel,
                     GUILayout.Width(thumbnailSize),
                     GUILayout.Height(30f));
@@ -202,8 +176,10 @@ namespace FarmSimulator.Editor
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 foreach (Sprite sprite in AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>())
                 {
-                    CozyTileSeason spriteSeason = ResolveSeason(path, sprite.name, sprite.rect.center.x, sprite.texture.width);
-                    result.Add(new SpriteEntry(sprite, path, spriteSeason));
+                    result.Add(new SpriteEntry(
+                        sprite,
+                        path,
+                        ResolveSeason(path, sprite.name, sprite.rect.center.x, sprite.texture.width)));
                 }
             }
 
@@ -250,7 +226,7 @@ namespace FarmSimulator.Editor
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-            Debug.Log($"Prepared {paths.Length} Cozy Farm tile sheet(s) as non-empty {TileSize}×{TileSize} sprites.");
+            Debug.Log($"Prepared {paths.Length} Cozy Farm seasonal tile sheet(s).");
         }
 
         private static void SliceSheet(string path)
@@ -273,25 +249,20 @@ namespace FarmSimulator.Editor
             Color32[] pixels = texture.GetPixels32();
             int columns = texture.width / TileSize;
             int rows = texture.height / TileSize;
-            var metadata = new List<SpriteMetaData>();
             string sheetName = Sanitize(Path.GetFileNameWithoutExtension(path));
+            var metadata = new List<SpriteMetaData>();
 
             for (int row = 0; row < rows; row++)
             {
                 for (int column = 0; column < columns; column++)
                 {
                     if (!HasVisiblePixel(pixels, texture.width, column, row)) continue;
-
                     float centerX = column * TileSize + TileSize * 0.5f;
-                    CozyTileSeason cellSeason = ResolveSeason(path, string.Empty, centerX, texture.width);
+                    CozyTileSeason tileSeason = ResolveSeason(path, string.Empty, centerX, texture.width);
                     metadata.Add(new SpriteMetaData
                     {
-                        name = $"{cellSeason.ToString().ToLowerInvariant()}_{sheetName}_{column:D3}_{row:D3}",
-                        rect = new Rect(
-                            column * TileSize,
-                            row * TileSize,
-                            TileSize,
-                            TileSize),
+                        name = $"{tileSeason.ToString().ToLowerInvariant()}_{sheetName}_{column:D3}_{row:D3}",
+                        rect = new Rect(column * TileSize, row * TileSize, TileSize, TileSize),
                         alignment = (int)SpriteAlignment.Center,
                         pivot = new Vector2(0.5f, 0.5f),
                     });
@@ -305,17 +276,13 @@ namespace FarmSimulator.Editor
             importer.SaveAndReimport();
         }
 
-        private static bool HasVisiblePixel(
-            Color32[] pixels,
-            int textureWidth,
-            int column,
-            int row)
+        private static bool HasVisiblePixel(Color32[] pixels, int width, int column, int row)
         {
             int startX = column * TileSize;
             int startY = row * TileSize;
             for (int y = 0; y < TileSize; y++)
             {
-                int offset = (startY + y) * textureWidth + startX;
+                int offset = (startY + y) * width + startX;
                 for (int x = 0; x < TileSize; x++)
                 {
                     if (pixels[offset + x].a != 0) return true;
@@ -328,34 +295,33 @@ namespace FarmSimulator.Editor
         {
             EnsureFolder(GeneratedRoot);
             EnsureFolder(PaletteRoot);
-            List<SpriteEntry> allEntries = DiscoverSprites();
+            List<SpriteEntry> all = DiscoverSprites();
             foreach (CozyTileSeason value in Seasons)
             {
-                BuildPalette(value, allEntries.Where(entry => entry.Season == value).ToArray());
+                BuildPalette(value, all.Where(entry => entry.Season == value).ToArray());
             }
-
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log("Rebuilt Cozy Farm seasonal palettes: Spring, Summer, Autumn and Winter.");
+            Debug.Log("Rebuilt Cozy Farm palettes for all four seasons.");
         }
 
         private static void BuildPalette(CozyTileSeason value, IReadOnlyList<SpriteEntry> seasonEntries)
         {
             string seasonName = value.ToString();
-            string tileFolder = GeneratedRoot + "/" + seasonName + "/Tiles";
-            EnsureFolder(GeneratedRoot + "/" + seasonName);
+            string seasonRoot = GeneratedRoot + "/" + seasonName;
+            string tileFolder = seasonRoot + "/Tiles";
+            EnsureFolder(seasonRoot);
             EnsureFolder(tileFolder);
 
             var tiles = new List<Tile>();
             foreach (SpriteEntry entry in seasonEntries)
             {
-                string sourceGuid = AssetDatabase.AssetPathToGUID(entry.AssetPath);
-                string fileName = Sanitize(sourceGuid + "_" + entry.Sprite.name) + ".asset";
-                string tilePath = tileFolder + "/" + fileName;
+                string guid = AssetDatabase.AssetPathToGUID(entry.AssetPath);
+                string tilePath = tileFolder + "/" + Sanitize(guid + "_" + entry.Sprite.name) + ".asset";
                 Tile tile = AssetDatabase.LoadAssetAtPath<Tile>(tilePath);
                 if (tile == null)
                 {
-                    tile = CreateInstance<Tile>();
+                    tile = ScriptableObject.CreateInstance<Tile>();
                     AssetDatabase.CreateAsset(tile, tilePath);
                 }
                 tile.name = entry.Sprite.name;
@@ -365,11 +331,10 @@ namespace FarmSimulator.Editor
                 tiles.Add(tile);
             }
 
-            GameObject palette = UnityTilePaletteBridge.CreateOrReplacePalette(
+            UnityTilePaletteBridge.CreateOrReplacePalette(
                 PaletteRoot,
                 "Cozy Farm - " + seasonName,
                 tilemap => PopulatePalette(tilemap, tiles));
-            if (palette != null) EditorUtility.SetDirty(palette);
         }
 
         private static void PopulatePalette(Tilemap tilemap, IReadOnlyList<Tile> tiles)
@@ -377,9 +342,9 @@ namespace FarmSimulator.Editor
             const int paletteColumns = 24;
             for (int index = 0; index < tiles.Count; index++)
             {
-                int x = index % paletteColumns;
-                int y = -(index / paletteColumns);
-                tilemap.SetTile(new Vector3Int(x, y, 0), tiles[index]);
+                tilemap.SetTile(
+                    new Vector3Int(index % paletteColumns, -(index / paletteColumns), 0),
+                    tiles[index]);
             }
             tilemap.CompressBounds();
         }
@@ -405,7 +370,7 @@ namespace FarmSimulator.Editor
             {
                 EditorUtility.DisplayDialog(
                     "Seasonal tiles",
-                    $"No Tilemap named '{layerName}' is loaded in the active scene.",
+                    $"No Tilemap named '{layerName}' is loaded in the current scene.",
                     "OK");
                 return;
             }
@@ -414,7 +379,7 @@ namespace FarmSimulator.Editor
             {
                 EditorUtility.DisplayDialog(
                     "Seasonal tiles",
-                    "Unity could not open or activate the requested Tile Palette.",
+                    "Unity could not activate the requested Tile Palette.",
                     "OK");
             }
         }
@@ -434,7 +399,9 @@ namespace FarmSimulator.Editor
             if (token.Contains("winter") || token.Contains("invierno") || token.Contains("snow"))
                 return CozyTileSeason.Winter;
 
-            float normalized = textureWidth <= 0f ? 0f : Mathf.Clamp01(horizontalCenter / textureWidth);
+            float normalized = textureWidth <= 0f
+                ? 0f
+                : Mathf.Clamp01(horizontalCenter / textureWidth);
             if (normalized < 0.25f) return CozyTileSeason.Spring;
             if (normalized < 0.5f) return CozyTileSeason.Summer;
             if (normalized < 0.75f) return CozyTileSeason.Autumn;
@@ -479,12 +446,6 @@ namespace FarmSimulator.Editor
                 .ToArray());
         }
 
-        private static string ToAbsolutePath(string assetPath)
-        {
-            string projectRoot = Directory.GetParent(Application.dataPath)?.FullName ?? string.Empty;
-            return Path.Combine(projectRoot, assetPath.Replace('/', Path.DirectorySeparatorChar));
-        }
-
         public readonly struct SpriteEntry
         {
             public SpriteEntry(Sprite sprite, string assetPath, CozyTileSeason season)
@@ -497,7 +458,6 @@ namespace FarmSimulator.Editor
             public Sprite Sprite { get; }
             public string AssetPath { get; }
             public CozyTileSeason Season { get; }
-            public string ShortName => Sprite == null ? "Missing" : Sprite.name;
         }
     }
 }
