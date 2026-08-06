@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using FarmSimulator.Application.Scenes;
 using FarmSimulator.Presentation.Player;
-using FarmSimulator.Presentation.Time;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -15,7 +14,19 @@ namespace FarmSimulator.Editor
     public static class CozyInteriorHouseSceneUpgrader
     {
         public const string UpgradeSignature =
-            "house-interior-cozy-interior-v1";
+            "house-interior-cozy-interior-v2";
+
+        public const string MarkerName =
+            "Cozy Interior Visual Upgrade";
+
+        private static readonly string[] RequiredSpriteNames =
+        {
+            "cozy_interior_wall_cream",
+            "cozy_interior_floor_wood",
+            "cozy_interior_door_cream",
+            "cozy_interior_bed_cream",
+            "cozy_interior_rug_warm",
+        };
 
         static CozyInteriorHouseSceneUpgrader()
         {
@@ -25,128 +36,202 @@ namespace FarmSimulator.Editor
         [MenuItem("Tools/Farm Simulator/Apply Cozy Interior To House Scene")]
         public static void ApplyFromMenu()
         {
-            EnsureUpgradedScene(force: true);
+            ApplyToHouseScene(force: true);
         }
 
         public static void EnsureUpgradedScene()
         {
-            EnsureUpgradedScene(force: false);
+            ApplyToHouseScene(force: false);
         }
 
-        private static void EnsureUpgradedScene(bool force)
+        public static bool ApplyToHouseScene(bool force)
         {
-            if (EditorApplication.isCompiling || EditorApplication.isUpdating)
+            if (EditorApplication.isCompiling ||
+                EditorApplication.isUpdating)
             {
                 EditorApplication.delayCall += EnsureUpgradedScene;
-                return;
+                return false;
             }
 
-            if (IsOpen(ProjectSceneNames.HouseInteriorPath))
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
             {
                 Debug.LogWarning(
-                    "Close HouseInterior before applying Cozy Interior art.");
-                return;
+                    "Cozy Interior art cannot be applied while entering " +
+                    "or running Play Mode.");
+                return false;
             }
 
-            AssetImporter sceneImporter =
-                AssetImporter.GetAtPath(ProjectSceneNames.HouseInteriorPath);
-            if (sceneImporter == null)
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(
+                    ProjectSceneNames.HouseInteriorPath) == null)
             {
                 EditorApplication.delayCall += EnsureUpgradedScene;
-                return;
+                Debug.LogWarning(
+                    "Cozy Interior is waiting for HouseInterior.unity.");
+                return false;
             }
 
             IReadOnlyDictionary<string, Sprite> sprites =
                 CozyInteriorHouseArtPipeline.LoadSprites();
-            string[] required =
-            {
-                "cozy_interior_wall_cream",
-                "cozy_interior_floor_wood",
-                "cozy_interior_door_cream",
-                "cozy_interior_bed_cream",
-                "cozy_interior_rug_warm",
-            };
+            string[] missingSprites = RequiredSpriteNames
+                .Where(name => !sprites.ContainsKey(name))
+                .ToArray();
 
-            if (required.Any(name => !sprites.ContainsKey(name)))
+            if (missingSprites.Length > 0)
             {
+                Debug.LogWarning(
+                    "Cozy Interior is waiting for curated sprites: " +
+                    string.Join(", ", missingSprites) + ".");
                 CozyInteriorHouseArtPipeline.EnsureAssets();
-                return;
+                EditorApplication.delayCall += EnsureUpgradedScene;
+                return false;
             }
 
-            if (!force &&
-                AssetDatabase.LoadAssetAtPath<SceneAsset>(
-                    ProjectSceneNames.HouseInteriorPath) == null)
+            Scene scene = SceneManager.GetSceneByPath(
+                ProjectSceneNames.HouseInteriorPath);
+            bool openedHere = !scene.IsValid() || !scene.isLoaded;
+            Scene previousActive = SceneManager.GetActiveScene();
+
+            if (openedHere)
             {
-                return;
+                scene = EditorSceneManager.OpenScene(
+                    ProjectSceneNames.HouseInteriorPath,
+                    OpenSceneMode.Additive);
             }
 
-            Scene scene = EditorSceneManager.OpenScene(
-                ProjectSceneNames.HouseInteriorPath,
-                OpenSceneMode.Additive);
-
+            bool saved = false;
             try
             {
-                ReplacePatch(scene, "Wood Floor", sprites["cozy_interior_floor_wood"]);
-                ReplacePatch(scene, "Back Interior Wall", sprites["cozy_interior_wall_cream"]);
-                ReplacePatch(scene, "Left Interior Wall", sprites["cozy_interior_wall_cream"]);
-                ReplacePatch(scene, "Right Interior Wall", sprites["cozy_interior_wall_cream"]);
-
-                ReplaceSingle(
-                    scene,
-                    "Interior Door",
-                    sprites["cozy_interior_door_cream"],
-                    new Vector3(0.7f, 0.7f, 1f),
-                    new Vector3(0f, -2.55f, 0f));
-
-                ReplaceBed(scene, sprites["cozy_interior_bed_cream"]);
-                ReplaceSingle(
-                    scene,
-                    "Woven Floor Runner",
-                    sprites["cozy_interior_rug_warm"],
-                    new Vector3(0.95f, 0.95f, 1f),
-                    new Vector3(-0.2f, 0.25f, 0f));
-
-                if (!EditorSceneManager.SaveScene(
-                        scene,
-                        ProjectSceneNames.HouseInteriorPath))
+                if (!force && Find(scene, MarkerName) != null)
                 {
-                    throw new InvalidOperationException(
-                        "Could not save upgraded HouseInterior.");
+                    return true;
+                }
+
+                ApplyVisuals(scene, sprites);
+                EnsureMarker(scene);
+                EditorSceneManager.MarkSceneDirty(scene);
+
+                if (openedHere || force)
+                {
+                    saved = EditorSceneManager.SaveScene(
+                        scene,
+                        ProjectSceneNames.HouseInteriorPath);
+                    if (!saved)
+                    {
+                        throw new InvalidOperationException(
+                            "Could not save upgraded HouseInterior.");
+                    }
+                }
+                else
+                {
+                    Debug.Log(
+                        "Cozy Interior art was applied to the open " +
+                        "HouseInterior scene. Save the scene to keep it.");
                 }
             }
             finally
             {
-                if (scene.IsValid() && scene.isLoaded)
+                if (openedHere && scene.IsValid() && scene.isLoaded)
                 {
                     EditorSceneManager.CloseScene(scene, true);
                 }
+
+                if (previousActive.IsValid() && previousActive.isLoaded)
+                {
+                    SceneManager.SetActiveScene(previousActive);
+                }
             }
 
-            sceneImporter = AssetImporter.GetAtPath(ProjectSceneNames.HouseInteriorPath);
-            if (sceneImporter != null)
+            if (saved)
             {
-                sceneImporter.userData = HouseAndSleepScenePipeline.HouseImportSignature;
-                sceneImporter.SaveAndReimport();
+                AssetImporter sceneImporter = AssetImporter.GetAtPath(
+                    ProjectSceneNames.HouseInteriorPath);
+                if (sceneImporter != null)
+                {
+                    sceneImporter.userData =
+                        HouseAndSleepScenePipeline.HouseImportSignature;
+                    sceneImporter.SaveAndReimport();
+                }
+
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
             }
 
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            Debug.Log("Applied Cozy Interior floor, walls, door, rug and bed.");
+            Debug.Log(
+                "Applied Cozy Interior v2: tiled floor and walls, " +
+                "real door, rug and bed. House interaction and sleep " +
+                "components were preserved.");
+            return true;
         }
 
-        private static void ReplacePatch(Scene scene, string objectName, Sprite sprite)
+        private static void ApplyVisuals(
+            Scene scene,
+            IReadOnlyDictionary<string, Sprite> sprites)
         {
-            Transform root = Find(scene, objectName);
-            if (root == null)
+            ReplacePatch(
+                scene,
+                "Wood Floor",
+                sprites["cozy_interior_floor_wood"],
+                new Vector3(1.7f, 1.5f, 1f));
+            ReplacePatch(
+                scene,
+                "Back Interior Wall",
+                sprites["cozy_interior_wall_cream"],
+                new Vector3(1.7f, 1f, 1f));
+            ReplacePatch(
+                scene,
+                "Left Interior Wall",
+                sprites["cozy_interior_wall_cream"],
+                new Vector3(0.55f, 1.48f, 1f));
+            ReplacePatch(
+                scene,
+                "Right Interior Wall",
+                sprites["cozy_interior_wall_cream"],
+                new Vector3(0.55f, 1.48f, 1f));
+
+            ReplaceSingle(
+                scene,
+                "Interior Door",
+                sprites["cozy_interior_door_cream"],
+                new Vector3(0.6f, 0.6f, 1f),
+                new Vector3(0f, -2.35f, 0f),
+                TopDownSortingLayers.World,
+                25);
+
+            ReplaceBed(
+                scene,
+                sprites["cozy_interior_bed_cream"]);
+            ReplaceSingle(
+                scene,
+                "Woven Floor Runner",
+                sprites["cozy_interior_rug_warm"],
+                new Vector3(0.55f, 0.55f, 1f),
+                new Vector3(-0.2f, 0.25f, 0f),
+                TopDownSortingLayers.Ground,
+                -80);
+        }
+
+        private static void ReplacePatch(
+            Scene scene,
+            string objectName,
+            Sprite sprite,
+            Vector3 tileScale)
+        {
+            Transform root = FindRequired(scene, objectName);
+            SpriteRenderer[] renderers =
+                root.GetComponentsInChildren<SpriteRenderer>(true);
+
+            if (renderers.Length == 0)
             {
-                return;
+                throw new InvalidOperationException(
+                    $"'{objectName}' has no SpriteRenderer children.");
             }
 
-            foreach (SpriteRenderer renderer in root.GetComponentsInChildren<SpriteRenderer>(true))
+            foreach (SpriteRenderer renderer in renderers)
             {
+                renderer.enabled = true;
                 renderer.sprite = sprite;
                 renderer.color = Color.white;
-                renderer.transform.localScale = Vector3.one;
+                renderer.transform.localScale = tileScale;
             }
         }
 
@@ -155,35 +240,33 @@ namespace FarmSimulator.Editor
             string objectName,
             Sprite sprite,
             Vector3 scale,
-            Vector3 position)
+            Vector3 position,
+            string sortingLayer,
+            int sortingOrder)
         {
-            Transform target = Find(scene, objectName);
-            if (target == null)
-            {
-                return;
-            }
-
-            SpriteRenderer renderer = target.GetComponent<SpriteRenderer>();
+            Transform target = FindRequired(scene, objectName);
+            SpriteRenderer renderer =
+                target.GetComponent<SpriteRenderer>();
             if (renderer == null)
             {
                 renderer = target.gameObject.AddComponent<SpriteRenderer>();
             }
 
+            renderer.enabled = true;
             renderer.sprite = sprite;
             renderer.color = Color.white;
+            renderer.sortingLayerName = sortingLayer;
+            renderer.sortingOrder = sortingOrder;
             target.localScale = scale;
             target.localPosition = position;
         }
 
         private static void ReplaceBed(Scene scene, Sprite sprite)
         {
-            Transform bed = Find(scene, "Hero Bed");
-            if (bed == null)
-            {
-                return;
-            }
+            Transform bed = FindRequired(scene, "Hero Bed");
 
-            foreach (SpriteRenderer renderer in bed.GetComponentsInChildren<SpriteRenderer>(true))
+            foreach (SpriteRenderer renderer in
+                     bed.GetComponentsInChildren<SpriteRenderer>(true))
             {
                 renderer.enabled = false;
             }
@@ -196,10 +279,12 @@ namespace FarmSimulator.Editor
                 visual.SetParent(bed, false);
             }
 
-            SpriteRenderer bedRenderer = visual.GetComponent<SpriteRenderer>();
+            SpriteRenderer bedRenderer =
+                visual.GetComponent<SpriteRenderer>();
             if (bedRenderer == null)
             {
-                bedRenderer = visual.gameObject.AddComponent<SpriteRenderer>();
+                bedRenderer =
+                    visual.gameObject.AddComponent<SpriteRenderer>();
             }
 
             bedRenderer.enabled = true;
@@ -208,23 +293,54 @@ namespace FarmSimulator.Editor
             bedRenderer.sortingLayerName = TopDownSortingLayers.World;
             bedRenderer.sortingOrder = 34;
             visual.localPosition = Vector3.zero;
-            visual.localScale = new Vector3(0.85f, 0.85f, 1f);
+            visual.localScale = new Vector3(0.65f, 0.65f, 1f);
 
             BoxCollider2D collider = bed.GetComponent<BoxCollider2D>();
-            if (collider != null)
+            if (collider == null)
             {
-                collider.size = new Vector2(1.9f, 2.6f);
-                collider.offset = new Vector2(0f, 0.15f);
+                throw new InvalidOperationException(
+                    "Hero Bed lost its BoxCollider2D.");
             }
+
+            collider.size = new Vector2(1.9f, 2.6f);
+            collider.offset = new Vector2(0f, 0.15f);
+        }
+
+        private static void EnsureMarker(Scene scene)
+        {
+            if (Find(scene, MarkerName) != null)
+            {
+                return;
+            }
+
+            Transform world = FindRequired(scene, "House Interior World");
+            var marker = new GameObject(MarkerName);
+            marker.transform.SetParent(world, false);
+        }
+
+        private static Transform FindRequired(
+            Scene scene,
+            string objectName)
+        {
+            Transform result = Find(scene, objectName);
+            if (result == null)
+            {
+                throw new InvalidOperationException(
+                    $"HouseInterior is missing required object " +
+                    $"'{objectName}'. Rebuild the house scenes first.");
+            }
+
+            return result;
         }
 
         private static Transform Find(Scene scene, string objectName)
         {
             foreach (GameObject root in scene.GetRootGameObjects())
             {
-                Transform[] transforms = root.GetComponentsInChildren<Transform>(true);
-                Transform result = transforms.FirstOrDefault(
-                    candidate => candidate.name == objectName);
+                Transform result = root
+                    .GetComponentsInChildren<Transform>(true)
+                    .FirstOrDefault(
+                        candidate => candidate.name == objectName);
                 if (result != null)
                 {
                     return result;
@@ -232,12 +348,6 @@ namespace FarmSimulator.Editor
             }
 
             return null;
-        }
-
-        private static bool IsOpen(string path)
-        {
-            Scene scene = SceneManager.GetSceneByPath(path);
-            return scene.IsValid() && scene.isLoaded;
         }
     }
 }
