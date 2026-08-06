@@ -83,6 +83,11 @@ namespace FarmSimulator.Presentation.Farming
             carrotStages = ValidateStages(carrotGrowthStages, nameof(carrotGrowthStages));
             cabbageStages = ValidateStages(cabbageGrowthStages, nameof(cabbageGrowthStages));
             ConfigureInteraction("Preparar parcela", interactionPriority: 5);
+
+            // AddComponent invokes OnEnable before editor-time dependencies are assigned.
+            // Render again after configuration so generated scenes serialize the subtle
+            // untilled guide instead of preserving the renderer's temporary disabled state.
+            Render();
         }
 
         public override bool CanInteract(GameObject interactor) =>
