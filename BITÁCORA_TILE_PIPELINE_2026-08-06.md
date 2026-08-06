@@ -102,18 +102,33 @@ Commits del ajuste final:
 - `225157451d83db5ff65161d40c3696328c29b14d`
 - `90dc5b8010853ed7d71b950caed63cce19b73e50`
 
-Estado: **CORREGIDO, pendiente de compilación, validación visual y EditMode local**. No se considera verificado hasta confirmación de Arturo.
+## Cierre del incremento — overlays y origen editable
 
-## Próxima validación
+Antes de integrar la rama se completó la autoría visual de edificios:
 
-1. Hacer Pull y esperar la recompilación.
-2. Reabrir una casa en `Footprint Editor`.
-3. Confirmar que el contador de diez celdas coincide con diez botones activos y con la superposición sobre el sprite.
-4. Pulsar `Save + regenerate prefab` o usar `Regenerate + place on scene grid`.
-5. Eliminar instancias antiguas y colocar una nueva.
-6. Confirmar que Scene muestra exactamente el mismo patrón y número de celdas.
-7. Mover una casa y verificar que la huella la sigue y cambia verde/rojo al intersectar otra máscara.
-8. Ejecutar EditMode completo.
+- el Footprint Editor separa y muestra `Visual bounds`, `Collider` y `Footprint`;
+- la huella de las casas usa por defecto un ancla `(0, 0.5)`, de modo que el borde inferior de la primera fila coincide con la base visual y la celda frontal queda libre para caminos y escalones;
+- `Footprint Origin` permite elegir manualmente dónde comienza la huella, editar el borde inferior, mover el origen con incrementos configurables y regenerar el prefab;
+- la previsualización, el gizmo de Scene, el snap y las colisiones consumen la misma máscara y el mismo origen;
+- Arturo confirmó visualmente que la herramienta quedó mucho mejor y suficientemente estable para integrar el incremento.
+
+Commits finales:
+
+- `927a7659559a1b98233eb34ba4488244ae3520a6` — overlays de visual, collider y footprint;
+- `b4a4965add30604778dcf93c605243e9c9653161` — borde inferior alineado con la base visual;
+- `58792b0201eda41787e88d7a586225b36fbaa82c` — editor explícito del origen de huella;
+- `255ddd6059a3e6272ae1b702289d1d7c9fb84d4b` — metadata del editor de origen.
+
+Estado al integrar: **IMPLEMENTADO y validado visualmente por Arturo**. `BUG-0014` no se marca como `VERIFICADO` en este documento porque no se recibió una nueva confirmación explícita de la suite EditMode después de los dos últimos ajustes de editor.
+
+## Próxima validación en `main`
+
+1. Actualizar `main` después del merge.
+2. Abrir una casa en `Footprint Editor` y confirmar overlays y origen editable.
+3. Regenerar y colocar un prefab.
+4. Confirmar que la celda frontal queda libre para caminos.
+5. Ejecutar EditMode completo.
+6. Marcar `BUG-0014` como `VERIFICADO` únicamente después de esa confirmación.
 
 ## Regla que se mantiene
 
