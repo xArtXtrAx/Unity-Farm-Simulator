@@ -16,7 +16,7 @@ namespace FarmSimulator.Editor
             IReadOnlyList<Vector2Int> previewCells = GetOccupiedCells(
                 previewAnchor,
                 footprint.GridSize);
-            bool blocked = OverlapsAnother(footprint, previewCells);
+            bool blocked = OverlapsAnother(footprint, previewCells, grid);
 
             Handles.color = blocked
                 ? new Color(1f, 0.2f, 0.2f, 0.65f)
@@ -84,7 +84,8 @@ namespace FarmSimulator.Editor
 
         private static bool OverlapsAnother(
             GridBuildingFootprint footprint,
-            IReadOnlyList<Vector2Int> previewCells)
+            IReadOnlyList<Vector2Int> previewCells,
+            Grid grid)
         {
             var preview = new HashSet<Vector2Int>(previewCells);
             foreach (GridBuildingFootprint other in
@@ -98,7 +99,11 @@ namespace FarmSimulator.Editor
                     continue;
                 }
 
-                foreach (Vector2Int occupied in other.GetOccupiedCells())
+                Vector2Int otherAnchor = GetPreviewAnchor(other, grid);
+                IReadOnlyList<Vector2Int> otherCells = GetOccupiedCells(
+                    otherAnchor,
+                    other.GridSize);
+                foreach (Vector2Int occupied in otherCells)
                 {
                     if (preview.Contains(occupied))
                     {
