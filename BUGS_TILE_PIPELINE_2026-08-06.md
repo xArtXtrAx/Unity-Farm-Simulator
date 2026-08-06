@@ -79,16 +79,17 @@ Este archivo complementa `BUGS.MD` durante el PR #14.
 - **Severidad:** S3 — Media.
 - **Detectado:** 2026-08-06.
 - **Sistema:** Farm Development Kit / colocación de edificios.
-- **Comportamiento observado:** primero la casa utilizó una huella automática `6 × 5`; después de migrarla a una máscara `4 × 3`, la huella seguía apareciendo demasiado abajo y algunas colocaciones mostraban una máscara antigua de diez celdas aunque el editor tuviera doce.
+- **Comportamiento observado:** primero la casa utilizó una huella automática `6 × 5`; después de migrarla a una máscara `4 × 3`, la huella seguía apareciendo demasiado abajo y el panel de celdas no mostraba el mismo patrón que la previsualización y Scene.
 - **Causas:**
   1. `GridSize` se derivaba inicialmente de las dimensiones visuales completas.
   2. El generador reutilizable aplicaba `-Baseline`, moviendo el sprite en la dirección opuesta a la composición exterior.
   3. `Place on scene grid` podía instanciar un prefab previamente generado y desactualizado respecto de la definición editada.
-- **Solución:** separar límites visuales y huella lógica; normalizar el prefab reutilizable alrededor del pivote inferior central del sprite; convertir portal, spawn y collider al mismo espacio local de base; y regenerar siempre el prefab antes de colocarlo desde Building Browser.
-- **Autoría:** el Footprint Editor superpone ahora sobre el sprite la misma máscara exacta que usan el prefab, el gizmo de Scene, el snap y las colisiones.
+  4. Los lienzos de ancho par utilizaban dos fórmulas diferentes: la máscara runtime `4 × 3` ocupaba columnas `-2..1`, mientras el panel editor dibujaba `-1..2`. Dos celdas reales quedaban invisibles en el panel aunque sí aparecían en la previsualización y en Scene.
+- **Solución:** separar límites visuales y huella lógica; normalizar el prefab alrededor del pivote inferior central; regenerar antes de colocar; y centralizar el origen horizontal del lienzo en `GridBuildingFootprint.GetCanvasMinimumX()`, reutilizado por runtime y editor.
+- **Autoría:** el Footprint Editor superpone sobre el sprite la misma máscara exacta que usan el prefab, el gizmo de Scene, el snap y las colisiones. Para un ancho de cuatro, las columnas canónicas son `-2, -1, 0, 1` y el ancla `(0,0)` aparece en la tercera columna.
 - **Valor inicial para casas:** lienzo `4 × 3` con diez celdas ocupadas; la fila posterior solo ocupa las dos celdas centrales.
-- **Commits de corrección más recientes:** `79585178ce8f752f2c0172721c861809e5078064`, `7903348eaaccf428faab231ab4ba2099f1a62b61`, `0484756f8cc0e5a1752c72bfb26682af582ee72b`, `e9583964368838c463dd9a1c185020b73091980d`.
-- **Validación pendiente:** regenerar y colocar una casa; confirmar que la máscara coincide exactamente con el editor y con la base visual; comprobar rojo/verde al solapar; ejecutar EditMode completo.
+- **Commits de corrección más recientes:** `dc44fc52663c0303ae6af6657f723c8d21c3091d`, `225157451d83db5ff65161d40c3696328c29b14d`, `90dc5b8010853ed7d71b950caed63cce19b73e50`.
+- **Validación pendiente:** abrir nuevamente una definición `4 × 3`; confirmar que el panel muestra las diez celdas indicadas por el contador y el mismo patrón que la superposición; regenerar, colocar, comprobar rojo/verde y ejecutar EditMode completo.
 
 ## Incidencia de compatibilidad Unity 6
 
@@ -98,18 +99,17 @@ Este archivo complementa `BUGS.MD` durante el PR #14.
 
 ## Estado de pruebas
 
-- Arturo confirmó EditMode completo sin errores antes del último ajuste de normalización de prefabs.
+- Arturo confirmó EditMode completo sin errores antes del último ajuste del origen horizontal de lienzos pares.
 - `BUG-0013` quedó verificado manualmente con DualSense.
 - `BUG-0014` requiere una nueva ejecución de EditMode y validación visual.
 
 ## Validación pendiente
 
 1. actualizar la rama y confirmar que Unity compila;
-2. abrir `Farm Development Kit → Building Browser`;
-3. abrir una casa con `Edit footprint` y comprobar la superposición exacta sobre el sprite;
+2. abrir `Farm Development Kit → Footprint Editor` con una casa `4 × 3`;
+3. confirmar que el panel, el contador y la superposición muestran exactamente las mismas diez celdas;
 4. guardar con `Save + regenerate prefab` o usar `Regenerate + place on scene grid`;
 5. eliminar instancias antiguas y colocar una nueva;
-6. confirmar que el patrón y el número de celdas coinciden con el editor;
-7. comprobar que la máscara sigue la casa y cambia a rojo solo al intersectar otras celdas ocupadas;
-8. ejecutar EditMode completo;
-9. no marcar `BUG-0014` como VERIFICADO hasta recibir confirmación de Arturo.
+6. confirmar que el patrón coincide en Scene y cambia a rojo solo al intersectar otras celdas ocupadas;
+7. ejecutar EditMode completo;
+8. no marcar `BUG-0014` como VERIFICADO hasta recibir confirmación de Arturo.
