@@ -8,6 +8,8 @@ namespace FarmSimulator.Editor
 {
     public static class CozyBuildingGridPlacementUtility
     {
+        private const int PlacementSearchRadius = 24;
+
         [MenuItem("Tools/Farm Simulator/Farm Development Kit/Snap Selected Building To Grid")]
         public static void SnapSelectedToGrid()
         {
@@ -42,18 +44,68 @@ namespace FarmSimulator.Editor
                 : SceneView.lastActiveSceneView.pivot;
             target.z = 0f;
             instance.transform.position = target;
-            if (!SnapToNearestCell(instance))
+
+            if (!PlaceAtNearestFreeCell(instance, PlacementSearchRadius))
             {
                 Undo.DestroyObjectImmediate(instance);
                 EditorUtility.DisplayDialog(
                     "Farm Development Kit",
-                    "The nearest grid footprint is occupied by another building.",
+                    "No free grid footprint was found near the Scene view. Move the Scene view to an open area and try again.",
                     "OK");
                 return null;
             }
 
             Selection.activeGameObject = instance;
+            SceneView.lastActiveSceneView?.FrameSelected();
             return instance;
+        }
+
+        public static bool PlaceAtNearestFreeCell(
+            GameObject instance,
+            int searchRadius)
+        {
+            if (instance == null) throw new ArgumentNullException(nameof(instance));
+            GridBuildingFootprint footprint = instance.GetComponent<GridBuildingFootprint>();
+            if (footprint == null)
+            {
+                return SnapToNearestCell(instance);
+            }
+
+            Grid grid = FindGrid();
+            Vector3Int origin = grid == null
+                ? new Vector3Int(
+                    Mathf.RoundToInt(instance.transform.position.x),
+                    Mathf.RoundToInt(instance.transform.position.y),
+                    0)
+                : grid.WorldToCell(instance.transform.position);
+
+            int radiusLimit = Mathf.Max(0, searchRadius);
+            for (int radius = 0; radius <= radiusLimit; radius++)
+            {
+                for (int y = -radius; y <= radius; y++)
+                {
+                    for (int x = -radius; x <= radius; x++)
+                    {
+                        if (radius > 0 && Mathf.Abs(x) != radius && Mathf.Abs(y) != radius)
+                        {
+                            continue;
+                        }
+
+                        Vector3Int candidate = new Vector3Int(
+                            origin.x + x,
+                            origin.y + y,
+                            0);
+                        SetCell(instance, footprint, grid, candidate);
+                        if (!OverlapsAnother(footprint))
+                        {
+                            EditorUtility.SetDirty(footprint);
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
         }
 
         public static bool SnapToNearestCell(GameObject instance)
@@ -65,39 +117,30 @@ namespace FarmSimulator.Editor
                 ? Vector2Int.zero
                 : footprint.AnchorCell;
 
-            Grid grid = UnityEngine.Object.FindObjectsByType<Grid>(
-                    FindObjectsInactive.Include,
-                    FindObjectsSortMode.None)
-                .FirstOrDefault();
-            Vector3Int cell;
-            Vector3 snappedPosition;
-            if (grid == null)
-            {
-                cell = new Vector3Int(
+            Grid grid = FindGrid();
+            Vector3Int cell = grid == null
+                ? new Vector3Int(
                     Mathf.RoundToInt(instance.transform.position.x),
                     Mathf.RoundToInt(instance.transform.position.y),
-                    0);
-                snappedPosition = new Vector3(cell.x, cell.y, 0f);
-            }
-            else
-            {
-                cell = grid.WorldToCell(instance.transform.position);
-                snappedPosition = grid.GetCellCenterWorld(cell);
-            }
+                    0)
+                : grid.WorldToCell(instance.transform.position);
 
             Undo.RecordObject(instance.transform, "Snap building to grid");
-            instance.transform.position = snappedPosition;
             if (footprint != null)
             {
                 Undo.RecordObject(footprint, "Update building footprint");
-                footprint.SetAnchorCell(new Vector2Int(cell.x, cell.y));
-                if (OverlapsAnother(footprint))
-                {
-                    instance.transform.position = previousPosition;
-                    footprint.SetAnchorCell(previousCell);
-                    return false;
-                }
+            }
 
+            SetCell(instance, footprint, grid, cell);
+            if (footprint != null && OverlapsAnother(footprint))
+            {
+                instance.transform.position = previousPosition;
+                footprint.SetAnchorCell(previousCell);
+                return false;
+            }
+
+            if (footprint != null)
+            {
                 EditorUtility.SetDirty(footprint);
             }
 
@@ -111,6 +154,26 @@ namespace FarmSimulator.Editor
                     FindObjectsInactive.Include,
                     FindObjectsSortMode.None)
                 .Any(other => other != footprint && footprint.Overlaps(other));
+        }
+
+        private static Grid FindGrid()
+        {
+            return UnityEngine.Object.FindObjectsByType<Grid>(
+                    FindObjectsInactive.Include,
+                    FindObjectsSortMode.None)
+                .FirstOrDefault();
+        }
+
+        private static void SetCell(
+            GameObject instance,
+            GridBuildingFootprint footprint,
+            Grid grid,
+            Vector3Int cell)
+        {
+            instance.transform.position = grid == null
+                ? new Vector3(cell.x, cell.y, 0f)
+                : grid.GetCellCenterWorld(cell);
+            footprint?.SetAnchorCell(new Vector2Int(cell.x, cell.y));
         }
     }
 }
