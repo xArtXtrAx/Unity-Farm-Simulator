@@ -34,7 +34,7 @@ namespace FarmSimulator.Editor
                 "Farm Development Kit — Buildings",
                 EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "Browse reusable building definitions by category. Houses are populated from the validated Full-Pack catalog; the remaining categories are ready for the next atlas-registration increments.",
+                "Browse definitions, generate reusable prefabs and apply house variants without editing scene internals manually.",
                 MessageType.Info);
 
             CozyBuildingCategory nextCategory =
@@ -54,10 +54,18 @@ namespace FarmSimulator.Editor
                     Reload();
                 }
 
-                if (GUILayout.Button("Generate building sprites", GUILayout.Height(26f)))
+                if (GUILayout.Button("Generate sprites", GUILayout.Height(26f)))
                 {
                     CozyFarmBuildingCatalog.EnsureAssets();
                     CozyFarmBuildingRegistry.Rebuild();
+                    Reload();
+                }
+
+                if (GUILayout.Button("Generate all prefabs", GUILayout.Height(26f)))
+                {
+                    IReadOnlyList<CozyBuildingDefinition> rebuilt =
+                        CozyFarmBuildingRegistry.Rebuild();
+                    CozyFarmBuildingPrefabGenerator.GenerateAll(rebuilt);
                     Reload();
                 }
             }
@@ -110,6 +118,9 @@ namespace FarmSimulator.Editor
                         EditorGUILayout.LabelField("Atlas", definition.AtlasRect.ToString());
                         EditorGUILayout.LabelField("Grid size", definition.GridSize.ToString());
                         EditorGUILayout.LabelField(
+                            "Prefab",
+                            definition.GeneratedPrefab == null ? "Not generated" : "Ready");
+                        EditorGUILayout.LabelField(
                             "Interior",
                             definition.SupportsInterior ? "Supported" : "None");
 
@@ -133,6 +144,43 @@ namespace FarmSimulator.Editor
                     {
                         Selection.activeObject = definition.GeneratedSprite;
                         EditorGUIUtility.PingObject(definition.GeneratedSprite);
+                    }
+
+                    if (GUILayout.Button("Generate prefab"))
+                    {
+                        CozyFarmBuildingPrefabGenerator.Generate(definition);
+                        Reload();
+                    }
+
+                    using (new EditorGUI.DisabledScope(
+                               definition.GeneratedPrefab == null))
+                    {
+                        if (GUILayout.Button("Locate prefab"))
+                        {
+                            Selection.activeObject = definition.GeneratedPrefab;
+                            EditorGUIUtility.PingObject(definition.GeneratedPrefab);
+                        }
+                    }
+                }
+
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    using (new EditorGUI.DisabledScope(
+                               definition.GeneratedPrefab == null))
+                    {
+                        if (GUILayout.Button("Place prefab in current scene"))
+                        {
+                            GameObject instance = PrefabUtility.InstantiatePrefab(
+                                definition.GeneratedPrefab) as GameObject;
+                            if (instance != null)
+                            {
+                                instance.transform.position = Vector3.zero;
+                                Undo.RegisterCreatedObjectUndo(
+                                    instance,
+                                    "Place Cozy building prefab");
+                                Selection.activeGameObject = instance;
+                            }
+                        }
                     }
 
                     using (new EditorGUI.DisabledScope(
