@@ -24,6 +24,35 @@ Registro histórico de errores detectados, investigados y corregidos durante el 
 
 ## Bugs activos
 
+## BUG-0014 — La huella lógica de los edificios no coincide con la base visual
+
+- **Estado:** CORREGIDO
+- **Severidad:** S3 — Media
+- **Detectado:** 2026-08-06
+- **Sistema:** Farm Development Kit / prefabs de edificios
+- **Rama afectada:** `agent/cozy-art-pipeline`
+- **Correcciones funcionales:** `79585178ce8f752f2c0172721c861809e5078064`, `7903348eaaccf428faab231ab4ba2099f1a62b61`, `0484756f8cc0e5a1752c72bfb26682af582ee72b`
+- **Prueba de regresión:** `e9583964368838c463dd9a1c185020b73091980d`
+- **Reportado por:** Arturo
+
+### Comportamiento observado
+
+La máscara `4 × 3` aparecía demasiado abajo respecto de la casa. Además, el Footprint Editor podía mostrar doce celdas mientras `Place on scene grid` instanciaba todavía una versión anterior del prefab con diez celdas.
+
+### Causa raíz
+
+El generador reutilizable aplicaba el baseline con signo invertido (`-Baseline`) aunque los sprites generados tienen pivote inferior central. Esto desplazaba el visual hacia arriba respecto del origen lógico. El Building Browser también podía reutilizar un prefab desactualizado después de editar la definición.
+
+### Solución aplicada
+
+Los prefabs reutilizables se normalizan ahora alrededor de la base inferior central del sprite. El visual queda en `(0, 0)` y portal, spawn y collider se convierten al mismo espacio local. El Building Browser regenera el prefab antes de colocarlo. El Footprint Editor dibuja sobre el sprite la misma máscara exacta utilizada por el prefab, el gizmo de Scene, el snap y las colisiones.
+
+### Validación pendiente
+
+Eliminar las instancias anteriores, colocar una casa con `Regenerate + place on scene grid`, confirmar coincidencia exacta entre editor y Scene, probar colisiones verde/rojo y ejecutar EditMode completo. No pasar a **VERIFICADO** hasta recibir confirmación local.
+
+---
+
 ## BUG-0011 — Regresión de compilación por uso de LINQ en `FarmPlotBehaviour`
 
 - **Estado:** CORREGIDO
@@ -252,6 +281,7 @@ Se separaron el suelo lógico 2D y su representación visual.
 
 ### 2026-08-06
 
+- Se registró `BUG-0014` por la discrepancia entre la base visual, la máscara lógica y prefabs desactualizados; quedó corregido pendiente de validación local.
 - Se registró `BUG-0011` por la regresión de compilación en `FarmPlotBehaviour` y quedó corregido pendiente de validación local.
 - Se documentó la decisión de representar cultivos como entidades runtime con `SpriteRenderer` y reservar Tilemaps para el mundo.
 - Se verificaron `BUG-0007` y `BUG-0008`.
