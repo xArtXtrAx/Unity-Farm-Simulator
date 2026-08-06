@@ -258,12 +258,16 @@ namespace FarmSimulator.Presentation.Farming
             }
 
             var copy = (Sprite[])stages.Clone();
-            if (copy.Any(sprite => sprite == null))
+            for (int index = 0; index < copy.Length; index++)
             {
-                throw new ArgumentException(
-                    "Crop visual stages cannot contain null sprites.",
-                    parameterName);
+                if (copy[index] == null)
+                {
+                    throw new ArgumentException(
+                        "Crop visual stages cannot contain null sprites.",
+                        parameterName);
+                }
             }
+
             return copy;
         }
     }
