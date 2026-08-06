@@ -16,6 +16,11 @@ namespace FarmSimulator.Presentation.Farming
         public const float MaximumCropHeight = 0.86f;
         public const float CropBaseline = 0f;
 
+        private static readonly Color UntilledGuideColor =
+            new Color32(128, 105, 72, 82);
+        private static readonly Color WateredSoilColor =
+            new Color32(116, 92, 72, 255);
+
         [SerializeField] private string plotId;
         [SerializeField] private SpriteRenderer soilRenderer;
         [SerializeField] private SpriteRenderer cropRenderer;
@@ -132,10 +137,12 @@ namespace FarmSimulator.Presentation.Farming
 
             FarmPlotState state = State;
             soilRenderer.sprite = tilledSoilSprite;
-            soilRenderer.enabled = state.IsTilled;
-            soilRenderer.color = state.IsWatered
-                ? new Color32(116, 92, 72, 255)
-                : Color.white;
+            soilRenderer.enabled = true;
+            soilRenderer.color = !state.IsTilled
+                ? UntilledGuideColor
+                : state.IsWatered
+                    ? WateredSoilColor
+                    : Color.white;
 
             if (!state.HasCrop)
             {
@@ -260,14 +267,11 @@ namespace FarmSimulator.Presentation.Farming
             var copy = (Sprite[])stages.Clone();
             for (int index = 0; index < copy.Length; index++)
             {
-                if (copy[index] == null)
-                {
-                    throw new ArgumentException(
-                        "Crop visual stages cannot contain null sprites.",
-                        parameterName);
-                }
+                if (copy[index] != null) continue;
+                throw new ArgumentException(
+                    "Crop visual stages cannot contain null sprites.",
+                    parameterName);
             }
-
             return copy;
         }
     }
