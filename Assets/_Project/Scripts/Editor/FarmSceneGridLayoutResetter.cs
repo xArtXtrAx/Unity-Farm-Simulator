@@ -9,7 +9,11 @@ using UnityEngine.SceneManagement;
 
 namespace FarmSimulator.Editor
 {
-    [InitializeOnLoad]
+    /// <summary>
+    /// Legacy one-shot starter-layout generator retained only for explicit recovery.
+    /// It must never run automatically because it rebuilds Farm from an older layout
+    /// and can overwrite authored Tilemaps and placed buildings.
+    /// </summary>
     public static class FarmSceneGridLayoutResetter
     {
         public const string LayoutRootName = "Farm Grid Layout v1";
@@ -23,27 +27,33 @@ namespace FarmSimulator.Editor
             "Fence Border",
         };
 
-        static FarmSceneGridLayoutResetter()
-        {
-            EditorApplication.delayCall += EnsureApplied;
-        }
-
-        [MenuItem("Tools/Farm Simulator/Reset Farm To Grid Starter Layout")]
+        [MenuItem("Tools/Farm Simulator/Legacy/Reset Farm To Old Starter Layout")]
         public static void ApplyFromMenu()
         {
-            Apply(force: true);
+            bool proceed = EditorUtility.DisplayDialog(
+                "Legacy farm reset",
+                "This command rebuilds Farm using the obsolete starter layout and can " +
+                "overwrite hand-painted Tilemaps, placed buildings and scene authoring.\n\n" +
+                "Use it only for deliberate legacy recovery.",
+                "Proceed anyway",
+                "Cancel");
+            if (proceed)
+            {
+                Apply(force: true);
+            }
         }
 
+        /// <summary>
+        /// Kept for source compatibility. Automatic scene mutation is intentionally disabled.
+        /// </summary>
         public static void EnsureApplied()
         {
-            Apply(force: false);
         }
 
         private static void Apply(bool force)
         {
             if (EditorApplication.isCompiling || EditorApplication.isUpdating)
             {
-                EditorApplication.delayCall += EnsureApplied;
                 return;
             }
 
@@ -134,8 +144,8 @@ namespace FarmSimulator.Editor
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log(
-                "Reset Farm to grid starter layout: house, nine plots, right bench and left lamp.");
+            Debug.LogWarning(
+                "Applied obsolete Farm Grid Layout v1 by explicit request.");
         }
 
         private static bool IsAlreadyApplied()
