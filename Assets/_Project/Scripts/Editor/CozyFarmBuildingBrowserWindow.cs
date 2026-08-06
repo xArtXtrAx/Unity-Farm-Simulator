@@ -28,7 +28,7 @@ namespace FarmSimulator.Editor
         {
             EditorGUILayout.LabelField("Farm Development Kit — Buildings", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "Browse definitions, generate reusable prefabs and place them directly on the active scene grid.",
+                "Browse definitions, author logical ground footprints, generate reusable prefabs and place them directly on the active scene grid.",
                 MessageType.Info);
 
             CozyBuildingCategory nextCategory =
@@ -92,7 +92,8 @@ namespace FarmSimulator.Editor
                         EditorGUILayout.LabelField(definition.DisplayName, EditorStyles.boldLabel);
                         EditorGUILayout.LabelField("ID", definition.Id);
                         EditorGUILayout.LabelField("Atlas", definition.AtlasRect.ToString());
-                        EditorGUILayout.LabelField("Grid size", definition.GridSize.ToString());
+                        EditorGUILayout.LabelField("Footprint canvas", definition.GridSize.ToString());
+                        EditorGUILayout.LabelField("Occupied cells", definition.FootprintOffsets.Count.ToString());
                         EditorGUILayout.LabelField("Prefab", definition.GeneratedPrefab == null ? "Not generated" : "Ready");
                         EditorGUILayout.LabelField("Interior", definition.SupportsInterior ? "Supported" : "None");
                         if (GUILayout.Button("Select"))
@@ -112,6 +113,11 @@ namespace FarmSimulator.Editor
                     {
                         Selection.activeObject = definition.GeneratedSprite;
                         EditorGUIUtility.PingObject(definition.GeneratedSprite);
+                    }
+                    if (GUILayout.Button("Edit footprint"))
+                    {
+                        Selection.activeObject = definition;
+                        CozyBuildingFootprintWindow.Open(definition);
                     }
                     if (GUILayout.Button("Generate prefab"))
                     {
