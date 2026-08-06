@@ -286,13 +286,17 @@ namespace FarmSimulator.Editor
             importer.textureType = TextureImporterType.Sprite;
             importer.spriteImportMode = SpriteImportMode.Single;
             importer.spritePixelsPerUnit = PixelsPerCell;
-            importer.spriteAlignment = (int)SpriteAlignment.Custom;
-            importer.spritePivot = pivot;
             importer.filterMode = FilterMode.Point;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.mipmapEnabled = false;
             importer.alphaIsTransparency = true;
             importer.wrapMode = TextureWrapMode.Clamp;
+
+            var spriteSettings = new TextureImporterSettings();
+            importer.ReadTextureSettings(spriteSettings);
+            spriteSettings.spriteAlignment = (int)SpriteAlignment.Custom;
+            spriteSettings.spritePivot = pivot;
+            importer.SetTextureSettings(spriteSettings);
             importer.SaveAndReimport();
         }
 
