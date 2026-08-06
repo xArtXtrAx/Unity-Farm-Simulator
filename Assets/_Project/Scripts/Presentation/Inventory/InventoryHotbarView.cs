@@ -34,15 +34,11 @@ namespace FarmSimulator.Presentation.Inventory
             Text slotQuantity)
         {
             root = slotRoot ?? throw new ArgumentNullException(nameof(slotRoot));
-            background = slotBackground ??
-                throw new ArgumentNullException(nameof(slotBackground));
+            background = slotBackground ?? throw new ArgumentNullException(nameof(slotBackground));
             icon = slotIcon ?? throw new ArgumentNullException(nameof(slotIcon));
-            numberText = slotNumber ??
-                throw new ArgumentNullException(nameof(slotNumber));
-            placeholderText = slotPlaceholder ??
-                throw new ArgumentNullException(nameof(slotPlaceholder));
-            quantityText = slotQuantity ??
-                throw new ArgumentNullException(nameof(slotQuantity));
+            numberText = slotNumber ?? throw new ArgumentNullException(nameof(slotNumber));
+            placeholderText = slotPlaceholder ?? throw new ArgumentNullException(nameof(slotPlaceholder));
+            quantityText = slotQuantity ?? throw new ArgumentNullException(nameof(slotQuantity));
         }
 
         public void Render(
@@ -53,21 +49,13 @@ namespace FarmSimulator.Presentation.Inventory
             Color normalNumber,
             Color selectedNumber)
         {
-            background.color = presentation.Selected
-                ? selectedFill
-                : normalFill;
-            numberText.color = presentation.Selected
-                ? selectedNumber
-                : normalNumber;
-
+            background.color = presentation.Selected ? selectedFill : normalFill;
+            numberText.color = presentation.Selected ? selectedNumber : normalNumber;
             bool hasSprite = itemSprite != null;
             icon.enabled = hasSprite;
             icon.sprite = itemSprite;
-            placeholderText.gameObject.SetActive(
-                !presentation.IsEmpty && !hasSprite);
-            placeholderText.text = hasSprite
-                ? string.Empty
-                : presentation.ShortLabel;
+            placeholderText.gameObject.SetActive(!presentation.IsEmpty && !hasSprite);
+            placeholderText.text = hasSprite ? string.Empty : presentation.ShortLabel;
             quantityText.text = presentation.Quantity > 1
                 ? $"×{presentation.Quantity}"
                 : string.Empty;
@@ -77,14 +65,14 @@ namespace FarmSimulator.Presentation.Inventory
     [DisallowMultipleComponent]
     public sealed class InventoryHotbarView : MonoBehaviour
     {
-        public static readonly Color NormalSlotColor =
-            new Color32(38, 49, 38, 240);
-        public static readonly Color SelectedSlotColor =
-            new Color32(86, 99, 61, 255);
-        public static readonly Color NormalNumberColor =
-            new Color32(216, 207, 170, 255);
-        public static readonly Color SelectedNumberColor =
-            new Color32(255, 242, 168, 255);
+        public static readonly Color NormalSlotColor = new Color32(38, 49, 38, 240);
+        public static readonly Color SelectedSlotColor = new Color32(86, 99, 61, 255);
+        public static readonly Color NormalNumberColor = new Color32(216, 207, 170, 255);
+        public static readonly Color SelectedNumberColor = new Color32(255, 242, 168, 255);
+
+        private const float CycleInputDebounceSeconds = 0.12f;
+        private static int lastConsumedCycleFrame = -1;
+        private static float lastConsumedCycleTime = float.NegativeInfinity;
 
         [SerializeField] private Text selectedItemText;
         [SerializeField] private InventoryHotbarSlotView[] slots;
@@ -97,8 +85,8 @@ namespace FarmSimulator.Presentation.Inventory
 
         public int SlotCount => slots?.Length ?? 0;
         public int SelectedIndex => model?.SelectedIndex ?? -1;
-        public string SelectedItemName =>
-            model?.SelectedItemName ?? string.Empty;
+        public string SelectedItemName => model?.SelectedItemName ?? string.Empty;
+        public bool IsInitialized => model != null;
         public Text SelectedItemText => selectedItemText;
         public IReadOnlyList<InventoryHotbarSlotView> Slots => slots;
         public IReadOnlyList<string> IconItemIds => iconItemIds;
@@ -123,7 +111,7 @@ namespace FarmSimulator.Presentation.Inventory
             }
 
             int cycle = ReadCycleInput();
-            if (cycle != 0)
+            if (cycle != 0 && TryConsumeCycleInput())
             {
                 CycleSelection(cycle);
             }
@@ -135,14 +123,10 @@ namespace FarmSimulator.Presentation.Inventory
             string[] mappedItemIds,
             Sprite[] mappedSprites)
         {
-            selectedItemText = selectedLabel ??
-                throw new ArgumentNullException(nameof(selectedLabel));
-            slots = slotViews ??
-                throw new ArgumentNullException(nameof(slotViews));
-            iconItemIds = mappedItemIds ??
-                throw new ArgumentNullException(nameof(mappedItemIds));
-            iconSprites = mappedSprites ??
-                throw new ArgumentNullException(nameof(mappedSprites));
+            selectedItemText = selectedLabel ?? throw new ArgumentNullException(nameof(selectedLabel));
+            slots = slotViews ?? throw new ArgumentNullException(nameof(slotViews));
+            iconItemIds = mappedItemIds ?? throw new ArgumentNullException(nameof(mappedItemIds));
+            iconSprites = mappedSprites ?? throw new ArgumentNullException(nameof(mappedSprites));
 
             if (slots.Length != InventoryHotbarAssetCatalog.SlotCount)
             {
@@ -164,8 +148,7 @@ namespace FarmSimulator.Presentation.Inventory
         {
             BuildIconLookup();
             model = new HotbarPresentationModel(
-                inventoryState ??
-                throw new ArgumentNullException(nameof(inventoryState)));
+                inventoryState ?? throw new ArgumentNullException(nameof(inventoryState)));
             Refresh();
         }
 
@@ -173,11 +156,7 @@ namespace FarmSimulator.Presentation.Inventory
         {
             EnsureInitialized();
             bool changed = model.SelectSlot(index);
-            if (changed)
-            {
-                Refresh();
-            }
-
+            if (changed) Refresh();
             return changed;
         }
 
@@ -185,12 +164,19 @@ namespace FarmSimulator.Presentation.Inventory
         {
             EnsureInitialized();
             bool changed = model.CycleSelection(delta);
-            if (changed)
+            if (changed) Refresh();
+            return changed;
+        }
+
+        public bool TryRefresh()
+        {
+            if (!IsInitialized || !ReferencesAreReady())
             {
-                Refresh();
+                return false;
             }
 
-            return changed;
+            Refresh();
+            return true;
         }
 
         public void Refresh()
@@ -198,17 +184,14 @@ namespace FarmSimulator.Presentation.Inventory
             EnsureReferences();
             EnsureInitialized();
 
-            IReadOnlyList<HotbarSlotPresentation> snapshot =
-                model.Snapshot();
+            IReadOnlyList<HotbarSlotPresentation> snapshot = model.Snapshot();
             for (int index = 0; index < snapshot.Count; index++)
             {
                 HotbarSlotPresentation presentation = snapshot[index];
                 Sprite sprite = null;
                 if (presentation.ItemId != null)
                 {
-                    iconsByItemId.TryGetValue(
-                        presentation.ItemId,
-                        out sprite);
+                    iconsByItemId.TryGetValue(presentation.ItemId, out sprite);
                 }
 
                 slots[index].Render(
@@ -230,7 +213,6 @@ namespace FarmSimulator.Presentation.Inventory
             {
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
-
             return slots[index];
         }
 
@@ -241,29 +223,19 @@ namespace FarmSimulator.Presentation.Inventory
                 sprite = null;
                 return false;
             }
-
-            return iconsByItemId.TryGetValue(itemId, out sprite) &&
-                sprite != null;
+            return iconsByItemId.TryGetValue(itemId, out sprite) && sprite != null;
         }
 
         private void BuildIconLookup()
         {
             iconsByItemId.Clear();
-            if (iconItemIds == null || iconSprites == null)
-            {
-                return;
-            }
-
+            if (iconItemIds == null || iconSprites == null) return;
             int count = Mathf.Min(iconItemIds.Length, iconSprites.Length);
             for (int index = 0; index < count; index++)
             {
                 string itemId = iconItemIds[index];
                 Sprite sprite = iconSprites[index];
-                if (string.IsNullOrEmpty(itemId) || sprite == null)
-                {
-                    continue;
-                }
-
+                if (string.IsNullOrEmpty(itemId) || sprite == null) continue;
                 iconsByItemId[itemId] = sprite;
             }
         }
@@ -271,11 +243,7 @@ namespace FarmSimulator.Presentation.Inventory
         private static int ReadDirectSlotIndex()
         {
             Keyboard keyboard = Keyboard.current;
-            if (keyboard == null)
-            {
-                return -1;
-            }
-
+            if (keyboard == null) return -1;
             if (keyboard.digit1Key.wasPressedThisFrame || keyboard.numpad1Key.wasPressedThisFrame) return 0;
             if (keyboard.digit2Key.wasPressedThisFrame || keyboard.numpad2Key.wasPressedThisFrame) return 1;
             if (keyboard.digit3Key.wasPressedThisFrame || keyboard.numpad3Key.wasPressedThisFrame) return 2;
@@ -290,37 +258,33 @@ namespace FarmSimulator.Presentation.Inventory
         private static int ReadCycleInput()
         {
             Gamepad gamepad = Gamepad.current;
-            if (gamepad == null && Gamepad.all.Count > 0)
-            {
-                gamepad = Gamepad.all[0];
-            }
-
+            if (gamepad == null && Gamepad.all.Count > 0) gamepad = Gamepad.all[0];
             if (gamepad != null)
             {
-                if (gamepad.leftShoulder.wasPressedThisFrame)
-                {
-                    return -1;
-                }
-
-                if (gamepad.rightShoulder.wasPressedThisFrame)
-                {
-                    return 1;
-                }
+                if (gamepad.leftShoulder.wasPressedThisFrame) return -1;
+                if (gamepad.rightShoulder.wasPressedThisFrame) return 1;
             }
 
             Mouse mouse = Mouse.current;
-            if (mouse == null)
-            {
-                return 0;
-            }
-
+            if (mouse == null) return 0;
             float scroll = mouse.scroll.ReadValue().y;
-            if (scroll > 0.01f)
+            if (scroll > 0.01f) return -1;
+            return scroll < -0.01f ? 1 : 0;
+        }
+
+        private static bool TryConsumeCycleInput()
+        {
+            int frame = global::UnityEngine.Time.frameCount;
+            float now = global::UnityEngine.Time.unscaledTime;
+            if (lastConsumedCycleFrame == frame ||
+                now - lastConsumedCycleTime < CycleInputDebounceSeconds)
             {
-                return -1;
+                return false;
             }
 
-            return scroll < -0.01f ? 1 : 0;
+            lastConsumedCycleFrame = frame;
+            lastConsumedCycleTime = now;
+            return true;
         }
 
         private void EnsureInitialized()
@@ -332,10 +296,16 @@ namespace FarmSimulator.Presentation.Inventory
             }
         }
 
+        private bool ReferencesAreReady()
+        {
+            return selectedItemText != null &&
+                slots != null &&
+                slots.Length == InventoryHotbarAssetCatalog.SlotCount;
+        }
+
         private void EnsureReferences()
         {
-            if (selectedItemText == null || slots == null ||
-                slots.Length != InventoryHotbarAssetCatalog.SlotCount)
+            if (!ReferencesAreReady())
             {
                 throw new InvalidOperationException(
                     "Inventory hotbar prefab references are incomplete.");

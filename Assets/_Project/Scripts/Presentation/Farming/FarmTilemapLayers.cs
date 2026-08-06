@@ -9,26 +9,26 @@ namespace FarmSimulator.Presentation.Farming
     {
         [SerializeField] private Tilemap ground;
         [SerializeField] private Tilemap paths;
-        [SerializeField] private Tilemap farming;
+        [SerializeField] private Tilemap soil;
         [SerializeField] private Tilemap decoration;
 
         public Tilemap Ground => ground;
         public Tilemap Paths => paths;
-        public Tilemap Farming => farming;
+        public Tilemap Soil => soil;
         public Tilemap Decoration => decoration;
 
         public void Configure(
             Tilemap groundLayer,
             Tilemap pathLayer,
-            Tilemap farmingLayer,
+            Tilemap soilLayer,
             Tilemap decorationLayer)
         {
             ground = groundLayer ??
                 throw new ArgumentNullException(nameof(groundLayer));
             paths = pathLayer ??
                 throw new ArgumentNullException(nameof(pathLayer));
-            farming = farmingLayer ??
-                throw new ArgumentNullException(nameof(farmingLayer));
+            soil = soilLayer ??
+                throw new ArgumentNullException(nameof(soilLayer));
             decoration = decorationLayer ??
                 throw new ArgumentNullException(nameof(decorationLayer));
         }

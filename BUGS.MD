@@ -24,7 +24,167 @@ Registro histórico de errores detectados, investigados y corregidos durante el 
 
 ## Bugs activos
 
-No hay bugs activos.
+## BUG-0014 — El panel del Footprint Editor no representaba todas las celdas guardadas
+
+- **Estado:** CORREGIDO
+- **Severidad:** S3 — Media
+- **Detectado:** 2026-08-06
+- **Sistema:** Farm Development Kit / huellas lógicas de edificios
+- **Rama afectada:** `agent/cozy-art-pipeline`
+- **Correcciones:** `dc44fc52663c0303ae6af6657f723c8d21c3091d`, `225157451d83db5ff65161d40c3696328c29b14d`
+- **Prueba de regresión:** `90dc5b8010853ed7d71b950caed63cce19b73e50`
+- **Reportado por:** Arturo
+
+### Comportamiento observado
+
+En una huella `4 × 3`, el contador y la superposición sobre el sprite indicaban diez celdas ocupadas, pero el panel de botones solo mostraba ocho. La máscara de Scene parecía distinta de la matriz editada.
+
+### Causa raíz
+
+La máscara runtime y el valor predeterminado de las casas utilizaban columnas `-2, -1, 0, 1`. El panel del editor calculaba el inicio horizontal con otra fórmula y mostraba `-1, 0, 1, 2`. Las dos celdas de la columna `-2` existían y participaban en colisiones, pero no podían verse ni editarse desde el panel.
+
+### Solución aplicada
+
+Se centralizó el origen horizontal en `GridBuildingFootprint.GetCanvasMinimumX()` y la enumeración del lienzo en `CreateRectangleOffsets()`. Runtime, relleno rectangular y panel editor comparten ahora la misma convención. En un ancho de cuatro, el ancla `(0,0)` aparece en la tercera columna y las diez celdas guardadas deben ser visibles.
+
+### Validación pendiente
+
+Confirmar en Unity que contador, matriz, previsualización y Scene muestran el mismo patrón; regenerar el prefab y ejecutar EditMode completo. No pasar a **VERIFICADO** hasta recibir confirmación local.
+
+---
+
+## BUG-0011 — Regresión de compilación por uso de LINQ en `FarmPlotBehaviour`
+
+- **Estado:** CORREGIDO
+- **Severidad:** S0 — Bloqueante
+- **Detectado:** 2026-08-06
+- **Sistema:** agricultura runtime / validación de sprites
+- **Rama afectada:** `agent/cozy-art-pipeline`
+- **Corrección funcional:** `02d1d696137a2692983e02d342ded5a7f41020df`
+- **Reportado por:** Arturo
+
+### Comportamiento observado
+
+Unity detenía la compilación con:
+
+```text
+CS1061: 'Sprite[]' does not contain a definition for 'Any'
+```
+
+El error aparecía en `FarmPlotBehaviour.ValidateStages()` después de migrar los cultivos desde Tilemap a entidades visuales con `SpriteRenderer`.
+
+### Causa raíz
+
+La validación utilizaba `copy.Any(sprite => sprite == null)` sin importar `System.Linq`. El código dependía implícitamente de LINQ dentro de un ensamblado que no tenía esa extensión disponible.
+
+### Solución aplicada
+
+Se reemplazó `Any()` por un ciclo explícito que recorre el arreglo y lanza la misma excepción cuando encuentra una etapa nula. La solución elimina la dependencia de LINQ y evita asignaciones innecesarias.
+
+### Validación pendiente
+
+Confirmar que Unity compila sin errores y ejecutar las suites completas EditMode y PlayMode. El bug pasará a **VERIFICADO** después de esa validación local.
+
+---
+
+## BUG-0010 — Los cultivos no conservan transparencia ni una base visual común
+
+- **Estado:** CORREGIDO
+- **Severidad:** S2 — Alta
+- **Detectado:** 2026-08-06
+- **Sistema:** Cozy Farm Tile Palette / agricultura
+- **Rama afectada:** `agent/cozy-art-pipeline`
+- **Corrección funcional:** `3fbd03dafb59aeb53f8e313e9d9e13eb531adeeb`
+- **Prueba de regresión:** `067aa4f43416c6ff836eb68c44e12e125f481513`
+- **Reportado por:** Arturo
+
+### Comportamiento observado
+
+Las semillas y algunas etapas de crecimiento aparecían como cuadros opacos, reemplazaban visualmente la tierra y quedaban desplazadas hacia arriba respecto de la celda.
+
+### Causa raíz
+
+Los tiles usaban directamente los recortes de `crops.png`. Algunas regiones conservaban un color de fondo opaco y, aunque el importador tenía `Alpha Is Transparency`, esos píxeles seguían siendo opacos. La paleta tampoco generaba una versión normalizada con pivote verificable.
+
+### Solución aplicada
+
+La solución final abandona los cultivos como tiles pintables. El catálogo genera 18 sprites transparentes para runtime y cada parcela los representa mediante `Crop Entity Visual`, un `SpriteRenderer` controlado por `FarmPlotBehaviour`. El cultivo ya no puede sustituir el suelo porque no ocupa una celda del Tilemap.
+
+### Validación pendiente
+
+Arar, sembrar, dormir y cosechar en Play Mode; confirmar que el suelo permanece visible y que las etapas cambian sobre la parcela sin cuadros opacos.
+
+---
+
+## BUG-0009 — Tierra arada y cultivo comparten una sola celda del mismo Tilemap
+
+- **Estado:** CORREGIDO
+- **Severidad:** S2 — Alta
+- **Detectado:** 2026-08-06
+- **Sistema:** Farm Tile Manager / Tilemaps agrícolas
+- **Rama afectada:** `agent/cozy-art-pipeline`
+- **Corrección funcional:** `94bb3fba22b8e609cf568a4abe9fe880dda3dee5`, `d1a7654d3b6c574eddd252c63067b9bdeb0727ef`, `5f30046020c8e6181c2f596b0b9f0812436e65cb`
+- **Prueba de regresión:** `067aa4f43416c6ff836eb68c44e12e125f481513`
+- **Reportado por:** Arturo
+
+### Comportamiento observado
+
+Al colocar una etapa de cultivo sobre una celda de tierra arada, el cultivo sustituía al tile de tierra. No era posible conservar ambos simultáneamente.
+
+### Causa raíz
+
+La escena y el Tile Manager utilizaban un único Tilemap `Farming`. Unity permite un solo tile por celda y Tilemap, por lo que la segunda pintura reemplazaba la primera.
+
+### Solución aplicada
+
+La solución final separa responsabilidades:
+
+```text
+Farm Authoring Grid
+├── Ground
+├── Paths
+├── Soil
+└── Decoration
+
+Farm Plot Field
+└── Crop Entity Visual (SpriteRenderer)
+```
+
+El suelo permanece en Tilemap y los cultivos son entidades runtime. Ya no existe una paleta ni un Tilemap `Crops`.
+
+### Validación pendiente
+
+Comprobar el ciclo agrícola completo y verificar que sembrar nunca modifica el Tilemap de suelo.
+
+---
+
+## BUG-0008 — Las pruebas PlayMode del hotbar dependen del orden de ejecución
+
+- **Estado:** VERIFICADO
+- **Severidad:** S3 — Media
+- **Detectado:** 2026-08-06
+- **Corregido/verificado:** 2026-08-06
+- **Sistema:** inventario persistente / pruebas PlayMode
+- **Rama afectada:** `agent/cozy-art-pipeline`
+- **Corrección funcional:** `d6e7e1c3ef898cbae62120ad98680a7e9c3c80b0`
+- **Reportado por:** Arturo
+
+Una prueba dejaba seleccionada la regadera y otra esperaba el slot cero. Al persistir el inventario entre escenas, el resultado dependía del orden. Ambas pruebas normalizan ahora explícitamente la selección inicial. Arturo confirmó **10/10 PlayMode**.
+
+---
+
+## BUG-0007 — Refactor de paletas rompe la compilación de pruebas EditMode
+
+- **Estado:** VERIFICADO
+- **Severidad:** S0 — Bloqueante
+- **Detectado:** 2026-08-06
+- **Corregido/verificado:** 2026-08-06
+- **Sistema:** catálogo de Tile Palettes / pruebas EditMode
+- **Rama afectada:** `agent/cozy-art-pipeline`
+- **Correcciones:** `40a5fc823b912e3261e77e307dfe9c56a2aa43a5`, `8b7bc2241469cc227677b2885d76d901884e25d3`
+- **Reportado por:** Arturo
+
+Las pruebas conservaban referencias a `PalettePrefabPath` y después a constantes de categoría inexistentes. Se migraron a `GetPalettePath(CozyPaletteCategory)`. Arturo confirmó que todas las pruebas EditMode volvieron a aparecer y pasaron.
 
 ---
 
@@ -44,41 +204,7 @@ No hay bugs activos.
 - **Prueba de regresión:** `e93efe9`
 - **Reportado por:** Arturo
 
-### Comportamiento observado
-
-Durante Play Mode, `Playable Player Sprite` cambiaba correctamente su `Order in Layer` aproximadamente entre **9600 y 10400**, pero el personaje se dibujaba siempre por encima de todos los objetos visibles del laboratorio. No existía una referencia con la que pudiera comprobarse visualmente el cambio delante/detrás.
-
-### Comportamiento esperado
-
-El laboratorio debe contener al menos un objeto 2D solapable que participe en el mismo sistema de sorting por Y. Al mover los pies del jugador por encima de la referencia, el jugador debe verse detrás; al moverlos por debajo, debe verse delante.
-
-### Causa raíz
-
-Las referencias existentes se construyen con `GameObject.CreatePrimitive`, `MeshRenderer` y materiales URP opacos. El personaje usa `SpriteRenderer`; su cola transparente y `sortingOrder` no se intercalan con esas primitivas opacas. El valor numérico cambiaba correctamente, pero la visibilidad no podía cambiar frente a esos objetos.
-
-### Solución aplicada
-
-- Se añadió `LabDepthSortingReference`, una referencia morada 2D de **1.5 × 2.25 unidades**.
-- Su pivote está en los pies y su posición de pies es `Y = 0.65`.
-- Usa `SpriteRenderer`, sorting layer `Actors` y `TopDownSpriteSorting`, igual que el jugador.
-- `LabSpatialCalibrationInstaller` la instala tanto si crea la calibración como si esta ya existe.
-- No tiene collider, para permitir atravesarla y observar el cambio visual.
-- La prueba PlayMode exige:
-  - misma sorting layer;
-  - orden correcto de la referencia;
-  - jugador detrás con pies más arriba;
-  - jugador delante con pies más abajo.
-
-### Verificación
-
-Arturo confirmó el 2026-08-05:
-
-- el rectángulo morado apareció correctamente en el laboratorio;
-- al caminar hacia arriba y superar su línea de pies, el personaje quedó oculto detrás;
-- al regresar hacia abajo, el personaje volvió a renderizarse delante;
-- EditMode pasó **36/36**;
-- PlayMode pasó **6/6**;
-- no se produjeron errores durante las pruebas.
+Durante Play Mode, `Playable Player Sprite` cambiaba correctamente su `Order in Layer`, pero no existía una referencia visual 2D compatible. Se añadió una referencia con `SpriteRenderer`, la misma sorting layer y cálculo por pies. Arturo verificó la oclusión delante/detrás y ambas suites completas.
 
 ---
 
@@ -88,14 +214,10 @@ Arturo confirmó el 2026-08-05:
 - **Severidad:** S0 — Bloqueante
 - **Detectado:** 2026-08-05
 - **Corregido/verificado:** 2026-08-05
-- **Versión de Unity:** `6000.3.21f1`
 - **Sistema:** prefab reutilizable y orden visual por profundidad
-- **Rama afectada:** `feature/player-prefab-depth-sorting`
-- **Commit afectado:** `489851d`
 - **Corrección funcional:** `a9a3fe2`
-- **Reportado por:** Arturo
 
-Unity entró en Safe Mode porque `Application.isPlaying` se resolvía como el namespace `FarmSimulator.Application`. Se cambió a `global::UnityEngine.Application.isPlaying`. Arturo verificó apertura normal, consola limpia y generación del prefab y sorting layers.
+`Application.isPlaying` se resolvía como el namespace `FarmSimulator.Application`. Se cambió a `global::UnityEngine.Application.isPlaying`.
 
 ---
 
@@ -105,12 +227,10 @@ Unity entró en Safe Mode porque `Application.isPlaying` se resolvía como el na
 - **Severidad:** S2 — Alta
 - **Detectado/verificado:** 2026-08-05
 - **Sistema:** importación y animación del personaje
-- **Rama afectada:** `feature/player-sprite-animation`
-- **Commit afectado:** `2099118`
 - **Corrección funcional:** `ed840bc`
 - **Prueba de regresión:** `70ec28c`
 
-La fuente inicial era incorrecta y no se validaba antes de importar. Se cambió a `src/assets/hero_hd.png`, se validaron firma PNG y dimensiones **192 × 288 px**, y se impidió escribir descargas inválidas. Arturo verificó importación, animación, pruebas y límites visuales.
+Se cambió a la fuente correcta `src/assets/hero_hd.png`, se validaron firma PNG y dimensiones 192 × 288 px y se impidió escribir descargas inválidas.
 
 ---
 
@@ -119,11 +239,10 @@ La fuente inicial era incorrecta y no se validaba antes de importar. Se cambió 
 - **Estado:** VERIFICADO
 - **Severidad:** S3 — Media
 - **Detectado/cerrado:** 2026-08-05
-- **Sistema:** `Lab` / límites de movimiento
 - **Corrección:** `9b55ade`
 - **Prueba:** `6c96d10`
 
-El perímetro usaba el collider pequeño de los pies e ignoraba el volumen visual. Se centralizaron dimensiones, marcador, collider y offsets, con límites verticales asimétricos por el pivote. Arturo verificó los cuatro extremos.
+Se centralizaron dimensiones, marcador, collider y offsets, con límites verticales asimétricos por el pivote.
 
 ---
 
@@ -132,10 +251,9 @@ El perímetro usaba el collider pequeño de los pies e ignoraba el volumen visua
 - **Estado:** VERIFICADO
 - **Severidad:** S4 — Baja
 - **Detectado/cerrado:** 2026-08-05
-- **Sistema:** `Lab` / referencia visual del jugador
 - **Corrección:** `dd7357c`
 
-Se reposicionó el marcador desde las dimensiones visuales: laterales centrados, superior sobre la cabeza e inferior bajo los pies.
+Se reposicionó el marcador desde las dimensiones visuales.
 
 ---
 
@@ -144,11 +262,10 @@ Se reposicionó el marcador desde las dimensiones visuales: laterales centrados,
 - **Estado:** VERIFICADO
 - **Severidad:** S3 — Media
 - **Detectado/cerrado:** 2026-08-05
-- **Sistema:** `Lab` / suelo de calibración
 - **Corrección:** `cdb6cdd`
 - **Prueba:** `c8342a2`
 
-`GameObject.CreatePrimitive` añadía un `BoxCollider` 3D y Unity rechazaba agregar `BoxCollider2D` durante el mismo frame. Se separaron el suelo lógico 2D y su representación visual.
+Se separaron el suelo lógico 2D y su representación visual.
 
 ---
 
@@ -162,9 +279,15 @@ Se reposicionó el marcador desde las dimensiones visuales: laterales centrados,
 
 ## Historial
 
+### 2026-08-06
+
+- Se registró `BUG-0014` por la discrepancia entre el panel, la previsualización y la máscara runtime en lienzos de ancho par; quedó corregido pendiente de validación local.
+- Se registró `BUG-0011` por la regresión de compilación en `FarmPlotBehaviour` y quedó corregido pendiente de validación local.
+- Se documentó la decisión de representar cultivos como entidades runtime con `SpriteRenderer` y reservar Tilemaps para el mundo.
+- Se verificaron `BUG-0007` y `BUG-0008`.
+- Se registraron `BUG-0009` y `BUG-0010` como corregidos pendientes de validación local.
+- Se separaron las capas agrícolas y se añadió generación de sprites transparentes.
+
 ### 2026-08-05
 
-- Se verificaron `BUG-0001` a `BUG-0005`.
-- Se añadió `BUG-0006` por falta de una referencia visual compatible con el sorting del jugador.
-- Se implementó una referencia 2D con la misma sorting layer y cálculo por pies.
-- Arturo verificó la oclusión delante/detrás y ambas suites completas; `BUG-0006` pasó a VERIFICADO.
+- Se verificaron `BUG-0001` a `BUG-0006`.

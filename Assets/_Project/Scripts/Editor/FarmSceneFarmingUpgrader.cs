@@ -15,49 +15,41 @@ namespace FarmSimulator.Editor
     [InitializeOnLoad]
     public static class FarmSceneFarmingUpgrader
     {
-        public const string UpgradeRootName = "Farming Core Loop v2";
+        public const string UpgradeRootName = "Farming Core Loop v4";
         public const string FieldRootName = "Farm Plot Field";
         public const string GridRootName = "Farm Authoring Grid";
         public const int Columns = 3;
         public const int Rows = 3;
 
-        private const string LegacyUpgradeRootName =
-            "Farming Core Loop v1";
+        private static readonly string[] PreviousRoots =
+        {
+            "Farming Core Loop v1",
+            "Farming Core Loop v2",
+            "Farming Core Loop v3",
+        };
+
         private const string TileSheetPath =
-            "Assets/_Project/Art/ThirdParty/CozyFarm/" +
-            "Pilot/Source/tiles.png";
-        private const string CropSheetPath =
-            "Assets/_Project/Art/ThirdParty/CozyFarm/" +
-            "Pilot/Source/crops.png";
+            "Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/tiles.png";
 
         static FarmSceneFarmingUpgrader()
         {
             EditorApplication.delayCall += EnsureApplied;
         }
 
-        [MenuItem(
-            "Tools/Farm Simulator/Apply Farming Field To Farm Scene")]
-        public static void ApplyFromMenu()
-        {
-            Apply(force: true);
-        }
+        [MenuItem("Tools/Farm Simulator/Apply Farming Field To Farm Scene")]
+        public static void ApplyFromMenu() => Apply(force: true);
 
-        public static void EnsureApplied()
-        {
-            Apply(force: false);
-        }
+        public static void EnsureApplied() => Apply(force: false);
 
         private static void Apply(bool force)
         {
-            if (EditorApplication.isCompiling ||
-                EditorApplication.isUpdating)
+            if (EditorApplication.isCompiling || EditorApplication.isUpdating)
             {
                 EditorApplication.delayCall += EnsureApplied;
                 return;
             }
 
-            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(
-                    ProjectSceneNames.FarmPath) == null)
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ProjectSceneNames.FarmPath) == null)
             {
                 EditorApplication.delayCall += EnsureApplied;
                 return;
@@ -67,13 +59,11 @@ namespace FarmSimulator.Editor
             if (!sprites.IsComplete)
             {
                 Debug.LogWarning(
-                    "Farming field is waiting for the curated Cozy Farm " +
-                    "tile and crop sprites.");
+                    "Farming field is waiting for the curated Cozy Farm terrain and generated crop sprites.");
                 return;
             }
 
-            Scene scene =
-                SceneManager.GetSceneByPath(ProjectSceneNames.FarmPath);
+            Scene scene = SceneManager.GetSceneByPath(ProjectSceneNames.FarmPath);
             bool openedHere = !scene.IsValid() || !scene.isLoaded;
             if (openedHere)
             {
@@ -84,19 +74,19 @@ namespace FarmSimulator.Editor
 
             try
             {
-                Transform existing = Find(scene, UpgradeRootName);
-                if (existing != null && !force)
+                if (Find(scene, UpgradeRootName) != null && !force)
                 {
                     return;
                 }
 
                 DestroyIfPresent(scene, UpgradeRootName);
-                DestroyIfPresent(scene, LegacyUpgradeRootName);
-                BuildField(scene, sprites);
+                foreach (string previousRoot in PreviousRoots)
+                {
+                    DestroyIfPresent(scene, previousRoot);
+                }
 
-                if (!EditorSceneManager.SaveScene(
-                        scene,
-                        ProjectSceneNames.FarmPath))
+                BuildField(scene, sprites);
+                if (!EditorSceneManager.SaveScene(scene, ProjectSceneNames.FarmPath))
                 {
                     throw new InvalidOperationException(
                         "Could not save Farm after adding the field.");
@@ -110,41 +100,25 @@ namespace FarmSimulator.Editor
                 }
             }
 
-            AssetImporter importer =
-                AssetImporter.GetAtPath(ProjectSceneNames.FarmPath);
-            if (importer != null)
-            {
-                importer.userData =
-                    HouseAndSleepScenePipeline.FarmImportSignature;
-                importer.SaveAndReimport();
-            }
-
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log(
-                "Applied Farming Core Loop v2: layered Tilemap ground, " +
-                "normalized crops and a 3x3 persistent plot field.");
+                "Applied Farming Core Loop v4: terrain Tilemaps plus plot-owned crop SpriteRenderers.");
         }
 
-        private static void BuildField(
-            Scene scene,
-            SpriteLibrary sprites)
+        private static void BuildField(Scene scene, SpriteLibrary sprites)
         {
             GameObject parent = FindRoot(scene, "Farm World");
             if (parent == null)
             {
-                throw new InvalidOperationException(
-                    "Farm scene is missing 'Farm World'.");
+                throw new InvalidOperationException("Farm scene is missing 'Farm World'.");
             }
 
-            // Replace the generated SpriteRenderer patches with real
-            // Tilemaps that can be painted through Unity's Tile Palette.
             DestroyIfPresent(scene, "Farm Grass");
             DestroyIfPresent(scene, "House Path");
 
             var upgradeRoot = new GameObject(UpgradeRootName);
             upgradeRoot.transform.SetParent(parent.transform, false);
-
             FarmTilemapLayers layers = CreateTilemapLayers(
                 upgradeRoot.transform,
                 sprites);
@@ -157,43 +131,31 @@ namespace FarmSimulator.Editor
             {
                 for (int column = 0; column < Columns; column++)
                 {
-                    Vector3Int cell = firstCell +
-                        new Vector3Int(column, row, 0);
-                    string plotId = $"farm-plot-{column}-{row}";
-                    var plot =
-                        new GameObject($"Plot {column + 1}-{row + 1}");
+                    Vector3Int cell = firstCell + new Vector3Int(column, row, 0);
+                    var plot = new GameObject($"Plot {column + 1}-{row + 1}");
                     plot.transform.SetParent(fieldRoot.transform, false);
-                    plot.transform.position =
-                        layers.Ground.GetCellCenterWorld(cell);
+                    plot.transform.position = layers.Ground.GetCellCenterWorld(cell);
 
                     SpriteRenderer soil = CreateRenderer(
-                        "Soil",
+                        "Soil Visual",
                         plot.transform,
                         sprites.TilledSoil,
                         TopDownSortingLayers.Ground,
                         -72);
-                    soil.transform.localScale =
-                        new Vector3(0.9f, 0.9f, 1f);
+                    soil.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
                     soil.enabled = false;
 
                     SpriteRenderer crop = CreateRenderer(
-                        "Crop",
+                        "Crop Entity Visual",
                         plot.transform,
                         null,
                         TopDownSortingLayers.World,
                         18);
-                    crop.transform.localPosition =
-                        new Vector3(
-                            0f,
-                            FarmPlotBehaviour.CropBaseline,
-                            0f);
-                    crop.transform.localScale = Vector3.one;
                     crop.enabled = false;
 
-                    FarmPlotBehaviour behaviour =
-                        plot.AddComponent<FarmPlotBehaviour>();
+                    FarmPlotBehaviour behaviour = plot.AddComponent<FarmPlotBehaviour>();
                     behaviour.Configure(
-                        plotId,
+                        $"farm-plot-{column}-{row}",
                         soil,
                         crop,
                         sprites.Grass,
@@ -204,14 +166,8 @@ namespace FarmSimulator.Editor
                 }
             }
 
-            MoveIfPresent(
-                scene,
-                "Garden Lamp",
-                new Vector3(-5.8f, -0.5f, 0f));
-            MoveIfPresent(
-                scene,
-                "Rock Border",
-                new Vector3(-5.2f, -3.35f, 0f));
+            MoveIfPresent(scene, "Garden Lamp", new Vector3(-5.8f, -0.5f, 0f));
+            MoveIfPresent(scene, "Rock Border", new Vector3(-5.2f, -3.35f, 0f));
         }
 
         private static FarmTilemapLayers CreateTilemapLayers(
@@ -223,7 +179,6 @@ namespace FarmSimulator.Editor
                 typeof(Grid),
                 typeof(FarmTilemapLayers));
             gridObject.transform.SetParent(parent, false);
-
             Grid grid = gridObject.GetComponent<Grid>();
             grid.cellLayout = GridLayout.CellLayout.Rectangle;
             grid.cellSize = Vector3.one;
@@ -239,8 +194,8 @@ namespace FarmSimulator.Editor
                 gridObject.transform,
                 TopDownSortingLayers.Ground,
                 -100);
-            Tilemap farming = CreateTilemap(
-                "Farming",
+            Tilemap soil = CreateTilemap(
+                "Soil",
                 gridObject.transform,
                 TopDownSortingLayers.Ground,
                 -80);
@@ -254,9 +209,7 @@ namespace FarmSimulator.Editor
             {
                 for (int x = -7; x <= 7; x++)
                 {
-                    ground.SetTile(
-                        new Vector3Int(x, y, 0),
-                        sprites.GrassTile);
+                    ground.SetTile(new Vector3Int(x, y, 0), sprites.GrassTile);
                 }
             }
 
@@ -264,19 +217,12 @@ namespace FarmSimulator.Editor
             {
                 for (int x = -1; x <= 1; x++)
                 {
-                    paths.SetTile(
-                        new Vector3Int(x, y, 0),
-                        sprites.DirtTile);
+                    paths.SetTile(new Vector3Int(x, y, 0), sprites.DirtTile);
                 }
             }
 
-            FarmTilemapLayers registry =
-                gridObject.GetComponent<FarmTilemapLayers>();
-            registry.Configure(
-                ground,
-                paths,
-                farming,
-                decoration);
+            FarmTilemapLayers registry = gridObject.GetComponent<FarmTilemapLayers>();
+            registry.Configure(ground, paths, soil, decoration);
             return registry;
         }
 
@@ -286,14 +232,9 @@ namespace FarmSimulator.Editor
             string sortingLayer,
             int sortingOrder)
         {
-            var go = new GameObject(
-                name,
-                typeof(Tilemap),
-                typeof(TilemapRenderer));
+            var go = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer));
             go.transform.SetParent(parent, false);
-
-            TilemapRenderer renderer =
-                go.GetComponent<TilemapRenderer>();
+            TilemapRenderer renderer = go.GetComponent<TilemapRenderer>();
             renderer.mode = TilemapRenderer.Mode.Chunk;
             renderer.sortingLayerName = sortingLayer;
             renderer.sortingOrder = sortingOrder;
@@ -320,33 +261,21 @@ namespace FarmSimulator.Editor
         private static SpriteLibrary LoadSprites()
         {
             CozyFarmTileCatalog.EnsureAssets();
-
-            Dictionary<string, Sprite> tiles =
-                LoadRepresentations(TileSheetPath);
-            Dictionary<string, Sprite> crops =
-                LoadRepresentations(CropSheetPath);
-
+            Dictionary<string, Sprite> tiles = LoadRepresentations(TileSheetPath);
             return new SpriteLibrary(
                 Get(tiles, "cozy_grass"),
                 Get(tiles, "cozy_tilled_soil"),
-                Stages(crops, "cozy_turnip_stage_"),
-                Stages(crops, "cozy_carrot_stage_"),
-                Stages(crops, "cozy_cabbage_stage_"),
-                AssetDatabase.LoadAssetAtPath<TileBase>(
-                    CozyFarmTileCatalog.GrassTilePath),
-                AssetDatabase.LoadAssetAtPath<TileBase>(
-                    CozyFarmTileCatalog.DirtTilePath));
+                CozyFarmTileCatalog.LoadGeneratedCropStages("cozy_turnip_stage_"),
+                CozyFarmTileCatalog.LoadGeneratedCropStages("cozy_carrot_stage_"),
+                CozyFarmTileCatalog.LoadGeneratedCropStages("cozy_cabbage_stage_"),
+                AssetDatabase.LoadAssetAtPath<TileBase>(CozyFarmTileCatalog.GrassTilePath),
+                AssetDatabase.LoadAssetAtPath<TileBase>(CozyFarmTileCatalog.DirtTilePath));
         }
 
-        private static Dictionary<string, Sprite> LoadRepresentations(
-            string path)
-        {
-            return AssetDatabase.LoadAllAssetRepresentationsAtPath(path)
+        private static Dictionary<string, Sprite> LoadRepresentations(string path) =>
+            AssetDatabase.LoadAllAssetRepresentationsAtPath(path)
                 .OfType<Sprite>()
-                .ToDictionary(
-                    sprite => sprite.name,
-                    StringComparer.Ordinal);
-        }
+                .ToDictionary(sprite => sprite.name, StringComparer.Ordinal);
 
         private static Sprite Get(
             IReadOnlyDictionary<string, Sprite> sprites,
@@ -356,33 +285,15 @@ namespace FarmSimulator.Editor
             return sprite;
         }
 
-        private static Sprite[] Stages(
-            IReadOnlyDictionary<string, Sprite> sprites,
-            string prefix)
-        {
-            var result = new Sprite[6];
-            for (int index = 0; index < result.Length; index++)
-            {
-                result[index] = Get(sprites, prefix + index);
-            }
-
-            return result;
-        }
-
-        private static GameObject FindRoot(Scene scene, string name)
-        {
-            return scene.GetRootGameObjects()
-                .FirstOrDefault(root => root.name == name);
-        }
+        private static GameObject FindRoot(Scene scene, string name) =>
+            scene.GetRootGameObjects().FirstOrDefault(root => root.name == name);
 
         private static Transform Find(Scene scene, string name)
         {
             foreach (GameObject root in scene.GetRootGameObjects())
             {
-                Transform result =
-                    root.GetComponentsInChildren<Transform>(true)
-                        .FirstOrDefault(
-                            candidate => candidate.name == name);
+                Transform result = root.GetComponentsInChildren<Transform>(true)
+                    .FirstOrDefault(candidate => candidate.name == name);
                 if (result != null)
                 {
                     return result;
@@ -392,9 +303,7 @@ namespace FarmSimulator.Editor
             return null;
         }
 
-        private static void DestroyIfPresent(
-            Scene scene,
-            string name)
+        private static void DestroyIfPresent(Scene scene, string name)
         {
             Transform target = Find(scene, name);
             if (target != null)
@@ -452,12 +361,10 @@ namespace FarmSimulator.Editor
                 GrassTile != null &&
                 DirtTile != null;
 
-            private static bool Complete(Sprite[] sprites)
-            {
-                return sprites != null &&
-                    sprites.Length == 6 &&
-                    sprites.All(sprite => sprite != null);
-            }
+            private static bool Complete(Sprite[] sprites) =>
+                sprites != null &&
+                sprites.Length == 6 &&
+                sprites.All(sprite => sprite != null);
         }
     }
 
@@ -469,14 +376,12 @@ namespace FarmSimulator.Editor
             string[] movedAssets,
             string[] movedFromAssetPaths)
         {
-            if (importedAssets.Any(
-                    path => string.Equals(
-                        path,
-                        ProjectSceneNames.FarmPath,
-                        StringComparison.Ordinal)))
+            if (importedAssets.Any(path => string.Equals(
+                    path,
+                    ProjectSceneNames.FarmPath,
+                    StringComparison.Ordinal)))
             {
-                EditorApplication.delayCall +=
-                    FarmSceneFarmingUpgrader.EnsureApplied;
+                EditorApplication.delayCall += FarmSceneFarmingUpgrader.EnsureApplied;
             }
         }
     }
