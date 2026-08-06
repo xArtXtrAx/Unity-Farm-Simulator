@@ -13,8 +13,7 @@ namespace FarmSimulator.Editor
             var footprint = (GridBuildingFootprint)target;
             Grid grid = Object.FindFirstObjectByType<Grid>(FindObjectsInactive.Include);
             Vector2Int previewAnchor = GetPreviewAnchor(footprint, grid);
-            var previewCells = new List<Vector2Int>(
-                footprint.GetOccupiedCells(previewAnchor));
+            var previewCells = new List<Vector2Int>(footprint.GetOccupiedCells(previewAnchor));
             bool blocked = OverlapsAnother(footprint, previewCells, grid);
 
             Handles.color = blocked
@@ -39,27 +38,25 @@ namespace FarmSimulator.Editor
                     new Color(Handles.color.r, Handles.color.g, Handles.color.b, 1f));
             }
 
+            Handles.color = Color.cyan;
+            Handles.DrawWireDisc(footprint.AnchorWorldPosition, Vector3.forward, 0.12f);
             Handles.Label(
-                footprint.transform.position + Vector3.up * 0.35f,
-                blocked
-                    ? "Footprint blocked"
-                    : $"{previewCells.Count} occupied cells");
-
+                footprint.AnchorWorldPosition + Vector3.up * 0.2f,
+                blocked ? "Footprint blocked" : $"{previewCells.Count} occupied cells");
             SceneView.RepaintAll();
         }
 
-        private static Vector2Int GetPreviewAnchor(
-            GridBuildingFootprint footprint,
-            Grid grid)
+        private static Vector2Int GetPreviewAnchor(GridBuildingFootprint footprint, Grid grid)
         {
+            Vector3 position = footprint.AnchorWorldPosition;
             if (grid == null)
             {
                 return new Vector2Int(
-                    Mathf.RoundToInt(footprint.transform.position.x),
-                    Mathf.RoundToInt(footprint.transform.position.y));
+                    Mathf.RoundToInt(position.x),
+                    Mathf.RoundToInt(position.y));
             }
 
-            Vector3Int cell = grid.WorldToCell(footprint.transform.position);
+            Vector3Int cell = grid.WorldToCell(position);
             return new Vector2Int(cell.x, cell.y);
         }
 
@@ -74,8 +71,7 @@ namespace FarmSimulator.Editor
                          FindObjectsInactive.Include,
                          FindObjectsSortMode.None))
             {
-                if (other == footprint ||
-                    other.gameObject.scene != footprint.gameObject.scene)
+                if (other == footprint || other.gameObject.scene != footprint.gameObject.scene)
                 {
                     continue;
                 }
@@ -83,10 +79,7 @@ namespace FarmSimulator.Editor
                 Vector2Int otherAnchor = GetPreviewAnchor(other, grid);
                 foreach (Vector2Int occupied in other.GetOccupiedCells(otherAnchor))
                 {
-                    if (preview.Contains(occupied))
-                    {
-                        return true;
-                    }
+                    if (preview.Contains(occupied)) return true;
                 }
             }
 
