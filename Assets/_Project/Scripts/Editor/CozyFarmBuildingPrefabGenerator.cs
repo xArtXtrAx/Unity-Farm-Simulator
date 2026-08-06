@@ -14,6 +14,7 @@ namespace FarmSimulator.Editor
             "Assets/_Project/Buildings/CozyFarm/Prefabs";
         public const string CompositionRootName = "Building Composition";
         public const string VisualName = "Building Visual";
+        public const string FootprintAnchorName = "Footprint Anchor";
         public const string DoorAnchorName = "Door Anchor";
         public const string PortalAnchorName = "Portal Anchor";
         public const string SpawnAnchorName = "Spawn Anchor";
@@ -57,11 +58,14 @@ namespace FarmSimulator.Editor
             try
             {
                 root.transform.position = Vector3.zero;
-                root.AddComponent<GridBuildingFootprint>()
-                    .Configure(
-                        definition.Id,
-                        definition.GridSize,
-                        definition.FootprintOffsets);
+
+                Transform footprintAnchor = Child(FootprintAnchorName, root.transform);
+                footprintAnchor.localPosition = definition.FootprintAnchorOffset;
+                root.AddComponent<GridBuildingFootprint>().Configure(
+                    definition.Id,
+                    definition.GridSize,
+                    definition.FootprintOffsets,
+                    footprintAnchor);
 
                 Transform composition = Child(CompositionRootName, root.transform);
                 Transform visual = Child(VisualName, composition);
