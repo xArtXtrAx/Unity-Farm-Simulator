@@ -34,15 +34,14 @@ Este archivo complementa `BUGS.MD` durante el PR #14.
 
 ## BUG-0013 — R1 puede avanzar dos posiciones del hotbar con DualSense
 
-- **Estado:** CORREGIDO; validación local pendiente.
+- **Estado:** VERIFICADO.
 - **Severidad:** S3 — Media.
 - **Detectado:** 2026-08-06.
 - **Sistema:** entrada de mando / inventario hotbar.
 - **Comportamiento observado:** una pulsación de R1 podía seleccionar el objeto situado dos casillas a la derecha.
-- **Causa probable:** el evento de navegación podía ser procesado más de una vez durante el mismo frame o en frames consecutivos muy próximos, especialmente si coexistían varias vistas del HUD durante una transición o el dispositivo emitía un rebote breve.
-- **Solución:** `InventoryHotbarView` comparte ahora una compuerta estática por frame y aplica un debounce de 120 ms a L1/R1 y rueda del ratón. Una activación física solo puede ejecutar un cambio de selección durante esa ventana.
-- **Corrección funcional:** `8544ff1e654a59c0fff167b51b6c07de7247c912`.
-- **Validación pendiente:** mantener R1/L1, pulsarlos repetidamente con DualSense y confirmar que cada pulsación corta desplaza exactamente una casilla. No pasar a **VERIFICADO** hasta confirmación de Arturo.
+- **Solución:** `InventoryHotbarView` comparte una compuerta estática por frame y aplica un debounce de 120 ms a L1/R1 y rueda del ratón. Se cualificó `global::UnityEngine.Time` para evitar colisión con `FarmSimulator.Presentation.Time`.
+- **Correcciones:** `8544ff1e654a59c0fff167b51b6c07de7247c912`, `7ce611c03ae95734338436d7a4506590a046c917`.
+- **Verificación:** Arturo confirmó en Play Mode que L1 y R1 avanzan exactamente una casilla por pulsación.
 
 ## Incremento — Catálogo reutilizable y selector de casas
 
@@ -55,6 +54,18 @@ Este archivo complementa `BUGS.MD` durante el PR #14.
 - Se añadieron pruebas de identificadores, rutas, regiones y metadatos positivos.
 - Las cuatro variantes nuevas no se consideran aprobadas visualmente hasta revisarlas individualmente en Unity.
 
+## Incremento — Reinicio de granja ajustado a la retícula
+
+- **Estado:** IMPLEMENTADO; validación visual y funcional local pendiente.
+- Nueva orden: `Tools → Farm Simulator → Reset Farm To Grid Starter Layout`.
+- La granja conserva únicamente el terreno base, la casa seleccionada, nueve parcelas, una banca a la derecha y una lámpara a la izquierda.
+- Se eliminan árboles, arbustos posteriores, rocas y cerca.
+- Se limpian las capas `Paths`, `Soil` y `Decoration` para comenzar desde una base de autoría vacía.
+- Casa, banca, lámpara, parcelas y spawn inicial se colocan mediante `Grid.GetCellCenterWorld`.
+- El portal y el spawn de regreso se realinean con los metadatos de la variante de casa.
+- Se añadió el marcador `Farm Grid Layout v1` para no reconstruir una escena ya aplicada durante cada recarga de dominio.
+- No se considera validado hasta confirmar visualmente la composición, entrada/salida y suites completas.
+
 ## Incidencia de compatibilidad Unity 6
 
 - `TextureImporter.spriteAlignment` no existe como propiedad directa en Unity 6.3.
@@ -63,18 +74,16 @@ Este archivo complementa `BUGS.MD` durante el PR #14.
 
 ## Estado de pruebas
 
-- Arturo confirmó **201/201 EditMode** después de corregir las guías de parcelas y actualizar las invariantes de las escenas generadas.
-- La corrección de entrada DualSense todavía requiere validación manual en Play Mode.
+- Arturo confirmó **201/201 EditMode** antes del incremento de reinicio de la granja.
+- `BUG-0013` quedó verificado manualmente con DualSense.
+- El nuevo layout requiere volver a ejecutar EditMode y PlayMode.
 
 ## Validación pendiente
 
 1. actualizar la rama y confirmar que Unity compila;
-2. probar R1 y L1 con DualSense, incluyendo pulsaciones rápidas;
-3. confirmar que cada pulsación desplaza una sola casilla;
-4. abrir `Tools → Farm Simulator → House Style Selector`;
-5. generar los cinco sprites;
-6. aplicar cada variante y comprobar que contiene una sola casa completa;
-7. validar escala, puerta, portal, collider, punto de aparición, sombra y sorting;
-8. probar entrada y salida de la casa con cada estilo;
-9. ejecutar PlayMode completo;
-10. no marcar variantes, `BUG-0012` ni `BUG-0013` como **VERIFICADO** hasta recibir confirmación de Arturo.
+2. ejecutar `Reset Farm To Grid Starter Layout` si no se aplica automáticamente;
+3. comprobar que solo permanecen casa, nueve parcelas, banca y lámpara sobre el terreno;
+4. confirmar que todos los elementos encajan en centros de celda;
+5. validar portal, collider y regreso desde el interior;
+6. ejecutar EditMode y PlayMode completos;
+7. no marcar el nuevo layout como validado hasta recibir confirmación de Arturo.
