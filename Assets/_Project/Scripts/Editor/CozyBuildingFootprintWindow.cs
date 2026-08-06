@@ -12,6 +12,9 @@ namespace FarmSimulator.Editor
         private Vector2Int size = new Vector2Int(4, 3);
         private Vector2 anchorOffset;
         private HashSet<Vector2Int> occupied = new HashSet<Vector2Int>();
+        private bool showVisualBounds = true;
+        private bool showColliderBounds = true;
+        private bool showFootprintOverlay = true;
 
         [MenuItem("Tools/Farm Simulator/Farm Development Kit/Footprint Editor")]
         public static void OpenFromMenu()
@@ -26,7 +29,7 @@ namespace FarmSimulator.Editor
         {
             var window = GetWindow<CozyBuildingFootprintWindow>();
             window.titleContent = new GUIContent("Footprint Editor");
-            window.minSize = new Vector2(520f, 560f);
+            window.minSize = new Vector2(520f, 620f);
             window.SetDefinition(
                 selected ?? CozyFarmBuildingRegistry.LoadAll().FirstOrDefault());
             window.Show();
@@ -47,7 +50,7 @@ namespace FarmSimulator.Editor
                 "Farm Development Kit — Building Authoring",
                 EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "The preview overlays the exact occupied cells used by the generated prefab, Scene gizmo, snapping and collision checks. Generated sprites use a bottom-centre pivot, so (0, 0) is normally the visual ground/base.",
+                "The preview separates visual bounds, physical collider and logical ground footprint. These layers intentionally serve different purposes and do not need to share the same outline.",
                 MessageType.Info);
 
             CozyBuildingDefinition next = (CozyBuildingDefinition)EditorGUILayout.ObjectField(
@@ -76,6 +79,23 @@ namespace FarmSimulator.Editor
                     }
                 }
                 return;
+            }
+
+            EditorGUILayout.LabelField("Preview overlays", EditorStyles.boldLabel);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                showVisualBounds = EditorGUILayout.ToggleLeft(
+                    "Visual bounds",
+                    showVisualBounds,
+                    GUILayout.Width(125f));
+                showColliderBounds = EditorGUILayout.ToggleLeft(
+                    "Collider",
+                    showColliderBounds,
+                    GUILayout.Width(95f));
+                showFootprintOverlay = EditorGUILayout.ToggleLeft(
+                    "Footprint",
+                    showFootprintOverlay,
+                    GUILayout.Width(105f));
             }
 
             DrawAuthoringPreview();
@@ -142,8 +162,8 @@ namespace FarmSimulator.Editor
         private void DrawAuthoringPreview()
         {
             Rect previewRect = GUILayoutUtility.GetRect(
-                240f,
-                230f,
+                260f,
+                265f,
                 GUILayout.ExpandWidth(true));
             EditorGUI.DrawRect(previewRect, new Color(0.10f, 0.10f, 0.10f, 1f));
 
@@ -163,10 +183,23 @@ namespace FarmSimulator.Editor
                 definition.MaximumHeight / Mathf.Max(0.01f, rawSize.y));
             Vector2 visualSize = rawSize * visualScale;
 
+            Vector2 colliderSize = definition.ColliderSize;
+            Vector2 colliderOffset = CozyFarmBuildingPrefabGenerator.ToPrefabBaseSpace(
+                definition.ColliderOffset,
+                definition.Baseline);
+            Vector2 colliderMin = colliderOffset - colliderSize * 0.5f;
+            Vector2 colliderMax = colliderOffset + colliderSize * 0.5f;
+
             float minX = -visualSize.x * 0.5f;
             float maxX = visualSize.x * 0.5f;
             float minY = 0f;
             float maxY = visualSize.y;
+
+            minX = Mathf.Min(minX, colliderMin.x);
+            maxX = Mathf.Max(maxX, colliderMax.x);
+            minY = Mathf.Min(minY, colliderMin.y);
+            maxY = Mathf.Max(maxY, colliderMax.y);
+
             foreach (Vector2Int offset in occupied)
             {
                 Vector2 centre = anchorOffset + (Vector2)offset;
@@ -176,7 +209,7 @@ namespace FarmSimulator.Editor
                 maxY = Mathf.Max(maxY, centre.y + 0.5f);
             }
 
-            const float worldPadding = 0.3f;
+            const float worldPadding = 0.35f;
             minX -= worldPadding;
             maxX += worldPadding;
             minY -= worldPadding;
@@ -185,16 +218,17 @@ namespace FarmSimulator.Editor
             float worldHeight = Mathf.Max(0.01f, maxY - minY);
             float pixelsPerUnit = Mathf.Min(
                 previewRect.width / worldWidth,
-                previewRect.height / worldHeight);
+                (previewRect.height - 26f) / worldHeight);
             Vector2 worldCentre = new Vector2(
                 (minX + maxX) * 0.5f,
                 (minY + maxY) * 0.5f);
+            Vector2 previewCentre = previewRect.center + Vector2.up * 10f;
 
             Vector2 Map(Vector2 world)
             {
                 return new Vector2(
-                    previewRect.center.x + (world.x - worldCentre.x) * pixelsPerUnit,
-                    previewRect.center.y - (world.y - worldCentre.y) * pixelsPerUnit);
+                    previewCentre.x + (world.x - worldCentre.x) * pixelsPerUnit,
+                    previewCentre.y - (world.y - worldCentre.y) * pixelsPerUnit);
             }
 
             Vector2 spriteTopLeft = Map(new Vector2(-visualSize.x * 0.5f, visualSize.y));
@@ -214,27 +248,52 @@ namespace FarmSimulator.Editor
                 source.height / texture.height);
             GUI.DrawTextureWithTexCoords(imageRect, texture, uv, true);
 
-            foreach (Vector2Int offset in occupied)
+            if (showVisualBounds)
             {
-                Vector2 centre = anchorOffset + (Vector2)offset;
-                Vector2 topLeft = Map(centre + new Vector2(-0.5f, 0.5f));
-                Vector2 bottomRight = Map(centre + new Vector2(0.5f, -0.5f));
-                Rect cellRect = Rect.MinMaxRect(
-                    topLeft.x,
-                    topLeft.y,
-                    bottomRight.x,
-                    bottomRight.y);
-                bool anchorCell = offset == Vector2Int.zero;
+                DrawOutline(imageRect, new Color(0.25f, 0.85f, 1f, 1f));
+            }
+
+            if (showColliderBounds)
+            {
+                Vector2 colliderTopLeft = Map(new Vector2(colliderMin.x, colliderMax.y));
+                Vector2 colliderBottomRight = Map(new Vector2(colliderMax.x, colliderMin.y));
+                Rect colliderRect = Rect.MinMaxRect(
+                    colliderTopLeft.x,
+                    colliderTopLeft.y,
+                    colliderBottomRight.x,
+                    colliderBottomRight.y);
                 EditorGUI.DrawRect(
-                    cellRect,
-                    anchorCell
-                        ? new Color(0.2f, 0.55f, 1f, 0.42f)
-                        : new Color(0.2f, 1f, 0.35f, 0.34f));
+                    colliderRect,
+                    new Color(1f, 0.65f, 0.15f, 0.14f));
                 DrawOutline(
-                    cellRect,
-                    anchorCell
-                        ? new Color(0.3f, 0.75f, 1f, 1f)
-                        : new Color(0.25f, 1f, 0.4f, 0.9f));
+                    colliderRect,
+                    new Color(1f, 0.65f, 0.15f, 1f));
+            }
+
+            if (showFootprintOverlay)
+            {
+                foreach (Vector2Int offset in occupied)
+                {
+                    Vector2 centre = anchorOffset + (Vector2)offset;
+                    Vector2 topLeft = Map(centre + new Vector2(-0.5f, 0.5f));
+                    Vector2 bottomRight = Map(centre + new Vector2(0.5f, -0.5f));
+                    Rect cellRect = Rect.MinMaxRect(
+                        topLeft.x,
+                        topLeft.y,
+                        bottomRight.x,
+                        bottomRight.y);
+                    bool anchorCell = offset == Vector2Int.zero;
+                    EditorGUI.DrawRect(
+                        cellRect,
+                        anchorCell
+                            ? new Color(0.2f, 0.55f, 1f, 0.42f)
+                            : new Color(0.2f, 1f, 0.35f, 0.34f));
+                    DrawOutline(
+                        cellRect,
+                        anchorCell
+                            ? new Color(0.3f, 0.75f, 1f, 1f)
+                            : new Color(0.25f, 1f, 0.4f, 0.9f));
+                }
             }
 
             Vector2 anchorPoint = Map(anchorOffset);
@@ -244,10 +303,42 @@ namespace FarmSimulator.Editor
             EditorGUI.DrawRect(
                 new Rect(anchorPoint.x - 1f, anchorPoint.y - 5f, 2f, 10f),
                 Color.cyan);
+
             GUI.Label(
-                new Rect(previewRect.x + 6f, previewRect.y + 5f, 220f, 18f),
-                "Exact prefab footprint preview",
+                new Rect(previewRect.x + 6f, previewRect.y + 5f, 250f, 18f),
+                "Building authoring layers",
                 EditorStyles.miniLabel);
+            DrawLegend(previewRect);
+        }
+
+        private void DrawLegend(Rect previewRect)
+        {
+            float y = previewRect.yMax - 20f;
+            float x = previewRect.x + 8f;
+
+            if (showVisualBounds)
+            {
+                DrawLegendItem(ref x, y, new Color(0.25f, 0.85f, 1f, 1f), "Visual");
+            }
+            if (showColliderBounds)
+            {
+                DrawLegendItem(ref x, y, new Color(1f, 0.65f, 0.15f, 1f), "Collider");
+            }
+            if (showFootprintOverlay)
+            {
+                DrawLegendItem(ref x, y, new Color(0.25f, 1f, 0.4f, 1f), "Footprint");
+            }
+        }
+
+        private static void DrawLegendItem(
+            ref float x,
+            float y,
+            Color color,
+            string label)
+        {
+            EditorGUI.DrawRect(new Rect(x, y + 2f, 11f, 11f), color);
+            GUI.Label(new Rect(x + 15f, y, 72f, 18f), label, EditorStyles.miniLabel);
+            x += 88f;
         }
 
         private static void DrawOutline(Rect rect, Color color)
