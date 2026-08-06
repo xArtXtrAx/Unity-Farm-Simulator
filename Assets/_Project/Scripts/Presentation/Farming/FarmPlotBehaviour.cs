@@ -12,6 +12,10 @@ namespace FarmSimulator.Presentation.Farming
     [DisallowMultipleComponent]
     public sealed class FarmPlotBehaviour : InteractableBehaviour
     {
+        public const float MaximumCropWidth = 0.62f;
+        public const float MaximumCropHeight = 0.72f;
+        public const float CropBaseline = -0.42f;
+
         [SerializeField] private string plotId;
         [SerializeField] private SpriteRenderer soilRenderer;
         [SerializeField] private SpriteRenderer cropRenderer;
@@ -152,8 +156,11 @@ namespace FarmSimulator.Presentation.Farming
             }
 
             FarmPlotState state = State;
-            soilRenderer.sprite =
-                state.IsTilled ? tilledSoilSprite : grassSprite;
+
+            // Untilled plots visually merge with the grass Tilemap. The soil
+            // overlay only appears after the player works the cell.
+            soilRenderer.sprite = tilledSoilSprite;
+            soilRenderer.enabled = state.IsTilled;
             soilRenderer.color = state.IsWatered
                 ? new Color32(116, 92, 72, 255)
                 : Color.white;
@@ -173,6 +180,32 @@ namespace FarmSimulator.Presentation.Farming
             cropRenderer.sprite = stages[index];
             cropRenderer.color = Color.white;
             cropRenderer.enabled = cropRenderer.sprite != null;
+            NormalizeCropVisual(cropRenderer.sprite);
+        }
+
+        private void NormalizeCropVisual(Sprite sprite)
+        {
+            if (sprite == null)
+            {
+                return;
+            }
+
+            Vector2 size = sprite.bounds.size;
+            if (size.x <= Mathf.Epsilon || size.y <= Mathf.Epsilon)
+            {
+                cropRenderer.transform.localScale = Vector3.one;
+                cropRenderer.transform.localPosition =
+                    new Vector3(0f, CropBaseline, 0f);
+                return;
+            }
+
+            float scale = Mathf.Min(
+                MaximumCropWidth / size.x,
+                MaximumCropHeight / size.y);
+            cropRenderer.transform.localScale =
+                new Vector3(scale, scale, 1f);
+            cropRenderer.transform.localPosition =
+                new Vector3(0f, CropBaseline, 0f);
         }
 
         private void Plant(FarmPlotState state, ItemId seedItemId)
