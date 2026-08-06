@@ -66,6 +66,16 @@ Este archivo complementa `BUGS.MD` durante el PR #14.
 - Se añadió el marcador `Farm Grid Layout v1` para no reconstruir una escena ya aplicada durante cada recarga de dominio.
 - No se considera validado hasta confirmar visualmente la composición, entrada/salida y suites completas.
 
+## Incremento — Farm Development Kit: prefabs reutilizables
+
+- **Estado:** IMPLEMENTADO; compilación y pruebas locales pendientes.
+- `CozyFarmBuildingPrefabGenerator` crea un prefab por cada `CozyBuildingDefinition`.
+- Cada prefab contiene un visual escalado desde los metadatos, `BoxCollider2D` y anclas nombradas para puerta, portal y aparición.
+- Los prefabs se guardan en `Assets/_Project/Buildings/CozyFarm/Prefabs` y quedan enlazados desde su definición.
+- El Building Browser permite generar, localizar y colocar el prefab seleccionado en la escena actual.
+- Se añadieron pruebas EditMode para verificar la cantidad de prefabs, el visual, el collider y las anclas.
+- No se considera validado hasta que Arturo confirme compilación, generación de los cinco prefabs y EditMode completo.
+
 ## Incidencia de compatibilidad Unity 6
 
 - `TextureImporter.spriteAlignment` no existe como propiedad directa en Unity 6.3.
@@ -76,14 +86,15 @@ Este archivo complementa `BUGS.MD` durante el PR #14.
 
 - Arturo confirmó **201/201 EditMode** antes del incremento de reinicio de la granja.
 - `BUG-0013` quedó verificado manualmente con DualSense.
-- El nuevo layout requiere volver a ejecutar EditMode y PlayMode.
+- Los incrementos de layout, vegetación, Building Browser y prefabs requieren volver a ejecutar EditMode y PlayMode.
 
 ## Validación pendiente
 
 1. actualizar la rama y confirmar que Unity compila;
-2. ejecutar `Reset Farm To Grid Starter Layout` si no se aplica automáticamente;
-3. comprobar que solo permanecen casa, nueve parcelas, banca y lámpara sobre el terreno;
-4. confirmar que todos los elementos encajan en centros de celda;
-5. validar portal, collider y regreso desde el interior;
-6. ejecutar EditMode y PlayMode completos;
-7. no marcar el nuevo layout como validado hasta recibir confirmación de Arturo.
+2. abrir `Farm Development Kit → Building Browser`;
+3. pulsar `Generate all prefabs`;
+4. confirmar cinco prefabs en `Assets/_Project/Buildings/CozyFarm/Prefabs`;
+5. localizar y colocar uno en una escena temporal;
+6. comprobar visual, collider y anclas;
+7. ejecutar EditMode y PlayMode completos;
+8. no marcar el incremento como validado hasta recibir confirmación de Arturo.
