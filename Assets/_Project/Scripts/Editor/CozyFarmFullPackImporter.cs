@@ -13,16 +13,10 @@ namespace FarmSimulator.Editor
     {
         public const string FullAssetRoot =
             "Assets/_Project/Art/ThirdParty/CozyFarm/Full";
-
-        public const string LocalPackageRoot =
-            "LocalAssets/CozyFarm";
-
         public const string PreviewRoot =
-            LocalPackageRoot + "/Previews";
-
+            "LocalAssets/CozyFarm/Previews";
         public const string ManifestAssetPath =
             FullAssetRoot + "/cozy-farm-full-pack-manifest.json";
-
         public const string ImportSignature =
             "cozy-farm-full-pack-v1";
 
@@ -43,13 +37,10 @@ namespace FarmSimulator.Editor
                 "Select the purchased Cozy Farm full-version ZIP",
                 string.Empty,
                 "zip");
-
-            if (string.IsNullOrWhiteSpace(archivePath))
+            if (!string.IsNullOrWhiteSpace(archivePath))
             {
-                return;
+                ImportArchive(archivePath, true);
             }
-
-            ImportArchive(archivePath, showCompletionDialog: true);
         }
 
         [MenuItem("Tools/Farm Simulator/Validate Full Cozy Farm Pack Import")]
@@ -65,37 +56,17 @@ namespace FarmSimulator.Editor
                 return;
             }
 
-            string absoluteAssetRoot = ToAbsoluteProjectPath(FullAssetRoot);
-            int importedPngCount = Directory.Exists(absoluteAssetRoot)
-                ? Directory.GetFiles(
-                    absoluteAssetRoot,
-                    "*.png",
-                    SearchOption.AllDirectories).Length
-                : 0;
-
-            string absolutePreviewRoot = ToAbsoluteProjectPath(PreviewRoot);
-            int previewGifCount = Directory.Exists(absolutePreviewRoot)
-                ? Directory.GetFiles(
-                    absolutePreviewRoot,
-                    "*.gif",
-                    SearchOption.AllDirectories).Length
-                : 0;
-
-            bool valid =
-                importedPngCount == manifest.pngCount &&
-                previewGifCount == manifest.gifCount &&
-                manifest.pngCount > 0;
+            int pngCount = CountFiles(FullAssetRoot, "*.png");
+            int gifCount = CountFiles(PreviewRoot, "*.gif");
+            bool valid = pngCount == manifest.pngCount &&
+                gifCount == manifest.gifCount;
 
             EditorUtility.DisplayDialog(
                 "Cozy Farm full pack",
                 valid
-                    ? $"Import validated.\n\n" +
-                      $"PNG sheets in Unity: {importedPngCount}\n" +
-                      $"GIF previews outside Assets: {previewGifCount}\n" +
-                      $"Archive SHA-256: {manifest.archiveSha256}"
-                    : $"The import is incomplete.\n\n" +
-                      $"Expected PNG: {manifest.pngCount}; found: {importedPngCount}\n" +
-                      $"Expected GIF: {manifest.gifCount}; found: {previewGifCount}",
+                    ? $"Import validated. PNG: {pngCount}; GIF previews: {gifCount}."
+                    : $"Import incomplete. PNG {pngCount}/{manifest.pngCount}; " +
+                      $"GIF {gifCount}/{manifest.gifCount}.",
                 "OK");
         }
 
@@ -109,7 +80,6 @@ namespace FarmSimulator.Editor
                     "An archive path is required.",
                     nameof(archivePath));
             }
-
             if (!File.Exists(archivePath))
             {
                 throw new FileNotFoundException(
@@ -118,15 +88,12 @@ namespace FarmSimulator.Editor
             }
 
             string fullArchivePath = Path.GetFullPath(archivePath);
-            string assetRootAbsolute = ToAbsoluteProjectPath(FullAssetRoot);
-            string previewRootAbsolute = ToAbsoluteProjectPath(PreviewRoot);
+            string assetRoot = ToAbsoluteProjectPath(FullAssetRoot);
+            string previewRoot = ToAbsoluteProjectPath(PreviewRoot);
+            Directory.CreateDirectory(assetRoot);
+            Directory.CreateDirectory(previewRoot);
 
-            Directory.CreateDirectory(assetRootAbsolute);
-            Directory.CreateDirectory(previewRootAbsolute);
-
-            var importedAssetPaths = new List<string>();
-            var discoveredEntries = new HashSet<string>(
-                StringComparer.OrdinalIgnoreCase);
+            var pngAssetPaths = new List<string>();
             int pngCount = 0;
             int gifCount = 0;
             int textCount = 0;
@@ -137,23 +104,19 @@ namespace FarmSimulator.Editor
                 using var archive = new ZipArchive(
                     stream,
                     ZipArchiveMode.Read,
-                    leaveOpen: false);
-
-                IReadOnlyList<PackEntry> entries = archive.Entries
+                    false);
+                PackEntry[] entries = archive.Entries
                     .Where(entry => !string.IsNullOrEmpty(entry.Name))
                     .Select(CreatePackEntry)
                     .Where(entry => entry != null)
                     .ToArray();
 
-                foreach (PackEntry entry in entries)
-                {
-                    discoveredEntries.Add(entry.RelativePath);
-                }
-
+                var names = new HashSet<string>(
+                    entries.Select(entry => entry.RelativePath),
+                    StringComparer.OrdinalIgnoreCase);
                 string[] missing = RequiredEntries
-                    .Where(required => !discoveredEntries.Contains(required))
+                    .Where(required => !names.Contains(required))
                     .ToArray();
-
                 if (missing.Length > 0)
                 {
                     throw new InvalidDataException(
@@ -164,50 +127,36 @@ namespace FarmSimulator.Editor
                 AssetDatabase.StartAssetEditing();
                 try
                 {
-                    for (int index = 0; index < entries.Count; index++)
+                    for (int index = 0; index < entries.Length; index++)
                     {
                         PackEntry entry = entries[index];
                         EditorUtility.DisplayProgressBar(
                             "Importing Cozy Farm full pack",
                             entry.RelativePath,
-                            entries.Count == 0
+                            entries.Length == 0
                                 ? 1f
-                                : (float)index / entries.Count);
+                                : (float)index / entries.Length);
 
-                        switch (entry.Kind)
+                        string root = entry.Kind == EntryKind.Gif
+                            ? previewRoot
+                            : assetRoot;
+                        ExtractEntry(
+                            entry.Entry,
+                            SafeCombine(root, entry.RelativePath));
+
+                        if (entry.Kind == EntryKind.Png)
                         {
-                            case PackEntryKind.Png:
-                            case PackEntryKind.Text:
-                            {
-                                string destination = SafeCombine(
-                                    assetRootAbsolute,
-                                    entry.RelativePath);
-                                ExtractEntry(entry.Entry, destination);
-                                string assetPath =
-                                    FullAssetRoot + "/" +
-                                    entry.RelativePath.Replace('\\', '/');
-                                importedAssetPaths.Add(assetPath);
-
-                                if (entry.Kind == PackEntryKind.Png)
-                                {
-                                    pngCount++;
-                                }
-                                else
-                                {
-                                    textCount++;
-                                }
-
-                                break;
-                            }
-                            case PackEntryKind.Gif:
-                            {
-                                string destination = SafeCombine(
-                                    previewRootAbsolute,
-                                    entry.RelativePath);
-                                ExtractEntry(entry.Entry, destination);
-                                gifCount++;
-                                break;
-                            }
+                            pngCount++;
+                            pngAssetPaths.Add(
+                                FullAssetRoot + "/" + entry.RelativePath);
+                        }
+                        else if (entry.Kind == EntryKind.Gif)
+                        {
+                            gifCount++;
+                        }
+                        else
+                        {
+                            textCount++;
                         }
                     }
                 }
@@ -222,11 +171,7 @@ namespace FarmSimulator.Editor
             }
 
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-
-            foreach (string assetPath in importedAssetPaths
-                         .Where(path => path.EndsWith(
-                             ".png",
-                             StringComparison.OrdinalIgnoreCase)))
+            foreach (string assetPath in pngAssetPaths)
             {
                 ConfigureTextureImporter(assetPath);
             }
@@ -240,28 +185,18 @@ namespace FarmSimulator.Editor
                 pngCount = pngCount,
                 gifCount = gifCount,
                 textCount = textCount,
-                unityAssetRoot = FullAssetRoot,
-                localPreviewRoot = PreviewRoot,
             };
-
-            string manifestAbsolute =
-                ToAbsoluteProjectPath(ManifestAssetPath);
-            Directory.CreateDirectory(
-                Path.GetDirectoryName(manifestAbsolute) ?? assetRootAbsolute);
             File.WriteAllText(
-                manifestAbsolute,
-                JsonUtility.ToJson(manifest, prettyPrint: true));
+                ToAbsoluteProjectPath(ManifestAssetPath),
+                JsonUtility.ToJson(manifest, true));
             AssetDatabase.ImportAsset(
                 ManifestAssetPath,
                 ImportAssetOptions.ForceSynchronousImport);
             AssetDatabase.SaveAssets();
 
             Debug.Log(
-                $"Imported Cozy Farm full pack locally: " +
-                $"{pngCount} PNG sheets, {gifCount} GIF previews and " +
-                $"{textCount} text files. Assets are available under " +
-                $"'{FullAssetRoot}'.");
-
+                $"Imported Cozy Farm full pack locally: {pngCount} PNG, " +
+                $"{gifCount} GIF and {textCount} text files.");
             if (showCompletionDialog)
             {
                 EditorUtility.DisplayDialog(
@@ -269,8 +204,7 @@ namespace FarmSimulator.Editor
                     $"PNG sheets available in Unity: {pngCount}\n" +
                     $"GIF previews preserved locally: {gifCount}\n" +
                     $"Text files: {textCount}\n\n" +
-                    $"Unity folder:\n{FullAssetRoot}\n\n" +
-                    $"Preview folder:\n{PreviewRoot}",
+                    $"Unity folder: {FullAssetRoot}",
                     "OK");
             }
 
@@ -285,14 +219,13 @@ namespace FarmSimulator.Editor
             }
 
             string normalized = entryPath.Replace('\\', '/').TrimStart('/');
-            const string rootPrefix = "full version/";
+            const string root = "full version/";
             if (normalized.StartsWith(
-                    rootPrefix,
+                    root,
                     StringComparison.OrdinalIgnoreCase))
             {
-                normalized = normalized.Substring(rootPrefix.Length);
+                normalized = normalized.Substring(root.Length);
             }
-
             if (string.IsNullOrWhiteSpace(normalized) ||
                 normalized.EndsWith("/", StringComparison.Ordinal))
             {
@@ -308,7 +241,6 @@ namespace FarmSimulator.Editor
                 throw new InvalidDataException(
                     $"Unsafe ZIP entry path: '{entryPath}'.");
             }
-
             return string.Join("/", segments);
         }
 
@@ -321,24 +253,23 @@ namespace FarmSimulator.Editor
             }
 
             string extension = Path.GetExtension(relativePath);
-            PackEntryKind kind;
-            if (string.Equals(extension, ".png", StringComparison.OrdinalIgnoreCase))
+            EntryKind kind;
+            if (extension.Equals(".png", StringComparison.OrdinalIgnoreCase))
             {
-                kind = PackEntryKind.Png;
+                kind = EntryKind.Png;
             }
-            else if (string.Equals(extension, ".gif", StringComparison.OrdinalIgnoreCase))
+            else if (extension.Equals(".gif", StringComparison.OrdinalIgnoreCase))
             {
-                kind = PackEntryKind.Gif;
+                kind = EntryKind.Gif;
             }
-            else if (string.Equals(extension, ".txt", StringComparison.OrdinalIgnoreCase))
+            else if (extension.Equals(".txt", StringComparison.OrdinalIgnoreCase))
             {
-                kind = PackEntryKind.Text;
+                kind = EntryKind.Text;
             }
             else
             {
                 return null;
             }
-
             return new PackEntry(entry, relativePath, kind);
         }
 
@@ -351,13 +282,8 @@ namespace FarmSimulator.Editor
             {
                 Directory.CreateDirectory(directory);
             }
-
             using Stream input = entry.Open();
-            using FileStream output = new FileStream(
-                destinationPath,
-                FileMode.Create,
-                FileAccess.Write,
-                FileShare.None);
+            using FileStream output = File.Create(destinationPath);
             input.CopyTo(output);
         }
 
@@ -367,8 +293,6 @@ namespace FarmSimulator.Editor
                 AssetImporter.GetAtPath(assetPath) as TextureImporter;
             if (importer == null)
             {
-                Debug.LogWarning(
-                    $"Could not configure imported texture '{assetPath}'.");
                 return;
             }
 
@@ -383,42 +307,52 @@ namespace FarmSimulator.Editor
                 TextureImporterCompression.Uncompressed;
             importer.npotScale = TextureImporterNPOTScale.None;
             importer.maxTextureSize = 4096;
-            importer.spriteGenerateFallbackPhysicsShape = false;
+
+            var settings = new TextureImporterSettings();
+            importer.ReadTextureSettings(settings);
+            settings.spriteGenerateFallbackPhysicsShape = false;
+            importer.SetTextureSettings(settings);
+
             importer.userData = ImportSignature;
             importer.SaveAndReimport();
         }
 
         private static string SafeCombine(string root, string relativePath)
         {
-            string rootFullPath = Path.GetFullPath(root)
+            string rootPath = Path.GetFullPath(root)
                 .TrimEnd(Path.DirectorySeparatorChar) +
                 Path.DirectorySeparatorChar;
-            string combined = Path.GetFullPath(
-                Path.Combine(
-                    rootFullPath,
-                    relativePath.Replace('/', Path.DirectorySeparatorChar)));
-
+            string combined = Path.GetFullPath(Path.Combine(
+                rootPath,
+                relativePath.Replace('/', Path.DirectorySeparatorChar)));
             if (!combined.StartsWith(
-                    rootFullPath,
+                    rootPath,
                     StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidDataException(
                     $"ZIP entry escapes the import root: '{relativePath}'.");
             }
-
             return combined;
         }
 
-        private static string ToAbsoluteProjectPath(string projectRelativePath)
+        private static string ToAbsoluteProjectPath(string relativePath)
         {
             string projectRoot = Path.GetFullPath(
                 Path.Combine(Application.dataPath, ".."));
-            return Path.GetFullPath(
-                Path.Combine(
-                    projectRoot,
-                    projectRelativePath.Replace(
-                        '/',
-                        Path.DirectorySeparatorChar)));
+            return Path.GetFullPath(Path.Combine(
+                projectRoot,
+                relativePath.Replace('/', Path.DirectorySeparatorChar)));
+        }
+
+        private static int CountFiles(string relativeRoot, string pattern)
+        {
+            string root = ToAbsoluteProjectPath(relativeRoot);
+            return Directory.Exists(root)
+                ? Directory.GetFiles(
+                    root,
+                    pattern,
+                    SearchOption.AllDirectories).Length
+                : 0;
         }
 
         private static string ComputeSha256(string path)
@@ -426,7 +360,8 @@ namespace FarmSimulator.Editor
             using FileStream stream = File.OpenRead(path);
             using SHA256 sha = SHA256.Create();
             return string.Concat(
-                sha.ComputeHash(stream).Select(value => value.ToString("x2")));
+                sha.ComputeHash(stream)
+                    .Select(value => value.ToString("x2")));
         }
 
         private static FullPackManifest LoadManifest()
@@ -438,7 +373,7 @@ namespace FarmSimulator.Editor
                 : JsonUtility.FromJson<FullPackManifest>(asset.text);
         }
 
-        private enum PackEntryKind
+        private enum EntryKind
         {
             Png,
             Gif,
@@ -450,7 +385,7 @@ namespace FarmSimulator.Editor
             public PackEntry(
                 ZipArchiveEntry entry,
                 string relativePath,
-                PackEntryKind kind)
+                EntryKind kind)
             {
                 Entry = entry;
                 RelativePath = relativePath;
@@ -458,10 +393,8 @@ namespace FarmSimulator.Editor
             }
 
             public ZipArchiveEntry Entry { get; }
-
             public string RelativePath { get; }
-
-            public PackEntryKind Kind { get; }
+            public EntryKind Kind { get; }
         }
 
         [Serializable]
@@ -474,8 +407,6 @@ namespace FarmSimulator.Editor
             public int pngCount;
             public int gifCount;
             public int textCount;
-            public string unityAssetRoot;
-            public string localPreviewRoot;
         }
     }
 }
