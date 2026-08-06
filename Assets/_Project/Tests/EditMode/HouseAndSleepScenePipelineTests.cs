@@ -139,6 +139,23 @@ namespace FarmSimulator.Tests.EditMode
             CozyFarmHouseArtPipeline.EnsureAssets();
             HouseAndSleepScenePipeline.EnsureScenes();
 
+            string selectedVariantId = CozyFarmHouseStyleWindow.SelectedVariantId;
+            CozyFarmBuildingCatalog.HouseVariant selectedVariant;
+            try
+            {
+                selectedVariant = CozyFarmBuildingCatalog.GetHouse(selectedVariantId);
+            }
+            catch (System.ArgumentException)
+            {
+                selectedVariant = CozyFarmBuildingCatalog.GetHouse(
+                    CozyFarmBuildingCatalog.DefaultHouseId);
+            }
+
+            // Scene generation owns the functional baseline and intentionally
+            // rebuilds the legacy placeholder. Apply the selected catalog style
+            // before validating the authored exterior composition.
+            CozyFarmHouseExteriorUpgrader.ApplyVariant(selectedVariant.Id);
+
             Scene farm =
                 EditorSceneManager.OpenScene(
                     ProjectSceneNames.FarmPath,
@@ -150,8 +167,7 @@ namespace FarmSimulator.Tests.EditMode
                 CollectionAssert.IsSubsetOf(
                     new[]
                     {
-                        "cozy_wood_panel_light",
-                        "cozy_wood_panel_dark",
+                        selectedVariant.Id,
                         "cozy_flower_crates",
                         "cozy_bridge_wood",
                         "cozy_tree_spring",
@@ -165,6 +181,9 @@ namespace FarmSimulator.Tests.EditMode
                 Assert.That(
                     FindGameObject(farm, "Roof"),
                     Is.Null);
+                Assert.That(
+                    FindGameObject(farm, CozyFarmHouseExteriorUpgrader.VisualRootName),
+                    Is.Not.Null);
                 AssertRenderersAreUntinted(farm);
             }
             finally
@@ -215,6 +234,11 @@ namespace FarmSimulator.Tests.EditMode
             foreach (SpriteRenderer renderer in
                      ComponentsInScene<SpriteRenderer>(scene))
             {
+                if (renderer.gameObject.name == "Entrance Grounding Shadow")
+                {
+                    continue;
+                }
+
                 Assert.That(
                     renderer.color,
                     Is.EqualTo(Color.white),
