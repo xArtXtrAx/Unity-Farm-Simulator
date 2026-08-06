@@ -80,15 +80,27 @@ namespace FarmSimulator.Editor
                     definition.MaximumWidth / Mathf.Max(0.01f, spriteSize.x),
                     definition.MaximumHeight / Mathf.Max(0.01f, spriteSize.y));
                 visual.localScale = new Vector3(scale, scale, 1f);
-                visual.localPosition = new Vector3(0f, -definition.Baseline, 0f);
+
+                // Generated building sprites use a bottom-centre pivot. Reusable
+                // prefabs therefore normalize their root to that visual ground/base
+                // instead of inheriting the scene-specific Hero House baseline.
+                visual.localPosition = Vector3.zero;
 
                 BoxCollider2D collider = root.AddComponent<BoxCollider2D>();
                 collider.size = definition.ColliderSize;
-                collider.offset = definition.ColliderOffset;
+                collider.offset = ToPrefabBaseSpace(
+                    definition.ColliderOffset,
+                    definition.Baseline);
 
-                Child(DoorAnchorName, root.transform).localPosition = definition.PortalOffset;
-                Child(PortalAnchorName, root.transform).localPosition = definition.PortalOffset;
-                Child(SpawnAnchorName, root.transform).localPosition = definition.SpawnOffset;
+                Vector2 portal = ToPrefabBaseSpace(
+                    definition.PortalOffset,
+                    definition.Baseline);
+                Vector2 spawn = ToPrefabBaseSpace(
+                    definition.SpawnOffset,
+                    definition.Baseline);
+                Child(DoorAnchorName, root.transform).localPosition = portal;
+                Child(PortalAnchorName, root.transform).localPosition = portal;
+                Child(SpawnAnchorName, root.transform).localPosition = spawn;
 
                 GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
                 if (prefab == null)
@@ -102,6 +114,11 @@ namespace FarmSimulator.Editor
             {
                 UnityEngine.Object.DestroyImmediate(root);
             }
+        }
+
+        public static Vector2 ToPrefabBaseSpace(Vector2 sourcePoint, float baseline)
+        {
+            return new Vector2(sourcePoint.x, sourcePoint.y - baseline);
         }
 
         public static string GetPrefabPath(CozyBuildingDefinition definition) =>
