@@ -2,13 +2,15 @@
 
 Documento maestro de continuidad. Debe permitir reanudar el proyecto sin depender de la memoria del chat.
 
-> **Regla de continuidad:** antes de modificar el repositorio, leer `CONTINUIDAD_GPT.md` desde `main`; después leer este archivo, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, ramas y commits recientes.
+> **Regla de continuidad:** antes de modificar el repositorio, leer `CONTINUIDAD_GPT.md` desde `main`; después leer este archivo, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, ramas, PR y commits recientes.
 
 > **Regla transaccional:** ninguna implementación, corrección o integración realizada por GPT se considera terminada hasta registrar aquí lo realizado, lo comprobado, lo pendiente y el siguiente paso exacto.
 
+> **Regla de validación:** no marcar una corrección como `VERIFICADA` únicamente porque el código fue publicado. La verificación requiere confirmación local de Arturo sobre compilación, comportamiento visual o funcional y pruebas relevantes.
+
 ---
 
-## 1. Identidad y entorno
+## 1. Identidad y estado operativo
 
 - **Repositorio:** `xArtXtrAx/Unity-Farm-Simulator`
 - **Propietario:** Arturo García (`xArtXtrAx`)
@@ -16,13 +18,17 @@ Documento maestro de continuidad. Debe permitir reanudar el proyecto sin depende
 - **Plantilla:** Universal 3D / URP
 - **Plataforma inicial:** Windows PC
 - **Control prioritario:** DualSense, además de teclado y mouse
-- **Ruta local:** `D:\Git\Unity-Farm-Simulator`
+- **Ruta local habitual:** `D:\Git\Unity-Farm-Simulator`
 - **Rama estable:** `main`
-- **Rama funcional cerrada:** `feature/domain-item-inventory-foundation`
-- **Rama activa nueva:** `chore/cozy-farm-art-intake`
-- **Proyecto fuente:** `xArtXtrAx/farming-game-A`
+- **Head integrado más reciente:** `794aab44916f974bc885aec0a203823041c72f8f`
+- **Integración más reciente:** PR #15 — `Consolidate seasonal tiles, scene sizing and collider authoring`
+- **Rama activa:** `dev/farm-scene-authoring`
+- **Base de la rama activa:** `main` después del merge del PR #15
+- **Proyecto fuente de reglas:** `xArtXtrAx/farming-game-A`
 - **Commit fuente congelado:** `dd32056c9f8142a2322bc2c1d41f0b05b002598f`
 - **Identidad Unity:** `jarturoga` / `Unity Farm Simulator` / `com.jarturoga.unityfarmsimulator`
+
+`CONTINUIDAD_GPT.md` continúa desactualizado y todavía describe el cierre de la hotbar como estado presente. Hasta corregirlo, esta bitácora y el estado real de GitHub tienen prioridad operativa para los incrementos posteriores al PR #8.
 
 ---
 
@@ -32,11 +38,14 @@ Documento maestro de continuidad. Debe permitir reanudar el proyecto sin depende
 - Physics 2D.
 - Cámara ortográfica frontal.
 - Resolución lógica 960 × 540, 16:9.
-- 64 Pixels Per Unit.
 - Frame del jugador: 64 × 72 px.
 - Pivote cercano a los pies: X 0.5 / Y 0.12.
 - Teclado y DualSense.
-- Orden visual basado en la coordenada Y de los pies.
+- Profundidad visual basada en la coordenada Y de los pies.
+- `FarmSimulator.Domain` no depende de `UnityEngine`.
+- Los Tilemaps representan contenido estático del mundo.
+- Los cultivos con estado y crecimiento son entidades runtime con `SpriteRenderer`.
+- Los edificios separan tres conceptos independientes: visual, collider físico y footprint lógico.
 
 Arquitectura:
 
@@ -58,610 +67,414 @@ Application
 Infrastructure / Presentation
 ```
 
-`FarmSimulator.Domain` no depende de `UnityEngine`.
+---
+
+## 3. Línea histórica integrada
+
+Las fases iniciales permanecen integradas:
+
+1. Cimentación del proyecto Unity/URP y assemblies.
+2. Calibración cenital XY, cámara ortográfica y resolución lógica.
+3. Movimiento por teclado y DualSense.
+4. Héroe animado en cuatro direcciones.
+5. Prefab reutilizable y profundidad visual por Y.
+6. Catálogo de objetos e inventario puro en Domain.
+7. Piloto artístico Cozy Farm, slicing curado y calibración visual.
+8. Hotbar uGUI de ocho slots conectada a `InventoryState`.
+9. Casa del héroe, interior, cama, sueño y avance de día.
+10. Núcleo agrícola con arado, riego, siembra, crecimiento y cosecha.
+11. Tilemaps separados para `Ground`, `Paths`, `Soil` y `Decoration`.
+12. Farm Development Kit para catálogo, generación y colocación de edificios Cozy Farm.
+
+Última línea base de pruebas confirmada antes del bloque de tiles estacionales:
+
+- EditMode completo: **211/211**.
+- PlayMode previamente confirmado: **10/10**.
+
+Estos conteos no deben extrapolarse automáticamente a los cambios posteriores. Después de los últimos ajustes de editor, cámara, límites y colliders sigue pendiente una ejecución completa nueva.
 
 ---
 
-## 3. Fases completadas e integradas
+## 4. Arquitectura agrícola y Tilemaps vigente
 
-### Fase 1 — Cimentación
-
-Proyecto Unity/URP, assemblies, `Bootstrap`, `Lab`, transición e identidad. PR #1.
-
-### Fase 2 — Calibración visual y espacial
-
-Vista cenital XY, Physics 2D, 960 × 540, 64 PPU y cámara 16:9. Validación: EditMode 4/4, PlayMode 2/2, consola limpia. PR #2.
-
-### Fase 3 — Movimiento del jugador
-
-WASD, flechas, stick, D-pad, zona muerta, diagonales, orientación, collider de pies y límites. Validación: EditMode 11/11, PlayMode 4/4, consola limpia. PR #3.
-
-### Fase 4 — Sprite y animación
-
-Spritesheet congelado `src/assets/hero_hd.png`, 192 × 288 px, frames 64 × 72, idle y walk en cuatro direcciones a 8 FPS. Validación: EditMode 27/27, PlayMode 5/5, consola limpia, teclado y DualSense aprobados. PR #4.
-
-### Fase 5 — Prefab reutilizable y profundidad visual
-
-Player prefab reutilizable, sorting layers, profundidad por Y de los pies y referencia 2D de oclusión.
-
-Validación local de Arturo — 2026-08-05:
-
-- EditMode: **36/36**.
-- PlayMode: **6/6**.
-- Consola: **0 errores y 0 advertencias**.
-- Teclado, DualSense y límites aprobados.
-- `Order in Layer`: aproximadamente **9600–10400**.
-- Oclusión correcta delante/detrás.
-- `BUG-0005` y `BUG-0006`: **VERIFICADOS**.
-
-Integración:
-
-- Commit de recursos: `258de79c40cb8f419f1f9a4b7d737c379015c6e1`.
-- PR #5: `Add reusable player prefab and top-down depth sorting`.
-- Merge en `main`: `341051f097d9d70796e69b9cddc9277ba3902ed0`.
-- Registro posterior: `8a85534526ad1e491cb0687d817f2924acee2d4d`.
-
-Bugs verificados acumulados: `BUG-0001` a `BUG-0006`.
-
-### Fase 6 — Catálogo de objetos e inventario de dominio
-
-Estado: **IMPLEMENTADA, VALIDADA E INTEGRADA**.
-
-Rama cerrada:
+Jerarquía conceptual:
 
 ```text
-feature/domain-item-inventory-foundation
+Farm Authoring Grid
+├── Ground
+├── Paths
+├── Soil
+└── Decoration
+
+Farm Plot Field
+└── Plot x-y
+    ├── Soil Visual
+    └── Crop Entity Visual (SpriteRenderer)
 ```
-
-Objetivo cumplido: núcleo de catálogo e inventario puro en `FarmSimulator.Domain`, sin hotbar visual, ScriptableObjects, almacenamiento, UI ni cambios de escenas.
-
-#### Fuente congelada estudiada
-
-Commit `dd32056c9f8142a2322bc2c1d41f0b05b002598f` de `xArtXtrAx/farming-game-A`:
-
-- `src/game/data/items.ts`;
-- `src/game/inventory/InventoryState.ts`;
-- `src/game/inventory/InventoryManager.ts`;
-- `tests/unit/data/catalogs.test.ts`;
-- `tests/unit/inventory/InventoryState.test.ts`;
-- `src/game/core/GameState.ts`;
-- `tests/integration/core/GameState.integration.test.ts`.
-
-No existía una prueba unitaria dedicada a `InventoryManager`; su responsabilidad de presentación no se migró en este bloque.
-
-#### Implementación 6A — Catálogo puro
-
-Archivos:
-
-- `Assets/_Project/Scripts/Domain/ItemCatalog.cs`;
-- `Assets/_Project/Scripts/Domain/ItemCatalog.cs.meta`.
-
-Incluye:
-
-- `ItemId` ordinal y case-sensitive con ocho IDs estables;
-- `ItemCategory`, `ItemDefinition` e `ItemCatalog`;
-- stacks 1 para herramientas y 99 para semillas/cosechas actuales;
-- semillas comprables por 30/50/75;
-- cosechas vendibles por 60/100/150;
-- catálogo de solo lectura y búsquedas tipadas/por cadena;
-- rechazo explícito de IDs nulos, vacíos o desconocidos.
-
-Commits históricos de la rama:
-
-- `deb03849826a5bfb5ecc07e303440e9277de70b3` — implementación;
-- `1264f1996ec462f802316b916471197cfb1fcfc0` — meta;
-- `88ee0e71acc2dbca944f6b04233be96a1772365a` — corrección de asignación explícita del parámetro `out` en `TryGet(ItemId, ...)`.
-
-#### Implementación 6B — Inventario puro
-
-Archivos:
-
-- `Assets/_Project/Scripts/Domain/InventoryState.cs`;
-- `Assets/_Project/Scripts/Domain/InventoryState.cs.meta`.
-
-Incluye:
-
-- `InventorySlot`, `InventorySlotSnapshot`, `AddItemResult`, `InventorySnapshot` e `InventoryState`;
-- ocho slots por defecto y selección inicial 0;
-- selección directa y ciclo con wrap-around;
-- copias defensivas;
-- stacking determinista: stacks existentes antes de slots vacíos;
-- adición completamente atómica por prevalidación de capacidad;
-- consumo parcial/exacto y limpieza de slots;
-- snapshots serializables y restauración prevalidada;
-- estado inicial: azada ×1, regadera ×1, semillas de nabo ×20 y cinco slots vacíos.
-
-Commits históricos de la rama:
-
-- `dcc20f14e4eca17ca99eccc3342d17e3f2e33bbc` — implementación;
-- `e909d9aa295caf4d62db905d6d2cc6202e3104bd` — meta.
-
-#### Implementación 6C — Pruebas EditMode
-
-Archivos:
-
-- `Assets/_Project/Tests/EditMode/ItemCatalogTests.cs`;
-- `Assets/_Project/Tests/EditMode/ItemCatalogTests.cs.meta`;
-- `Assets/_Project/Tests/EditMode/InventoryStateTests.cs`;
-- `Assets/_Project/Tests/EditMode/InventoryStateTests.cs.meta`.
-
-Commits históricos de la rama:
-
-- `00c804a3b19258ecbdf71e3cd8bafd7e47b94de4` — 25 casos de catálogo;
-- `75cb1918485e8fb8ecc02d801360866654586fa6` — meta de catálogo;
-- `cedaa70982c5dec0da6bf6fa18a7addf9e36200c` — 63 casos de inventario;
-- `718000a776ac109dfbdd9d053f3aa93ee591e690` — meta de inventario.
-
-Cobertura:
-
-- catálogo: **25** casos;
-- inventario: **63** casos;
-- nuevos: **88** casos;
-- línea base existente: **36** casos;
-- total EditMode: **124** casos.
-
-#### Validación local de Arturo — 2026-08-05
-
-- Unity cargó y ejecutó el conjunto sin errores de compilación reportados.
-- EditMode completo: **124/124**.
-- Fallos: **0**.
-- Casos nuevos aprobados: **88/88**.
-- PlayMode no cambió y conserva la regresión previa confirmada de **6/6**.
-- No se reportó en ese mensaje un conteo independiente de advertencias de consola.
-
-#### Integración
-
-- PR #6: `Add domain item catalog and inventory foundation`.
-- Head validado de la rama: `c91b3063f9c06fb949842d64d730694a84d4f416`.
-- Método: **Squash and merge**.
-- Squash commit en `main`: `4abce7561215a28e7a37e082cbaacf3825021e92`.
-- Archivos integrados: dos fuentes Domain, cuatro pruebas/metas EditMode y `BITÁCORA_GPT.MD`.
-- No se integraron escenas, UI, Input System, ScriptableObjects, almacenamiento ni recursos artísticos externos.
-- El héroe existente permanece intacto en `Assets/_Project/Resources/Characters/Farmer/farmer-spritesheet.png`, junto con su prefab, animaciones, pivote, collider y profundidad.
-
-#### Incidencia de escritura en rama — resuelta sin residuo
-
-El primer intento del catálogo usó el parámetro antiguo `branch_name`, que el conector ignoró y escribió temporalmente dos archivos en `main`.
-
-- commits accidentales: `a43bc0209de7b9c5e18aedc4f7ec2c02727af908` y `63698bebad19755e07e5eb8c6a15b98f400679c3`;
-- reversión inicial: `59edfe528f42c238d71491d950dcd71680597f82` y `7ab7d97f76b8eae5be81bcfdb5b64bae343a6db6`;
-- comparación contra `d1893aa596203546e3915b6babf1f8828d861177`: cero archivos diferentes;
-- `main` fue restaurada exactamente al head previo, eliminando también el historial accidental;
-- todas las escrituras posteriores usaron `branch` y fueron verificadas.
-
----
-
-## 4. Decisión artística vigente
-
-Arturo proporcionó un ZIP del paquete completo **Cozy Farm** para evaluación.
 
 Decisiones:
 
-- el héroe actual **se conserva** durante el desarrollo;
-- no se sustituirá el sprite del jugador de manera automática;
-- Cozy Farm se considera una biblioteca candidata para mundo, agricultura, objetos, edificios, animales y UI;
-- el ZIP y sus recursos no formaron parte del PR #6;
-- no se importará el paquete completo directamente ni se usarán sus GIF como fuentes Unity;
-- cualquier incorporación se hará en una rama dedicada mediante un subconjunto piloto, conservando los originales intactos;
-- antes de subir recursos con licencia, el repositorio deberá mantenerse privado mientras estén publicados.
+- `Ground`, `Paths`, `Soil` y `Decoration` se pintan con tiles.
+- Las semillas, plantas y cosechas no son tiles pintables.
+- `FarmPlotBehaviour` controla la etapa visual del cultivo.
+- Un cultivo nunca reemplaza el tile del suelo.
+- La escena no debe reconstruirse para reparar una capa de terreno.
+- Cualquier herramienta de recuperación debe operar sobre la escena existente, usar Undo y preservar objetos y tiles manuales.
 
-Rama activa del bloque:
+El detalle histórico de esta migración se conserva también en `BITÁCORA_TILE_PIPELINE_2026-08-06.md`.
+
+---
+
+## 5. Farm Development Kit — edificios
+
+Los edificios reutilizables usan esta estructura:
 
 ```text
-chore/cozy-farm-art-intake
+Building Root
+├── Building Composition
+│   └── Building Visual
+├── Footprint Anchor
+├── Door Anchor
+├── Portal Anchor
+└── Spawn Anchor
 ```
 
-La recepción inicial se limita a iconos de objetos, semillas, cultivos y terreno. No organizar todavía todos los edificios, animales, enemigos y estaciones.
+Responsabilidades:
 
-### Bloque artístico A1 — Recepción piloto de Cozy Farm
+- `Building Visual`: representación artística.
+- `BoxCollider2D`: colisión física del edificio.
+- `GridBuildingFootprint`: máscara lógica de celdas ocupadas.
+- `Footprint Anchor`: origen local de la huella lógica.
+- `Door/Portal/Spawn Anchor`: puntos de transición y aparición.
 
-Estado: **VALIDADO LOCALMENTE**.
+### Footprint Editor
 
-#### Fuente y selección
+El editor permite:
 
-Archivo local no versionado: `full version.zip`, Cozy Farm de shubibubi, copia comprada proporcionada por Arturo el 5 de agosto de 2026.
+- escoger una definición de edificio;
+- visualizar bounds del sprite, collider y footprint;
+- editar el lienzo lógico y celdas ocupadas;
+- editar `Footprint Anchor`;
+- rellenar o limpiar la máscara;
+- restaurar el footprint predeterminado de categoría;
+- guardar y regenerar el prefab.
 
-Inventario observado:
+La corrección del lienzo par centralizó el origen horizontal en:
 
-- 445 entradas;
-- 63 PNG;
-- 344 GIF;
-- 3 TXT.
+- `GridBuildingFootprint.GetCanvasMinimumX()`;
+- `GridBuildingFootprint.CreateRectangleOffsets()`.
 
-Los GIF se consideran únicamente referencia temporal y no entran en Unity.
+`BUG-0014` continúa registrado como `CORREGIDO`, pendiente de una nueva suite EditMode explícita antes de marcarlo `VERIFICADO`.
 
-Se preparó y versionó un bundle con cinco hojas PNG originales:
+### Autoría del collider desde Footprint Editor
 
-- `Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/items.png` — 160 × 192;
-- `Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/seeds.png` — 112 × 96;
-- `Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/tools.png` — 592 × 64;
-- `Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/crops.png` — 96 × 592;
-- `Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/tiles.png` — 864 × 800.
+Implementación publicada:
 
-No se incluyeron ZIP, GIF, `global.png`, `item_carry.png`, personajes, animales, edificios, enemigos ni variantes estacionales completas.
+- `19bb965b15541819062340eb5a93e8f3e0427b72` — persistencia de geometría de collider autorizada.
+- `8d33e728bd8e12f89c0fb03413b3effcf3c90cb7` — controles de collider en Footprint Editor.
+- `170c341727e3272df67753c07e31921ea83b4fc9` — documentación del incremento.
 
-#### Configuración inicial
+Controles disponibles:
 
-- Texture Type: Sprite (2D and UI).
-- Sprite Mode: Single temporal.
-- Pixels Per Unit: 16.
-- Filter Mode: Point.
-- Mip Maps: desactivados.
-- Wrap Mode: Clamp.
-- Alpha Is Transparency: activado.
-- Compresión por defecto: desactivada.
+- `Collider Center`;
+- `Collider Size`;
+- paso de ajuste fino;
+- movimiento izquierda, derecha, arriba y abajo;
+- ensanchar, estrechar, aumentar o reducir altura;
+- alinear el borde inferior con la base visual;
+- restaurar el collider del catálogo;
+- previsualización naranja inmediata con centro marcado;
+- `Save + regenerate prefab` para aplicar al `BoxCollider2D` generado.
 
-#### Publicación y validación
-
-- Commit local de assets publicado por Arturo: `e4540b42d275b650f726bad41d4546787ae544e9` — `Add Cozy Farm pilot art sources`.
-- El commit contiene exactamente 17 archivos del piloto.
-- Arturo confirmó el 5 de agosto de 2026 que la importación y todas las pruebas solicitadas quedaron OK.
-- Como A1 no añadió casos, la línea base confirmada permaneció en **124/124 EditMode** y **6/6 PlayMode**.
-- No se reportaron errores de compilación ni ciclos de reimportación.
-- El héroe, escenas, prefabs, scripts funcionales, asmdefs, Input System y Domain permanecieron sin cambios.
-
-### Bloque artístico A2 — Slicing curado de Cozy Farm
-
-Estado: **IMPLEMENTADO REMOTAMENTE; VALIDACIÓN LOCAL PENDIENTE**.
-
-Objetivo: convertir únicamente recursos con consumidor próximo o criterio de prueba en sub-sprites nombrados, conservando los PNG originales sin duplicarlos ni editarlos.
-
-#### Objetos y semillas
-
-`items.png` expone tres sprites 16 × 16:
-
-- `cozy_turnip`;
-- `cozy_carrot`;
-- `cozy_cabbage`.
-
-`seeds.png` expone tres sprites 16 × 16:
-
-- `cozy_turnip_seeds`;
-- `cozy_carrot_seeds`;
-- `cozy_cabbage_seeds`.
-
-Alias visuales provisionales:
-
-- el paquete denomina `radish` al recurso asociado provisionalmente con el ID de dominio `turnip`;
-- el paquete denomina `lettuce` al usado provisionalmente con `cabbage`;
-- los IDs de dominio no cambiaron y los alias pueden reemplazarse después sin tocar la lógica.
-
-#### Cultivos
-
-`crops.png` expone 18 sprites 16 × 16:
-
-- `cozy_turnip_stage_0` a `cozy_turnip_stage_5`;
-- `cozy_carrot_stage_0` a `cozy_carrot_stage_5`;
-- `cozy_cabbage_stage_0` a `cozy_cabbage_stage_5`.
-
-Los 18 sprites usan pivote inferior central para su colocación futura sobre parcelas.
-
-#### Terreno
-
-`tiles.png` expone cuatro sprites 16 × 16:
-
-- `cozy_grass`;
-- `cozy_dirt`;
-- `cozy_water`;
-- `cozy_tilled_soil`.
-
-#### Herramientas
-
-`tools.png` contiene máquinas de procesamiento y mobiliario, no iconos adecuados de azada o regadera. Permanece en modo Single y no se crearon aliases `cozy_hoe` ni `cozy_watering_can`.
-
-#### Pruebas A2
-
-Archivos nuevos:
-
-- `Assets/_Project/Tests/EditMode/CozyFarmPilotArtTests.cs`;
-- `Assets/_Project/Tests/EditMode/CozyFarmPilotArtTests.cs.meta`.
-
-Seis casos nuevos comprueban:
-
-- dimensiones exactas de las cinco hojas;
-- importación pixel-art a 16 PPU, Point, sin mipmaps, Clamp y sin compresión;
-- que `tools.png` siga Single y no exponga aliases falsos de herramienta;
-- los seis nombres de objetos/semillas;
-- las 18 etapas de cultivo;
-- los cuatro tiles piloto.
-
-La aserción de `tools.png` se endureció en `d88eeacb38ff50963b31d1d8a0f2c91b4297bf49` para no depender de cómo Unity represente internamente el sprite principal en modo Single.
-
-#### Alcance remoto confirmado
-
-Desde el commit validado de A1 hasta el head de A2 solo cambian:
-
-- cuatro `.meta` de texturas (`items`, `seeds`, `crops`, `tiles`);
-- la prueba A2 y su `.meta`;
-- `COZY_FARM_INTAKE.md`;
-- esta bitácora al cerrar la transacción documental.
-
-No se modificaron PNG, héroe, escenas, prefabs, runtime, asmdefs, Input System ni Domain.
-
----
-
-## 5. Protocolo permanente de continuidad
-
-Existe en `main` `CONTINUIDAD_GPT.md` y el README apunta a él.
-
-Cadena de recuperación:
+Espacio de autoría:
 
 ```text
-README.md en main
-  → CONTINUIDAD_GPT.md en main
-  → BITÁCORA_GPT.MD en la rama activa o main
-  → COZY_FARM_INTAKE.md
-  → BUGS.MD + MIGRACION_DESDE_FARMING_GAME_A.MD
-  → comparación main/rama y commits recientes
-  → Próximo paso exacto
+X = 0 → centro horizontal del edificio
+Y = 0 → base visual inferior del edificio
 ```
 
-Los cambios exclusivamente locales siguen siendo el único estado que GitHub no protege.
+Las definiciones guardan si el collider fue autorizado manualmente. `Rebuild definitions` actualiza el valor original del catálogo, pero no sobrescribe un collider autorizado. Solo `Reset collider to catalog default` elimina la personalización.
+
+**Validación confirmada por Arturo:** la herramienta visual le agradó y funciona como editor de collider.
+
+**Pendiente:** ejecutar EditMode completo y validar en Play la colisión física de un prefab regenerado antes de considerar el incremento totalmente verificado.
 
 ---
 
-## 6. Próximo paso exacto
+## 6. Selector de tiles estacionales
 
-1. En GitHub Desktop, permanecer en `chore/cozy-farm-art-intake` y ejecutar **Fetch origin / Pull origin**.
-2. Confirmar que el head remoto incluido es `d88eeacb38ff50963b31d1d8a0f2c91b4297bf49` o un registro documental posterior sin cambios funcionales.
-3. Abrir Unity `6000.3.21f1` y esperar la reimportación de `items.png`, `seeds.png`, `crops.png` y `tiles.png`.
-4. Confirmar en el Project Browser o Sprite Editor:
-   - 3 sprites de objetos;
-   - 3 sprites de semillas;
-   - 18 sprites de cultivos;
-   - 4 sprites de terreno.
-5. Confirmar visualmente que los cultivos tienen pivote inferior central.
-6. Ejecutar EditMode completo; resultado esperado, todavía no confirmado: **130/130**.
-7. Ejecutar PlayMode completo; resultado esperado, todavía no confirmado: **6/6**.
-8. Evaluar si `radish → turnip` y `lettuce → cabbage` son aceptables como alias visuales provisionales.
-9. Comunicar pruebas, consola y percepción visual antes de crear Tilemaps, paletas, prefabs, UI o conexión con inventario.
-10. No añadir más sprites ni funcionalidad a esta rama hasta cerrar la validación A2.
-11. Mantener `FarmSimulator.Domain` independiente de `UnityEngine`.
+Rama de desarrollo histórica: `dev/seasonal-tile-browser`.
 
----
+Commits principales:
 
-## 7. Línea base pendiente de migrar
+- `34cd57780d008bca65201a1e071b0e69ce80ce0e` — selector estacional inicial.
+- `bbdb64b6ecfd9fa5bfffc40343c844fd6843be62` — corrección de compilación.
+- `186f6e66cab7f2079e7c918c9ae2d089160e431a` — metadata.
+- `cc42802702def1cccda4ef9579bde9ffcdf34c84` — thumbnails reales.
+- `3818ecf344c0e6cdca518d4073f193a96216ce16` — arrastre directo a la Scene.
 
-Hotbar visual, almacenamiento, economía, tiempo, agricultura, herramientas, tres cultivos, interacciones, granja, casa, mercado, envíos, estaciones, sueño, fin de día y guardado JSON versionado. Detalle en `MIGRACION_DESDE_FARMING_GAME_A.MD`.
+La ventana:
 
----
+- analiza las texturas del paquete Cozy Farm Full/Tiles;
+- corta sprites de 16 × 16;
+- organiza por estación;
+- muestra thumbnails reales;
+- genera assets `Tile` únicamente cuando se necesitan;
+- permite arrastrar un tile directamente sobre el Tilemap de la Scene;
+- respeta la capa seleccionada y registra Undo.
 
-## 8. Protocolo para chat nuevo
-
-> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`; después `BITÁCORA_GPT.MD` y `COZY_FARM_INTAKE.md` desde `chore/cozy-farm-art-intake`, seguido de `BUGS.MD` y `MIGRACION_DESDE_FARMING_GAME_A.MD`. La Fase 6 está integrada mediante PR #6. A1 de Cozy Farm fue validado con 124/124 EditMode y 6/6 PlayMode. A2 está implementado en `d88eeacb38ff50963b31d1d8a0f2c91b4297bf49`, con 3 objetos, 3 semillas, 18 etapas de cultivo, 4 tiles y 6 pruebas EditMode nuevas; su validación esperada es 130/130 EditMode y 6/6 PlayMode. Conserva el héroe actual y no avances a Tilemaps o UI antes de la validación de Arturo.
-
----
-
-## 9. Actualización posterior — A2 validado y A3 implementado
-
-> **Esta sección sustituye operativamente los apartados 6 y 8 anteriores, que se conservan como registro histórico del estado previo a la validación.**
-
-### A2 — Validación final local
-
-Arturo confirmó el 5 de agosto de 2026:
-
-- `items.png`: **3** sprites;
-- `seeds.png`: **3** sprites;
-- `crops.png`: **18** sprites;
-- `tiles.png`: **4** sprites;
-- `tools.png`: una planilla Single sin cortes;
-- EditMode: **130/130**;
-- PlayMode: **6/6**;
-- errores: **0**.
-
-A2 queda **VALIDADO**. Los alias `radish → turnip` y `lettuce → cabbage` siguen siendo provisionales y reversibles.
-
-### A3 — Escena artística de exhibición
-
-Estado: **IMPLEMENTADO REMOTAMENTE; GENERACIÓN E INSPECCIÓN LOCAL PENDIENTES**.
-
-Archivos añadidos:
-
-- `Assets/_Project/Scripts/Editor/CozyFarmShowcaseScenePipeline.cs`;
-- `Assets/_Project/Scripts/Editor/CozyFarmShowcaseScenePipeline.cs.meta`;
-- `Assets/_Project/Tests/EditMode/CozyFarmShowcaseSceneTests.cs`;
-- `Assets/_Project/Tests/EditMode/CozyFarmShowcaseSceneTests.cs.meta`.
-
-El pipeline Editor genera reproduciblemente:
+Ruta de tiles generados:
 
 ```text
-Assets/_Project/Scenes/CozyFarmShowcase.unity
+Assets/_Project/Art/Generated/CozyFarm/SeasonalTiles/{Season}/Tiles
 ```
 
-Características:
+### Tinte rosa al entrar en Play
 
-- escena separada de `Lab` y `Bootstrap`;
-- cámara ortográfica de **4.21875** con `ReferenceAspectCamera`;
-- fondo de césped;
-- cuatro muestras de terreno;
-- tres objetos cosechados y tres bolsas de semillas;
-- tres filas con seis etapas de crecimiento cada una;
-- instancia conectada al prefab vigente del héroe;
-- comando manual `Tools > Farm Simulator > Rebuild Cozy Farm Showcase`;
-- no añade Tilemaps, paletas, UI, hotbar, integración funcional ni cambios en Domain.
+El terreno completo aparecía rosa cuando la Tile Palette conservaba un objetivo de pintura activo. La causa observada fue el estado de foco/tinte del editor, no un shader roto ni una textura perdida.
 
-Pruebas A3 añadidas: **4** casos EditMode sobre generación/firma, grupos curados, prefab del héroe y cámara.
+Corrección:
 
-Head remoto al cerrar esta actualización:
+- `6295b506eaff833f88a986447a30c83318d11c3a` — limpiar el objetivo de pintura de Tile Palette antes de entrar en Play.
+
+La corrección debe mantenerse como protección de editor. No se ha registrado una ejecución completa de regresión posterior específica para este cambio.
+
+---
+
+## 7. Reset antiguo de la granja — desactivado
+
+Se identificó que `FarmSceneGridLayoutResetter` era una herramienta heredada destructiva. Su inicialización automática podía ejecutar una reconstrucción antigua de `Farm`, reemplazando composición, fachada y decoración actuales.
+
+El comando antiguo llegó a ejecutarse manualmente durante el diagnóstico y reconstruyó una versión obsoleta de la escena. Esto confirmó que no era una herramienta válida para reparar césped o límites.
+
+Corrección:
+
+- `7711e95ac1994c526133d6074683c70ee63a1a26` — desactivar la ejecución automática y mover el comando a `Legacy` con confirmación explícita.
+
+Estado actual:
+
+- `EnsureApplied()` no reconstruye nada.
+- No existe reset automático al abrir el proyecto.
+- El comando está bajo:
 
 ```text
-088f1589b1ab26e057e1bdc8fe9c43f7a1d08255
+Tools/Farm Simulator/Legacy/Reset Farm To Old Starter Layout
 ```
 
-### Próximo paso exacto vigente
-
-1. En GitHub Desktop, hacer **Fetch origin / Pull origin** en `chore/cozy-farm-art-intake`.
-2. Abrir Unity `6000.3.21f1` y esperar compilación e importación.
-3. Confirmar que se genere `Assets/_Project/Scenes/CozyFarmShowcase.unity`.
-4. Abrir la escena y pulsar Play.
-5. Confirmar que `Lab` permanece intacta.
-6. Evaluar escala, nitidez y coherencia del héroe frente a terreno, objetos, semillas y cultivos.
-7. Ejecutar EditMode; esperado **134/134**.
-8. Ejecutar PlayMode; esperado **6/6**.
-9. Reportar apariencia, conteos y cualquier error o advertencia.
-10. No hacer commit todavía de la escena generada ni avanzar a Tilemaps/hotbar hasta revisar el resultado.
-
-### Prompt vigente para chat nuevo
-
-> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee `CONTINUIDAD_GPT.md` desde `main`; después `BITÁCORA_GPT.MD` y `COZY_FARM_INTAKE.md` desde `chore/cozy-farm-art-intake`. A1 y A2 de Cozy Farm están validados con 130/130 EditMode, 6/6 PlayMode y cero errores. A3 está implementado hasta `088f1589b1ab26e057e1bdc8fe9c43f7a1d08255`: un pipeline Editor genera `CozyFarmShowcase.unity` y cuatro pruebas elevan el esperado a 134/134 EditMode. La generación local, inspección visual y pruebas A3 siguen pendientes. Conserva el héroe y no avances a Tilemaps o UI antes de la validación de Arturo.
+Regla vigente: no recomendar ni ejecutar este comando para reparar terreno. Las reparaciones de Tilemap deben modificar solo la capa afectada de la escena existente.
 
 ---
 
-## 10. Actualización posterior — A3 validado y A3.1 implementado
+## 8. Tamaño de escenas, cámara y área jugable
 
-> **Esta sección sustituye operativamente el próximo paso y el prompt de la sección 9; las secciones anteriores permanecen como historial.**
+### Scene Size
 
-### A3 — Validación técnica y diagnóstico visual
+Commits iniciales:
 
-Arturo confirmó el 5 de agosto de 2026:
+- `b8cef00de5850eeb4fbde862061ecb119685107c` — selector de tamaño para Farm e interior.
+- `c4cc4c367df3c62cdf249919de275b0daed35e57` — metadata.
 
-- EditMode: **134/134**;
-- PlayMode: **6/6**;
-- errores: **0**.
+Ruta:
 
-La escena se generó y conservó correctamente `Lab` y el prefab actual del héroe. La captura reveló, sin embargo, una composición visual no aceptable:
+```text
+Tools
+→ Farm Simulator
+→ Farm Development Kit
+→ Scene Size
+```
 
-- objetos cosechados y semillas mostrados a escala física de mundo;
-- 18 bases circulares `cozy_tilled_soil` repetidas y dominantes;
-- muestras de terreno 2×2 demasiado grandes;
-- distribución dispersa con mucho espacio vacío;
-- comparación entre roles de UI y mundo poco clara.
+La ventana permite seleccionar:
 
-Conclusión: A3 queda **VALIDADO TÉCNICAMENTE**, pero su primera composición fue **RECHAZADA VISUALMENTE**.
+- `Farm`;
+- `HouseInterior`.
 
-### A3.1 — Reequilibrio de escala y composición
+Y configurar:
 
-Estado: **IMPLEMENTADO REMOTAMENTE; REGENERACIÓN, INSPECCIÓN Y PRUEBAS LOCALES PENDIENTES**.
+- ancho en celdas;
+- alto en celdas;
+- celda central;
+- para Farm, relleno opcional de celdas vacías de `Ground` con césped;
+- limpieza opcional y explícitamente destructiva de tiles fuera del límite.
 
-Commits funcionales:
+La herramienta no debe reconstruir casas, decoración o sistemas de escena.
 
-- `4e6f8e756a38c6dd1ba9a74032f943105e73a9e7` — reequilibrio del generador;
-- `39abe438bb6068b21438fb836b5eea01295f0db3` — pruebas de roles de escala y composición compacta.
+### Cámara de seguimiento
 
-Documentación operativa:
+Commits:
 
-- `23f38f9e2c2791cd61170c2c0e39690ff058eff1` — actualización de `COZY_FARM_INTAKE.md`.
+- `b80a74ad4a5911e09301f58f518e92e04b1a9219` — `PlayerFollowCamera2D`.
+- `e571301ea5a8bc8f49af637129ee97c8fc51a079` — metadata.
+- `e739e780f1356e37e7fd1479ce67ddc2025b55bc` — configuración desde Scene Size.
+- `255c64b56574e9d05b005b7f162269665e19369f` — limpieza de placeholder.
+- `68ee45992fa28769a6868be5941776ee889fa96f` — documentación.
 
-Cambios del generador:
+Configuración de Farm:
 
-- firma elevada a `cozy-farm-showcase-scene-v2` para invalidar y regenerar la escena anterior;
-- iconos de objetos y semillas a escala **0.55**, colocados sobre una referencia de 3×2 slots;
-- cultivos conservados a escala de mundo **1.0**;
-- eliminación de los 18 objetos `soil_for_*`;
-- cama compartida de tierra de **6×3 tiles** para las 18 etapas;
-- cuatro muestras de terreno reducidas a **un tile individual** cada una;
-- héroe intacto a escala **1.0**, sobre referencia de tierra de **2×2 tiles**;
-- distribución compactada dentro del encuadre lógico 960×540;
-- protección contra sobrescritura si `CozyFarmShowcase` está abierta: se solicita cerrarla y ejecutar el comando manual.
+- modo `Follow Player`;
+- zoom fijo expresado como altura visible en celdas;
+- seguimiento suavizado;
+- clamp opcional a `Scene Authoring Bounds`.
 
-Decisión sobre `cozy_tilled_soil`:
+El tamaño del mapa y el zoom son conceptos separados:
 
-- no se modificó `tiles.png.meta` ni ningún slice A2;
-- la silueta circular queda como muestra aislada provisional;
-- deja de utilizarse como base repetida bajo cada etapa para no distorsionar la lectura de escala.
+```text
+Tamaño del mapa = cuántas celdas existen
+Vista de cámara  = cuántas celdas se ven simultáneamente
+```
 
-Pruebas A3.1:
+### Sincronización del área física recorrible
 
-- `CozyFarmShowcaseSceneTests.cs` pasa de **4 a 6 casos**;
-- verifica iconos UI a 0.55 frente a cultivos/héroe a 1.0;
-- verifica panel compartido, cama compartida, ausencia de `soil_for_*`, muestras individuales y referencia 2×2 del héroe.
+El primer selector modificaba el área visual/lógica, pero el jugador seguía bloqueado por los colliders antiguos de `Movement Boundary`.
 
-No se modificaron PNG, `.meta` artísticos, `Lab`, prefab/spritesheet/animaciones del héroe, Domain, inventario, Input System, runtime, Tilemaps, paletas o hotbar.
+Corrección:
 
-### Próximo paso exacto vigente
+- `7f580db74e2e447642f83389f970f2e33125b556` — sincronizar los límites físicos con el tamaño autorizado.
+- `37e74aad1236d167ad9cb631689fec19034c1277` — metadata.
 
-1. Cerrar `CozyFarmShowcase` en Unity antes de hacer Pull.
-2. En GitHub Desktop, hacer **Fetch origin / Pull origin** en `chore/cozy-farm-art-intake`.
-3. Abrir Unity `6000.3.21f1` y esperar compilación/importación.
-4. La firma `v2` debe regenerar `Assets/_Project/Scenes/CozyFarmShowcase.unity`.
-5. Si aparece el aviso de escena antigua abierta, cerrarla y ejecutar `Tools > Farm Simulator > Rebuild Cozy Farm Showcase`.
-6. Abrir la escena y pulsar Play.
-7. Confirmar visualmente iconos menores, filas compactas sin círculos repetidos, cuatro muestras individuales y héroe intacto sobre 2×2 tiles.
-8. Ejecutar EditMode completo; esperado **136/136**.
-9. Ejecutar PlayMode completo; esperado **6/6**.
-10. Reportar captura, conteos y cualquier error o advertencia.
-11. No hacer commit todavía de la escena generada ni avanzar a Tilemaps/hotbar antes de la revisión visual.
+Jerarquía resultante:
 
-### Prompt vigente para chat nuevo
+```text
+Movement Boundary
+├── Boundary Left
+├── Boundary Right
+├── Boundary Bottom
+└── Boundary Top
+```
 
-> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee `CONTINUIDAD_GPT.md` desde `main`; después `BITÁCORA_GPT.MD` y `COZY_FARM_INTAKE.md` desde `chore/cozy-farm-art-intake`. A1 y A2 están validados. A3 pasó 134/134 EditMode y 6/6 PlayMode sin errores, pero su primera composición fue rechazada por desproporción. A3.1 está implementado hasta `39abe438bb6068b21438fb836b5eea01295f0db3`: iconos a 0.55, cultivos y héroe a 1.0, cama compartida 6×3, muestras individuales y dos pruebas nuevas. El esperado es 136/136 EditMode y 6/6 PlayMode. Conserva el héroe y no avances a Tilemaps o hotbar antes de la validación visual de Arturo.
+Los cuatro colliders quedan fuera del rectángulo jugable para no perder media celda en los bordes.
+
+**Validación confirmada por Arturo:** después de reaplicar el tamaño, el personaje pudo recorrer el área ampliada correctamente. Este comportamiento funcional queda aprobado.
+
+**Pendiente:** ejecutar suites completas después de la integración para registrar una línea base nueva.
 
 ---
 
-## 11. Actualización posterior — A3.1 validado y A3.2 implementado
+## 9. Integración del PR #15
 
-> **Esta sección sustituye operativamente el próximo paso y el prompt de la sección 10. Las conclusiones anteriores que descartaban cambiar la escala del héroe quedan corregidas por evidencia visual posterior más directa.**
+PR:
 
-### A3.1 — Validación final y corrección del diagnóstico
+```text
+#15 — Consolidate seasonal tiles, scene sizing and collider authoring
+```
 
-Arturo confirmó el 5 de agosto de 2026:
+Rama fuente:
 
-- EditMode: **136/136**;
-- PlayMode: **6/6**;
-- errores: **0**.
+```text
+dev/seasonal-tile-browser
+```
 
-La composición compacta funcionó técnicamente, pero Arturo movió al héroe junto a cada región y aportó cinco capturas comparativas. Estas comparaciones demostraron que el héroe sigue demasiado pequeño frente a:
+Base:
 
-- un tile de terreno;
-- los cultivos jóvenes e intermedios;
-- los cultivos maduros;
-- la cama de cultivo completa.
+```text
+main
+```
 
-La interpretación anterior de que la geometría era suficiente queda anulada. El diagnóstico correcto es:
+Contenido integrado:
 
-- héroe 64 × 72 a 64 PPU = **1 × 1.125 unidades**;
-- tile Cozy Farm 16 × 16 a 16 PPU = **1 × 1 unidad**;
-- el héroe queda prácticamente de un tile de alto, insuficiente para la lectura humana cenital buscada;
-- reducir tiles rompería continuidad de grid;
-- escalar la raíz del jugador alteraría collider y referencias técnicas.
+- selector estacional de tiles;
+- thumbnails reales y arrastre a Scene;
+- protección contra tinte de Tile Palette al entrar en Play;
+- desactivación del reset automático antiguo;
+- selector de tamaño para Farm e interior;
+- cámara de seguimiento acotada;
+- sincronización de límites físicos con el tamaño de escena;
+- edición persistente del collider desde Footprint Editor;
+- documentación del pipeline de tiles y edificios.
 
-A3.1 queda **VALIDADA TÉCNICAMENTE**, pero su relación héroe/mundo permanece **RECHAZADA VISUALMENTE**.
+Merge commit:
 
-### A3.2 — Calibración visual del héroe a 1.5×
+```text
+794aab44916f974bc885aec0a203823041c72f8f
+```
 
-Estado: **IMPLEMENTADO REMOTAMENTE; REGENERACIÓN, INSPECCIÓN Y PRUEBAS LOCALES PENDIENTES**.
+Estado de validación al integrar:
 
-Commits funcionales:
+- expansión del área jugable: **validada por Arturo**;
+- editor visual del collider: **validado por Arturo**;
+- suite EditMode completa posterior: **pendiente**;
+- suite PlayMode completa posterior: **pendiente**;
+- validación física exhaustiva de colliders autorizados: **pendiente**.
 
-- `8c48c55ed5bcc9d6d836f3e83bcc79cc5d7e0200` — firma `v3` y escala del visual del héroe;
-- `d4d3757640aa5b4f232bbd35f28d9e924bb328b7` — prueba adicional de escala visual y collider intacto.
+No afirmar que todos los cambios del PR #15 están verificados hasta cerrar esas pruebas.
 
-Documentación operativa:
+---
 
-- `3b8e057b2f2746fa9732a063e8e4872ffd95dd1d` — actualización de `COZY_FARM_INTAKE.md`.
+## 10. Bugs y documentación relacionada
 
-Cambios:
+`BUGS.MD` contiene actualmente:
 
-- firma elevada a `cozy-farm-showcase-scene-v3`;
-- nueva constante `HeroVisualScale = 1.5f`;
-- raíz `Current Hero` en escala **1.0**;
-- hijo `Playable Player Sprite` en escala **1.5**;
-- collider, Rigidbody2D, motor, feet sorting, pivote lógico y prefab fuente sin cambios;
-- tiles y cultivos conservados en escala **1.0**;
-- tamaño visual esperado del héroe: aproximadamente **1.5 × 1.6875 unidades**.
+- `BUG-0001` a `BUG-0008` verificados;
+- `BUG-0009`, `BUG-0010`, `BUG-0011` y `BUG-0014` corregidos, con validaciones pendientes según su registro.
 
-La escala es compatible con la cuadrícula visual: el héroe usa bloques lógicos 4×4 y 1.5× los convierte en bloques 6×6 en la resolución de referencia, sin escalado fraccional de esos bloques.
+Los problemas recientes que deben quedar reflejados o conciliados en el reporte de bugs son:
 
-Pruebas A3.2:
+- reset automático heredado capaz de sobrescribir `Farm`;
+- límites físicos que no acompañaban el tamaño autorizado;
+- tinte rosa de Tile Palette en Play;
+- documentación maestra desactualizada después del PR #15.
 
-- `CozyFarmShowcaseSceneTests.cs` pasa de **6 a 7 casos**;
-- el caso nuevo verifica raíz 1.0, visual 1.5 y collider con ancho, alto y offset originales.
+La integración del PR #15 no actualizó completamente `BUGS.MD` ni `BUGS_TILE_PIPELINE_2026-08-06.md`. Esto sigue siendo deuda documental y no debe ocultarse.
 
-A3.2 solo modifica la instancia de la exhibición. El prefab real no se cambiará antes de la aprobación visual de Arturo.
+---
 
-### Próximo paso exacto vigente
+## 11. Rama activa actual
 
-1. Cerrar `CozyFarmShowcase` antes de hacer Pull.
-2. Hacer **Fetch origin / Pull origin** en `chore/cozy-farm-art-intake`.
-3. Abrir Unity y esperar compilación/importación.
-4. La firma `v3` debe regenerar la escena.
-5. Si aparece el aviso de escena abierta, cerrarla y ejecutar `Tools > Farm Simulator > Rebuild Cozy Farm Showcase`.
-6. Colocar al héroe junto a un tile, un cultivo joven y uno maduro.
-7. Compartir una captura para decidir entre 1.5× y una posible prueba 1.25×.
-8. Ejecutar EditMode; esperado **137/137**.
-9. Ejecutar PlayMode; esperado **6/6**.
-10. No hacer commit de la escena generada ni modificar el prefab real antes de aprobar la comparación.
+Después del merge del PR #15 se creó:
 
-### Prompt vigente para chat nuevo
+```text
+dev/farm-scene-authoring
+```
 
-> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee `CONTINUIDAD_GPT.md` desde `main`; después `BITÁCORA_GPT.MD` y `COZY_FARM_INTAKE.md` desde `chore/cozy-farm-art-intake`. A1 y A2 están validados. A3.1 pasó 136/136 EditMode y 6/6 PlayMode sin errores, pero cinco comparaciones directas demostraron que el héroe a escala 1.0 sigue demasiado pequeño frente a tiles y cultivos. A3.2 está implementado hasta `d4d3757640aa5b4f232bbd35f28d9e924bb328b7`: firma v3, raíz/collider 1.0 y solo el hijo visual del héroe a 1.5. El esperado es 137/137 EditMode y 6/6 PlayMode. No cambies todavía el prefab real ni avances a Tilemaps/hotbar antes de la aprobación visual de Arturo.
+Esta rama parte del `main` integrado en `794aab44916f974bc885aec0a203823041c72f8f`.
+
+Propósito general:
+
+- continuar herramientas y autoría segura de escenas de granja e interiores;
+- evitar regeneradores destructivos;
+- conservar las escenas existentes y aplicar cambios específicos con Undo;
+- registrar cada incremento en esta bitácora antes de considerarlo cerrado.
+
+La actualización presente de `BITÁCORA_GPT.MD` es el primer commit documental de esta rama.
+
+---
+
+## 12. Estado comprobado, pendiente y siguiente paso exacto
+
+### Comprobado
+
+- El área jugable de Farm se expande al cambiar ancho y alto.
+- La cámara puede seguir al jugador manteniendo zoom fijo.
+- `Movement Boundary` se sincroniza con los límites autorizados.
+- Footprint Editor permite modificar visualmente centro y tamaño del collider.
+- El reset antiguo dejó de ejecutarse automáticamente.
+- El PR #15 está fusionado en `main`.
+- La nueva rama `dev/farm-scene-authoring` existe desde el estado integrado.
+
+### Pendiente
+
+- Ejecutar EditMode completo sobre la línea posterior al PR #15.
+- Ejecutar PlayMode completo sobre la misma línea.
+- Validar un prefab regenerado con collider personalizado dentro de Farm.
+- Confirmar que `Rebuild definitions` conserva el collider autorizado.
+- Confirmar que `Reset collider to catalog default` restaura correctamente el valor original.
+- Conciliar `BUGS.MD` y `BUGS_TILE_PIPELINE_2026-08-06.md` con los incidentes recientes.
+- Actualizar `CONTINUIDAD_GPT.md` cuando se realice el siguiente cierre de integración.
+
+### Siguiente paso exacto
+
+1. Permanecer en `dev/farm-scene-authoring`.
+2. Hacer Pull de la actualización documental.
+3. Abrir Unity y confirmar compilación sin errores.
+4. Ejecutar EditMode completo y registrar el conteo real.
+5. Ejecutar PlayMode completo y registrar el conteo real.
+6. Regenerar una casa con collider personalizado y probar la colisión en Play.
+7. Ejecutar `Rebuild definitions`, reabrir la definición y confirmar que el collider personalizado permanece.
+8. Probar `Reset collider to catalog default` en una definición de prueba.
+9. Actualizar `BUGS.MD` y `BUGS_TILE_PIPELINE_2026-08-06.md` con resultados reales.
+10. Solo después escoger el siguiente incremento funcional de autoría de escenas.
+
+---
+
+## 13. Prompt vigente para un chat nuevo
+
+> Continúa `xArtXtrAx/Unity-Farm-Simulator`. Lee primero `CONTINUIDAD_GPT.md` desde `main`, pero considera que está desactualizado después del PR #8. Después lee `BITÁCORA_GPT.MD` desde `dev/farm-scene-authoring`, `MIGRACION_DESDE_FARMING_GAME_A.MD`, `BUGS.MD`, `BITÁCORA_TILE_PIPELINE_2026-08-06.md` y los commits recientes. El PR #15 fue fusionado en `main` mediante `794aab44916f974bc885aec0a203823041c72f8f`. Están integrados el selector estacional de tiles, protección de Tile Palette, Scene Size, cámara de seguimiento, límites físicos sincronizados y edición persistente del collider. Arturo validó la expansión del área jugable y el editor visual del collider. Las suites completas posteriores al PR #15 y la validación física exhaustiva del collider siguen pendientes. La rama activa es `dev/farm-scene-authoring`. No uses regeneradores antiguos para reparar escenas y no marques bugs como verificados sin confirmación local.
