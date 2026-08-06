@@ -85,33 +85,33 @@ Los sprites generados usan pivote inferior central. Los prefabs reutilizables se
 - `Regenerate + place on scene grid` reconstruye el prefab antes de instanciarlo, evitando máscaras desactualizadas;
 - el Footprint Editor superpone sobre el sprite la misma máscara exacta usada por Scene, snap y colisiones.
 
-Commits del incremento de ancla y máscara:
+### Corrección del lienzo de ancho par
 
-- `eccfeb5c77344f859e1c186706c8527625c4cd6d`
-- `3658f3d0f7c52936429a2b50609721438e03525f`
-- `dd85db8d9f4eec30c30cd9656f024f60f1ca0dcd`
-- `8dbfd0e2baa2337b132afe788944882042b20f13`
-- `4e6b14189f65532e2635af773deb4c1c4c4f632b`
-- `2194e5d553b119457c5c6dbedc9e3f3bf3325422`
-- `b63f76458b5bced669fa8f455f95aa9ce0ea7395`
+La discrepancia restante no estaba en el gizmo ni en el prefab. El lienzo de `4 × 3` utilizaba columnas distintas según el sistema:
 
-Commits de normalización final:
+```text
+Runtime / máscara guardada: -2, -1, 0, 1
+Panel del editor anterior:  -1,  0, 1, 2
+```
 
-- `79585178ce8f752f2c0172721c861809e5078064`
-- `7903348eaaccf428faab231ab4ba2099f1a62b61`
-- `0484756f8cc0e5a1752c72bfb26682af582ee72b`
-- `e9583964368838c463dd9a1c185020b73091980d`
+Por eso el contador informaba diez celdas, la previsualización mostraba las diez, pero el panel solo podía representar ocho de ellas. Se centralizó la fórmula en `GridBuildingFootprint.GetCanvasMinimumX()` y `CreateRectangleOffsets()`. El editor reutiliza ahora esas mismas funciones, de modo que la celda ancla `(0,0)` aparece en la tercera columna de un lienzo de ancho cuatro y todas las celdas guardadas son visibles.
+
+Commits del ajuste final:
+
+- `dc44fc52663c0303ae6af6657f723c8d21c3091d`
+- `225157451d83db5ff65161d40c3696328c29b14d`
+- `90dc5b8010853ed7d71b950caed63cce19b73e50`
 
 Estado: **CORREGIDO, pendiente de compilación, validación visual y EditMode local**. No se considera verificado hasta confirmación de Arturo.
 
 ## Próxima validación
 
 1. Hacer Pull y esperar la recompilación.
-2. Eliminar de la escena las instancias generadas antes de la normalización.
-3. Abrir una casa en `Footprint Editor` y confirmar que la previsualización combina sprite y máscara.
-4. Pintar diez o doce celdas y pulsar `Save + regenerate prefab`, o usar directamente `Regenerate + place on scene grid` desde Building Browser.
-5. Confirmar que Scene muestra exactamente el mismo patrón y número de celdas.
-6. Confirmar que la máscara cubre la base de la casa en vez de quedar separada debajo.
+2. Reabrir una casa en `Footprint Editor`.
+3. Confirmar que el contador de diez celdas coincide con diez botones activos y con la superposición sobre el sprite.
+4. Pulsar `Save + regenerate prefab` o usar `Regenerate + place on scene grid`.
+5. Eliminar instancias antiguas y colocar una nueva.
+6. Confirmar que Scene muestra exactamente el mismo patrón y número de celdas.
 7. Mover una casa y verificar que la huella la sigue y cambia verde/rojo al intersectar otra máscara.
 8. Ejecutar EditMode completo.
 
