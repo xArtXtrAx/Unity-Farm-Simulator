@@ -21,12 +21,10 @@ namespace FarmSimulator.Tests.PlayMode
             GameSessionRuntime.Instance.ResetSession();
 
             yield return LoadScene(ProjectSceneNames.Farm);
-            yield return null;
+            yield return WaitForPlayerAtSpawn(
+                ProjectSpawnIds.FarmStart);
 
-            GameObject farmPlayer =
-                Object.FindFirstObjectByType<
-                    PlayerPrefabIdentity>()
-                    ?.gameObject;
+            GameObject farmPlayer = FindPlayerInActiveScene();
             Assert.That(farmPlayer, Is.Not.Null);
             Assert.That(
                 farmPlayer.GetComponent<
@@ -45,12 +43,11 @@ namespace FarmSimulator.Tests.PlayMode
             entrance.Interact(farmPlayer);
             yield return WaitForScene(
                 ProjectSceneNames.HouseInterior);
-            yield return null;
+            yield return WaitForPlayerAtSpawn(
+                ProjectSpawnIds.HouseEntrance);
 
             GameObject housePlayer =
-                Object.FindFirstObjectByType<
-                    PlayerPrefabIdentity>()
-                    ?.gameObject;
+                FindPlayerInActiveScene();
             Assert.That(housePlayer, Is.Not.Null);
 
             SceneSpawnPoint entranceSpawn =
@@ -69,12 +66,11 @@ namespace FarmSimulator.Tests.PlayMode
             exit.Interact(housePlayer);
             yield return WaitForScene(
                 ProjectSceneNames.Farm);
-            yield return null;
+            yield return WaitForPlayerAtSpawn(
+                ProjectSpawnIds.FarmHouseDoor);
 
             GameObject returnedPlayer =
-                Object.FindFirstObjectByType<
-                    PlayerPrefabIdentity>()
-                    ?.gameObject;
+                FindPlayerInActiveScene();
             SceneSpawnPoint exteriorSpawn =
                 FindSpawn(ProjectSpawnIds.FarmHouseDoor);
 
@@ -94,7 +90,8 @@ namespace FarmSimulator.Tests.PlayMode
 
             yield return LoadScene(
                 ProjectSceneNames.HouseInterior);
-            yield return null;
+            yield return WaitForPlayerAtSpawn(
+                ProjectSpawnIds.HouseEntrance);
 
             int initialDay =
                 GameSessionRuntime.Instance
@@ -104,9 +101,7 @@ namespace FarmSimulator.Tests.PlayMode
                 Object.FindFirstObjectByType<
                     BedInteractable>();
             GameObject player =
-                Object.FindFirstObjectByType<
-                    PlayerPrefabIdentity>()
-                    ?.gameObject;
+                FindPlayerInActiveScene();
 
             Assert.That(bed, Is.Not.Null);
             Assert.That(player, Is.Not.Null);
@@ -114,7 +109,8 @@ namespace FarmSimulator.Tests.PlayMode
             bed.Interact(player);
             yield return WaitForScene(
                 ProjectSceneNames.HouseInterior);
-            yield return null;
+            yield return WaitForPlayerAtSpawn(
+                ProjectSpawnIds.HouseBedWake);
 
             Assert.That(
                 GameSessionRuntime.Instance
@@ -122,9 +118,7 @@ namespace FarmSimulator.Tests.PlayMode
                 Is.EqualTo(initialDay + 1));
 
             GameObject awakenedPlayer =
-                Object.FindFirstObjectByType<
-                    PlayerPrefabIdentity>()
-                    ?.gameObject;
+                FindPlayerInActiveScene();
             SceneSpawnPoint wakeSpawn =
                 FindSpawn(ProjectSpawnIds.HouseBedWake);
 
@@ -171,6 +165,56 @@ namespace FarmSimulator.Tests.PlayMode
                 $"within {maximumFrames} frames.");
         }
 
+        private static IEnumerator WaitForPlayerAtSpawn(
+            string spawnId)
+        {
+            const int maximumFrames = 180;
+            for (int frame = 0;
+                 frame < maximumFrames;
+                 frame++)
+            {
+                GameObject player =
+                    FindPlayerInActiveScene();
+                SceneSpawnPoint spawn = FindSpawn(spawnId);
+
+                if (player != null &&
+                    spawn != null &&
+                    Vector2.Distance(
+                        player.transform.position,
+                        spawn.transform.position) < 0.05f)
+                {
+                    yield break;
+                }
+
+                yield return null;
+            }
+
+            Assert.Fail(
+                $"Player did not reach spawn '{spawnId}' " +
+                $"within {maximumFrames} frames.");
+        }
+
+        private static GameObject FindPlayerInActiveScene()
+        {
+            Scene activeScene =
+                SceneManager.GetActiveScene();
+
+            foreach (GameObject root in
+                     activeScene.GetRootGameObjects())
+            {
+                PlayerPrefabIdentity identity =
+                    root.GetComponentInChildren<
+                        PlayerPrefabIdentity>(
+                        includeInactive: true);
+                if (identity != null)
+                {
+                    return identity.gameObject;
+                }
+            }
+
+            return null;
+        }
+
         private static ScenePortal FindPortal(
             string targetScene)
         {
@@ -178,10 +222,13 @@ namespace FarmSimulator.Tests.PlayMode
                 Object.FindObjectsByType<
                     ScenePortal>(
                     FindObjectsSortMode.None);
+            Scene activeScene =
+                SceneManager.GetActiveScene();
 
             foreach (ScenePortal portal in portals)
             {
-                if (portal.TargetScene == targetScene)
+                if (portal.gameObject.scene == activeScene &&
+                    portal.TargetScene == targetScene)
                 {
                     return portal;
                 }
@@ -197,10 +244,13 @@ namespace FarmSimulator.Tests.PlayMode
                 Object.FindObjectsByType<
                     SceneSpawnPoint>(
                     FindObjectsSortMode.None);
+            Scene activeScene =
+                SceneManager.GetActiveScene();
 
             foreach (SceneSpawnPoint point in points)
             {
-                if (point.SpawnId == spawnId)
+                if (point.gameObject.scene == activeScene &&
+                    point.SpawnId == spawnId)
                 {
                     return point;
                 }
