@@ -11,12 +11,19 @@ namespace FarmSimulator.Editor
     /// Small compatibility bridge around the 2D Tilemap Editor package.
     /// Reflection keeps the project resilient across minor package API changes.
     /// </summary>
+    [InitializeOnLoad]
     public static class UnityTilePaletteBridge
     {
         private const string PaletteUtilityTypeName =
             "UnityEditor.Tilemaps.GridPaletteUtility";
         private const string PaintingStateTypeName =
             "UnityEditor.Tilemaps.GridPaintingState";
+
+        static UnityTilePaletteBridge()
+        {
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        }
 
         public static bool IsAvailable =>
             FindType(PaletteUtilityTypeName) != null &&
@@ -142,6 +149,26 @@ namespace FarmSimulator.Editor
             SetStaticProperty(stateType, "scenePaintTarget", paintTarget);
             SceneView.RepaintAll();
             return true;
+        }
+
+        public static void ClearScenePaintTarget()
+        {
+            Type stateType = FindType(PaintingStateTypeName);
+            if (stateType == null)
+            {
+                return;
+            }
+
+            SetStaticProperty(stateType, "scenePaintTarget", null);
+            SceneView.RepaintAll();
+        }
+
+        private static void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            if (state == PlayModeStateChange.ExitingEditMode)
+            {
+                ClearScenePaintTarget();
+            }
         }
 
         private static object[] BuildCreateArguments(
