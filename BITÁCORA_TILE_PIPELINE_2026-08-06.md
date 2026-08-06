@@ -87,21 +87,58 @@ Se sustituyó la consulta LINQ por un ciclo explícito que valida cada entrada d
 - cuatro paletas de mundo;
 - 18 sprites runtime importados con transparencia, 16 PPU y pivote central.
 
+## Reconstrucción de la casa con el atlas completo
+
+La fachada modular basada en paneles del paquete piloto fue retirada. La casa exterior ahora se obtiene directamente de:
+
+```text
+Assets/_Project/Art/ThirdParty/CozyFarm/Full/Buildings/buildings.png
+```
+
+`CozyFarmBuildingCatalog` centraliza los rectángulos de origen del atlas y genera sprites transparentes reutilizables en:
+
+```text
+Assets/_Project/Art/Generated/CozyFarm/Buildings
+```
+
+La primera variante es `starter-green-gable-house.png`. El generador:
+
+- lee el PNG original sin alterar su importador;
+- extrae una casa completa mediante un `RectInt` documentado;
+- detecta los límites alfa visibles;
+- recorta el espacio vacío;
+- conserva transparencia real;
+- importa a 16 PPU, filtro Point, sin mipmaps ni compresión;
+- utiliza pivote inferior centrado para apoyar la fachada sobre el suelo.
+
+`CozyFarmHouseExteriorUpgrader` usa un único `SpriteRenderer` para la casa completa y conserva el root funcional, portal, collider y puntos de aparición. La estructura generada es:
+
+```text
+Hero House Exterior
+└── Cozy Full-Pack House v4
+    ├── Starter Green Gable House
+    └── Entrance Grounding Shadow
+```
+
+Commits:
+
+- `f4ddd073822f93493ca4f16eb717ddd3499d7d9b`
+- `3782565ee49a30235ba17b23308c7a38a894c525`
+- `e0d8c96a471ff191abb040351c1f1b00013d210b`
+
+La selección visual exacta del rectángulo del atlas queda pendiente de validación local en Unity. Si requiere ajuste, solo se modifica `StarterHouseSource`; la escena y la lógica no cambian.
+
 ## Próximo paso exacto
 
 1. Hacer Pull de `agent/cozy-art-pipeline`.
 2. Esperar compilación e importación.
-3. Ejecutar `Rebuild Cozy Tile Catalog + Palettes`.
-4. Ejecutar `Apply Farming Field To Farm Scene`.
-5. Confirmar que ya no existe botón ni paleta `Crops`.
-6. Confirmar jerarquía `Ground / Paths / Soil / Decoration`.
-7. Entrar en Play Mode.
-8. Arar, sembrar y verificar que la planta aparece como `Crop Entity Visual` sobre la tierra.
-9. Dormir y comprobar el cambio de etapa.
-10. Confirmar que el suelo inferior nunca cambia de color ni desaparece.
-11. Ejecutar EditMode y PlayMode completos.
-12. Cuando Unity compile y las suites pasen, cambiar `BUG-0011` a **VERIFICADO**.
+3. Ejecutar `Generate Cozy Full-Pack Building Sprites`.
+4. Ejecutar `Apply Cozy House Exterior To Farm Scene`.
+5. Abrir `Farm` y validar la casa completa, transparencia, escala y alineación de la puerta.
+6. Entrar en Play Mode y comprobar portal, collider y regreso desde el interior.
+7. Ejecutar EditMode y PlayMode completos.
+8. Si el recorte incluye piezas vecinas o corta parte del edificio, ajustar exclusivamente `CozyFarmBuildingCatalog.StarterHouseSource`.
 
 ## Exclusiones
 
-No se modificaron reglas de crecimiento, consumo de semillas, inventario persistente, sueño, portales, casa, interiores ni collider del héroe.
+No se modificaron reglas de crecimiento, consumo de semillas, inventario persistente, sueño, portales, interiores ni collider del héroe.
