@@ -86,13 +86,18 @@ namespace FarmSimulator.Editor
                     CreateDefaultHouseFootprint(),
                     authored: false);
             }
-            if (!footprintAnchorAuthored)
+
+            bool legacyPortalAnchor =
+                (footprintAnchorOffset - house.PortalOffset).sqrMagnitude < 0.0001f;
+            if (!footprintAnchorAuthored || legacyPortalAnchor)
             {
-                // Generated sprites use a bottom-centre pivot. The prefab root is therefore
-                // the stable ground/base origin. Portal offsets are interaction points and
+                // Generated sprites use a bottom-centre pivot, so the prefab root is the
+                // stable ground/base origin. Portal offsets are interaction points and
                 // must not be reused as occupancy origins.
                 footprintAnchorOffset = Vector2.zero;
+                footprintAnchorAuthored = false;
             }
+
             doorAnchor = house.DoorAnchor;
             portalOffset = house.PortalOffset;
             spawnOffset = house.SpawnOffset;
