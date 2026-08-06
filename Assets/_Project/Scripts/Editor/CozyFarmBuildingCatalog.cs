@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -7,24 +8,98 @@ namespace FarmSimulator.Editor
 {
     /// <summary>
     /// Generates reusable transparent building sprites from the purchased
-    /// Cozy Farm full-version atlas. Source rectangles are defined once here
-    /// so future house styles can be added without changing scene logic.
+    /// Cozy Farm full-version atlas. Every house style owns its extraction and
+    /// scene-alignment metadata so scene code does not contain atlas knowledge.
     /// </summary>
     public static class CozyFarmBuildingCatalog
     {
+        public sealed class HouseVariant
+        {
+            public HouseVariant(
+                string id,
+                string displayName,
+                RectInt sourceRect,
+                Vector2 doorAnchor,
+                Vector2 portalOffset,
+                Vector2 spawnOffset,
+                Vector2 colliderSize,
+                Vector2 colliderOffset,
+                float maximumWidth,
+                float maximumHeight,
+                float baseline,
+                Vector2 shadowOffset,
+                Vector2 shadowScale,
+                int sortingOrder)
+            {
+                Id = id;
+                DisplayName = displayName;
+                SourceRect = sourceRect;
+                DoorAnchor = doorAnchor;
+                PortalOffset = portalOffset;
+                SpawnOffset = spawnOffset;
+                ColliderSize = colliderSize;
+                ColliderOffset = colliderOffset;
+                MaximumWidth = maximumWidth;
+                MaximumHeight = maximumHeight;
+                Baseline = baseline;
+                ShadowOffset = shadowOffset;
+                ShadowScale = shadowScale;
+                SortingOrder = sortingOrder;
+            }
+
+            public string Id { get; }
+            public string DisplayName { get; }
+            public RectInt SourceRect { get; }
+            public Vector2 DoorAnchor { get; }
+            public Vector2 PortalOffset { get; }
+            public Vector2 SpawnOffset { get; }
+            public Vector2 ColliderSize { get; }
+            public Vector2 ColliderOffset { get; }
+            public float MaximumWidth { get; }
+            public float MaximumHeight { get; }
+            public float Baseline { get; }
+            public Vector2 ShadowOffset { get; }
+            public Vector2 ShadowScale { get; }
+            public int SortingOrder { get; }
+            public string GeneratedPath => GeneratedRoot + "/" + Id + ".png";
+        }
+
         public const string SourceAtlasPath =
             "Assets/_Project/Art/ThirdParty/CozyFarm/Full/Buildings/buildings.png";
         public const string GeneratedRoot =
             "Assets/_Project/Art/Generated/CozyFarm/Buildings";
+        public const string DefaultHouseId = "starter-green-gable-house";
         public const string StarterHousePath =
             GeneratedRoot + "/starter-green-gable-house.png";
 
-        // Coordinates use Texture2D's bottom-left origin. The previous preset
-        // pointed at the empty/prop strip above the green-house row. This region
-        // isolates the first complete green gable cottage in the Full-Pack atlas
-        // without including the neighbouring alternate facade or loose parts.
-        public static readonly RectInt StarterHouseSource =
-            new RectInt(681, 548, 68, 86);
+        private static readonly HouseVariant[] HouseVariants =
+        {
+            CreateGreenVariant(
+                DefaultHouseId,
+                "Starter Green Gable House",
+                new RectInt(681, 548, 68, 86)),
+            CreateGreenVariant(
+                "green-gable-house-wide-entry",
+                "Green Gable House — Wide Entry",
+                new RectInt(761, 548, 68, 86)),
+            CreateGreenVariant(
+                "green-gable-house-clean",
+                "Green Gable House — Clean Roof",
+                new RectInt(905, 548, 68, 86)),
+            CreateGreenVariant(
+                "green-gable-house-autumn",
+                "Green Gable House — Autumn Roof",
+                new RectInt(1033, 548, 68, 86)),
+            CreateGreenVariant(
+                "green-gable-house-winter",
+                "Green Gable House — Winter",
+                new RectInt(1161, 548, 68, 86))
+        };
+
+        public static IReadOnlyList<HouseVariant> Houses => HouseVariants;
+
+        // Compatibility members retained for existing tests and callers.
+        public static RectInt StarterHouseSource => GetHouse(DefaultHouseId).SourceRect;
 
         [MenuItem("Tools/Farm Simulator/Generate Cozy Full-Pack Building Sprites")]
         public static void GenerateFromMenu()
@@ -32,21 +107,40 @@ namespace FarmSimulator.Editor
             EnsureAssets();
             EditorUtility.DisplayDialog(
                 "Cozy Farm buildings",
-                "Generated the starter house sprite from the full buildings atlas.",
+                $"Generated {HouseVariants.Length} reusable house sprites from the full buildings atlas.",
                 "OK");
+        }
+
+        public static HouseVariant GetHouse(string id)
+        {
+            for (int index = 0; index < HouseVariants.Length; index++)
+            {
+                if (string.Equals(HouseVariants[index].Id, id, StringComparison.Ordinal))
+                {
+                    return HouseVariants[index];
+                }
+            }
+
+            throw new ArgumentException($"Unknown Cozy Farm house variant '{id}'.", nameof(id));
+        }
+
+        public static Sprite EnsureHouse(string id)
+        {
+            HouseVariant variant = GetHouse(id);
+            EnsureAssets();
+            Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(variant.GeneratedPath);
+            if (sprite == null)
+            {
+                throw new InvalidOperationException(
+                    $"The generated Cozy house sprite '{variant.GeneratedPath}' could not be loaded.");
+            }
+
+            return sprite;
         }
 
         public static Sprite EnsureStarterHouse()
         {
-            EnsureAssets();
-            Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(StarterHousePath);
-            if (sprite == null)
-            {
-                throw new InvalidOperationException(
-                    "The generated Cozy starter house sprite could not be loaded.");
-            }
-
-            return sprite;
+            return EnsureHouse(DefaultHouseId);
         }
 
         public static void EnsureAssets()
@@ -59,8 +153,35 @@ namespace FarmSimulator.Editor
             }
 
             Directory.CreateDirectory(ToAbsolutePath(GeneratedRoot));
-            GenerateSprite(SourceAtlasPath, StarterHousePath, StarterHouseSource);
+            for (int index = 0; index < HouseVariants.Length; index++)
+            {
+                HouseVariant variant = HouseVariants[index];
+                GenerateSprite(SourceAtlasPath, variant.GeneratedPath, variant.SourceRect);
+            }
+
             AssetDatabase.SaveAssets();
+        }
+
+        private static HouseVariant CreateGreenVariant(
+            string id,
+            string displayName,
+            RectInt sourceRect)
+        {
+            return new HouseVariant(
+                id,
+                displayName,
+                sourceRect,
+                doorAnchor: new Vector2(0.5f, 0.08f),
+                portalOffset: new Vector2(0f, -1.55f),
+                spawnOffset: new Vector2(0f, -2.15f),
+                colliderSize: new Vector2(5.35f, 2.45f),
+                colliderOffset: new Vector2(0f, -0.25f),
+                maximumWidth: 5.8f,
+                maximumHeight: 4.45f,
+                baseline: -1.62f,
+                shadowOffset: new Vector2(0f, -1.67f),
+                shadowScale: new Vector2(1.25f, 0.28f),
+                sortingOrder: 20);
         }
 
         private static void GenerateSprite(
@@ -161,8 +282,7 @@ namespace FarmSimulator.Editor
                 false);
             try
             {
-                var clear = new Color32[outputWidth * outputHeight];
-                output.SetPixels32(clear);
+                output.SetPixels32(new Color32[outputWidth * outputHeight]);
                 output.SetPixels(
                     padding,
                     padding,
@@ -211,7 +331,7 @@ namespace FarmSimulator.Editor
             settings.spritePivot = new Vector2(0.5f, 0f);
             settings.spriteGenerateFallbackPhysicsShape = false;
             importer.SetTextureSettings(settings);
-            importer.userData = "cozy-farm-generated-building-v1";
+            importer.userData = "cozy-farm-generated-building-v2";
             importer.SaveAndReimport();
         }
 
