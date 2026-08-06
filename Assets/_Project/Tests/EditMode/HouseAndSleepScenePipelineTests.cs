@@ -10,285 +10,132 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Tilemaps;
 
 namespace FarmSimulator.Tests.EditMode
 {
     public sealed class HouseAndSleepScenePipelineTests
     {
         [Test]
-        public void GeneratesBothScenesAndAddsThemToBuildSettings()
+        public void LegacyPipelineDoesNotGenerateScenesAutomatically()
         {
-            CozyFarmHouseArtPipeline.EnsureAssets();
             HouseAndSleepScenePipeline.EnsureScenes();
 
             Assert.That(
-                AssetDatabase.LoadAssetAtPath<SceneAsset>(
-                    ProjectSceneNames.FarmPath),
-                Is.Not.Null);
+                HouseAndSleepScenePipeline.FarmImportSignature,
+                Does.Contain("disabled"));
             Assert.That(
-                AssetDatabase.LoadAssetAtPath<SceneAsset>(
-                    ProjectSceneNames.HouseInteriorPath),
-                Is.Not.Null);
-
-            Assert.That(
-                AssetImporter.GetAtPath(
-                    ProjectSceneNames.FarmPath)
-                    ?.userData,
-                Is.EqualTo(
-                    HouseAndSleepScenePipeline
-                        .FarmImportSignature));
-            Assert.That(
-                AssetImporter.GetAtPath(
-                    ProjectSceneNames.HouseInteriorPath)
-                    ?.userData,
-                Is.EqualTo(
-                    HouseAndSleepScenePipeline
-                        .HouseImportSignature));
-
-            string[] enabledPaths =
-                EditorBuildSettings.scenes
-                    .Where(scene => scene.enabled)
-                    .Select(scene => scene.path)
-                    .ToArray();
-
-            Assert.That(
-                enabledPaths,
-                Does.Contain(ProjectSceneNames.FarmPath));
-            Assert.That(
-                enabledPaths,
-                Does.Contain(
-                    ProjectSceneNames
-                        .HouseInteriorPath));
+                HouseAndSleepScenePipeline.HouseImportSignature,
+                Does.Contain("disabled"));
         }
 
         [Test]
-        public void GeneratedScenesPreservePlayerRootAndContainFlowObjects()
+        public void ModernRecoveryCreatesBothScenesAndBuildSettingsEntries()
         {
-            CozyFarmHouseArtPipeline.EnsureAssets();
-            HouseAndSleepScenePipeline.EnsureScenes();
+            ModernFarmSceneAuthoring.GenerateMissingScenes();
 
-            Scene farm =
-                EditorSceneManager.OpenScene(
-                    ProjectSceneNames.FarmPath,
-                    OpenSceneMode.Additive);
+            Assert.That(
+                AssetDatabase.LoadAssetAtPath<SceneAsset>(ProjectSceneNames.FarmPath),
+                Is.Not.Null);
+            Assert.That(
+                AssetDatabase.LoadAssetAtPath<SceneAsset>(ProjectSceneNames.HouseInteriorPath),
+                Is.Not.Null);
 
-            try
-            {
-                PlayerPrefabIdentity farmPlayer =
-                    FindInScene<PlayerPrefabIdentity>(
-                        farm);
-
-                Assert.That(farmPlayer, Is.Not.Null);
-                Assert.That(
-                    farmPlayer.transform.localScale,
-                    Is.EqualTo(Vector3.one));
-                Assert.That(
-                    farmPlayer.GetComponents<Collider2D>(),
-                    Has.Length.EqualTo(1));
-                Assert.That(
-                    FindInScene<ScenePortal>(farm)
-                        ?.TargetScene,
-                    Is.EqualTo(
-                        ProjectSceneNames
-                            .HouseInterior));
-            }
-            finally
-            {
-                EditorSceneManager.CloseScene(
-                    farm,
-                    removeScene: true);
-            }
-
-            Scene house =
-                EditorSceneManager.OpenScene(
-                    ProjectSceneNames.HouseInteriorPath,
-                    OpenSceneMode.Additive);
-
-            try
-            {
-                PlayerPrefabIdentity housePlayer =
-                    FindInScene<PlayerPrefabIdentity>(
-                        house);
-
-                Assert.That(housePlayer, Is.Not.Null);
-                Assert.That(
-                    housePlayer.transform.localScale,
-                    Is.EqualTo(Vector3.one));
-                Assert.That(
-                    housePlayer.GetComponents<Collider2D>(),
-                    Has.Length.EqualTo(1));
-                Assert.That(
-                    FindInScene<BedInteractable>(house),
-                    Is.Not.Null);
-                Assert.That(
-                    FindInScene<ScenePortal>(house)
-                        ?.TargetScene,
-                    Is.EqualTo(ProjectSceneNames.Farm));
-            }
-            finally
-            {
-                EditorSceneManager.CloseScene(
-                    house,
-                    removeScene: true);
-            }
-        }
-
-        [Test]
-        public void GeneratedScenesUseCuratedCozyFarmCabinSprites()
-        {
-            CozyFarmHouseArtPipeline.EnsureAssets();
-            HouseAndSleepScenePipeline.EnsureScenes();
-
-            string selectedVariantId = CozyFarmHouseStyleWindow.SelectedVariantId;
-            CozyFarmBuildingCatalog.HouseVariant selectedVariant;
-            try
-            {
-                selectedVariant = CozyFarmBuildingCatalog.GetHouse(selectedVariantId);
-            }
-            catch (System.ArgumentException)
-            {
-                selectedVariant = CozyFarmBuildingCatalog.GetHouse(
-                    CozyFarmBuildingCatalog.DefaultHouseId);
-            }
-
-            FarmSceneGridLayoutResetter.ApplyFromMenu();
-
-            Scene farm =
-                EditorSceneManager.OpenScene(
-                    ProjectSceneNames.FarmPath,
-                    OpenSceneMode.Additive);
-
-            try
-            {
-                string[] farmSprites = SpriteNames(farm);
-                Assert.That(farmSprites, Does.Contain(selectedVariant.Id));
-                Assert.That(farmSprites, Does.Contain("cozy_bench_light"));
-                Assert.That(farmSprites, Does.Contain("cozy_lamp_green"));
-                Assert.That(farmSprites, Does.Not.Contain("cozy_tree_spring"));
-                Assert.That(
-                    FindGameObject(farm, "House Body"),
-                    Is.Null);
-                Assert.That(
-                    FindGameObject(farm, "Roof"),
-                    Is.Null);
-                Assert.That(
-                    FindGameObject(farm, CozyFarmHouseExteriorUpgrader.VisualRootName),
-                    Is.Not.Null);
-                Assert.That(
-                    FindGameObject(farm, FarmSceneGridLayoutResetter.LayoutRootName),
-                    Is.Not.Null);
-                AssertRenderersAreUntinted(farm);
-            }
-            finally
-            {
-                EditorSceneManager.CloseScene(
-                    farm,
-                    removeScene: true);
-            }
-
-            Scene house =
-                EditorSceneManager.OpenScene(
-                    ProjectSceneNames.HouseInteriorPath,
-                    OpenSceneMode.Additive);
-
-            try
-            {
-                string[] houseSprites = SpriteNames(house);
-                CollectionAssert.IsSubsetOf(
-                    new[]
-                    {
-                        "cozy_wood_panel_light",
-                        "cozy_wood_panel_dark",
-                        "cozy_bench_light",
-                        "cozy_fence_horizontal",
-                        "cozy_flower_crates",
-                        "cozy_crates_dark",
-                        "cozy_lamp_green",
-                    },
-                    houseSprites);
-                Assert.That(
-                    FindGameObject(house, "Bed Mattress"),
-                    Is.Not.Null);
-                Assert.That(
-                    FindGameObject(house, "Bed Pillow"),
-                    Is.Not.Null);
-                AssertRenderersAreUntinted(house);
-            }
-            finally
-            {
-                EditorSceneManager.CloseScene(
-                    house,
-                    removeScene: true);
-            }
-        }
-
-        private static void AssertRenderersAreUntinted(Scene scene)
-        {
-            foreach (SpriteRenderer renderer in
-                     ComponentsInScene<SpriteRenderer>(scene))
-            {
-                if (UsesIntentionalTint(renderer))
-                {
-                    continue;
-                }
-
-                Assert.That(
-                    renderer.color,
-                    Is.EqualTo(Color.white),
-                    renderer.gameObject.name);
-            }
-        }
-
-        private static bool UsesIntentionalTint(SpriteRenderer renderer)
-        {
-            string objectName = renderer.gameObject.name;
-            return objectName == "Entrance Grounding Shadow" ||
-                   objectName == "Soil Visual";
-        }
-
-        private static string[] SpriteNames(Scene scene)
-        {
-            return ComponentsInScene<SpriteRenderer>(scene)
-                .Where(renderer => renderer.sprite != null)
-                .Select(renderer => renderer.sprite.name)
-                .Distinct()
+            string[] enabledPaths = EditorBuildSettings.scenes
+                .Where(entry => entry.enabled)
+                .Select(entry => entry.path)
                 .ToArray();
+            Assert.That(enabledPaths, Does.Contain(ProjectSceneNames.FarmPath));
+            Assert.That(enabledPaths, Does.Contain(ProjectSceneNames.HouseInteriorPath));
         }
 
-        private static GameObject FindGameObject(
-            Scene scene,
-            string objectName)
+        [Test]
+        public void FarmUsesModernTilemapHierarchyAndRuntimeFlowObjects()
         {
-            foreach (Transform transform in
-                     ComponentsInScene<Transform>(scene))
-            {
-                if (transform.name == objectName)
-                {
-                    return transform.gameObject;
-                }
-            }
+            ModernFarmSceneAuthoring.GenerateMissingScenes();
+            Scene farm = EditorSceneManager.OpenScene(
+                ProjectSceneNames.FarmPath,
+                OpenSceneMode.Additive);
 
-            return null;
+            try
+            {
+                Assert.That(FindObject(farm, "Farm Authoring Grid"), Is.Not.Null);
+                Assert.That(FindObject(farm, "Ground")?.GetComponent<Tilemap>(), Is.Not.Null);
+                Assert.That(FindObject(farm, "Paths")?.GetComponent<Tilemap>(), Is.Not.Null);
+                Assert.That(FindObject(farm, "Soil")?.GetComponent<Tilemap>(), Is.Not.Null);
+                Assert.That(FindObject(farm, "Decoration")?.GetComponent<Tilemap>(), Is.Not.Null);
+                Assert.That(FindObject(farm, "Movement Boundary"), Is.Not.Null);
+                Assert.That(FindObject(farm, "Scene Authoring Bounds"), Is.Not.Null);
+
+                PlayerPrefabIdentity player = FindComponent<PlayerPrefabIdentity>(farm);
+                Assert.That(player, Is.Not.Null);
+                Assert.That(player.transform.localScale, Is.EqualTo(Vector3.one));
+
+                ScenePortal portal = FindComponent<ScenePortal>(farm);
+                Assert.That(portal, Is.Not.Null);
+                Assert.That(portal.TargetScene, Is.EqualTo(ProjectSceneNames.HouseInterior));
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(farm, true);
+            }
         }
 
-        private static IEnumerable<T> ComponentsInScene<T>(Scene scene)
+        [Test]
+        public void HouseContainsBedPortalSpawnsAndModernAuthoringLayers()
+        {
+            ModernFarmSceneAuthoring.GenerateMissingScenes();
+            Scene house = EditorSceneManager.OpenScene(
+                ProjectSceneNames.HouseInteriorPath,
+                OpenSceneMode.Additive);
+
+            try
+            {
+                Assert.That(FindObject(house, "House Authoring Grid"), Is.Not.Null);
+                Assert.That(FindObject(house, "Ground")?.GetComponent<Tilemap>(), Is.Not.Null);
+                Assert.That(FindObject(house, "Walls")?.GetComponent<Tilemap>(), Is.Not.Null);
+                Assert.That(FindObject(house, "Decoration")?.GetComponent<Tilemap>(), Is.Not.Null);
+                Assert.That(FindComponent<BedInteractable>(house), Is.Not.Null);
+
+                ScenePortal portal = FindComponent<ScenePortal>(house);
+                Assert.That(portal, Is.Not.Null);
+                Assert.That(portal.TargetScene, Is.EqualTo(ProjectSceneNames.Farm));
+
+                string[] spawnIds = Components<SceneSpawnPoint>(house)
+                    .Select(spawn => spawn.SpawnId)
+                    .ToArray();
+                Assert.That(spawnIds, Does.Contain(ProjectSpawnIds.HouseEntrance));
+                Assert.That(spawnIds, Does.Contain(ProjectSpawnIds.HouseBedWake));
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(house, true);
+            }
+        }
+
+        private static GameObject FindObject(Scene scene, string name)
+        {
+            return Components<Transform>(scene)
+                .FirstOrDefault(transform => transform.name == name)
+                ?.gameObject;
+        }
+
+        private static T FindComponent<T>(Scene scene)
+            where T : Component
+        {
+            return Components<T>(scene).FirstOrDefault();
+        }
+
+        private static IEnumerable<T> Components<T>(Scene scene)
             where T : Component
         {
             foreach (GameObject root in scene.GetRootGameObjects())
             {
-                foreach (T component in
-                         root.GetComponentsInChildren<T>(
-                             includeInactive: true))
+                foreach (T component in root.GetComponentsInChildren<T>(true))
                 {
                     yield return component;
                 }
             }
-        }
-
-        private static T FindInScene<T>(Scene scene)
-            where T : Component
-        {
-            return ComponentsInScene<T>(scene).FirstOrDefault();
         }
     }
 }
