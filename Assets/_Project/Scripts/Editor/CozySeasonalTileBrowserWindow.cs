@@ -142,21 +142,82 @@ namespace FarmSimulator.Editor
         {
             using (new EditorGUILayout.VerticalScope(GUILayout.Width(thumbnailSize + 8f)))
             {
-                Texture preview = AssetPreview.GetAssetPreview(entry.Sprite) ??
-                    AssetPreview.GetMiniThumbnail(entry.Sprite);
-                if (GUILayout.Button(
-                        preview,
-                        GUILayout.Width(thumbnailSize),
-                        GUILayout.Height(thumbnailSize)))
+                Rect previewRect = GUILayoutUtility.GetRect(
+                    thumbnailSize,
+                    thumbnailSize,
+                    GUILayout.Width(thumbnailSize),
+                    GUILayout.Height(thumbnailSize));
+
+                DrawCheckerBackground(previewRect);
+                DrawSpritePreview(entry.Sprite, previewRect);
+
+                if (GUI.Button(previewRect, GUIContent.none, GUIStyle.none))
                 {
                     Selection.activeObject = entry.Sprite;
                     EditorGUIUtility.PingObject(entry.Sprite);
                 }
+
+                string label = entry.Sprite.name;
+                var content = new GUIContent(label, label);
                 GUILayout.Label(
-                    entry.Sprite.name,
+                    content,
                     EditorStyles.centeredGreyMiniLabel,
                     GUILayout.Width(thumbnailSize),
                     GUILayout.Height(30f));
+            }
+        }
+
+        private static void DrawSpritePreview(Sprite sprite, Rect destination)
+        {
+            if (sprite == null || sprite.texture == null) return;
+
+            Rect textureRect = sprite.textureRect;
+            Texture2D texture = sprite.texture;
+            Rect uv = new Rect(
+                textureRect.x / texture.width,
+                textureRect.y / texture.height,
+                textureRect.width / texture.width,
+                textureRect.height / texture.height);
+
+            float sourceAspect = textureRect.width / Mathf.Max(1f, textureRect.height);
+            Rect fitted = destination;
+            if (sourceAspect > 1f)
+            {
+                fitted.height = destination.width / sourceAspect;
+                fitted.y += (destination.height - fitted.height) * 0.5f;
+            }
+            else
+            {
+                fitted.width = destination.height * sourceAspect;
+                fitted.x += (destination.width - fitted.width) * 0.5f;
+            }
+
+            GUI.DrawTextureWithTexCoords(fitted, texture, uv, true);
+        }
+
+        private static void DrawCheckerBackground(Rect rect)
+        {
+            const float square = 8f;
+            Color light = EditorGUIUtility.isProSkin
+                ? new Color(0.24f, 0.24f, 0.24f, 1f)
+                : new Color(0.78f, 0.78f, 0.78f, 1f);
+            Color dark = EditorGUIUtility.isProSkin
+                ? new Color(0.18f, 0.18f, 0.18f, 1f)
+                : new Color(0.65f, 0.65f, 0.65f, 1f);
+
+            for (float y = rect.y; y < rect.yMax; y += square)
+            {
+                int row = Mathf.FloorToInt((y - rect.y) / square);
+                for (float x = rect.x; x < rect.xMax; x += square)
+                {
+                    int column = Mathf.FloorToInt((x - rect.x) / square);
+                    Rect cell = new Rect(
+                        x,
+                        y,
+                        Mathf.Min(square, rect.xMax - x),
+                        Mathf.Min(square, rect.yMax - y));
+                    EditorGUI.DrawRect(cell, ((row + column) & 1) == 0 ? light : dark);
+                }
             }
         }
 
