@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using FarmSimulator.Presentation.Buildings;
 using UnityEditor;
 using UnityEngine;
 
@@ -260,7 +261,7 @@ namespace FarmSimulator.Editor
         private void DrawGrid()
         {
             float cellSize = Mathf.Clamp((position.width - 80f) / size.x, 28f, 54f);
-            int minX = -((size.x - 1) / 2);
+            int minX = GridBuildingFootprint.GetCanvasMinimumX(size.x);
             for (int y = size.y - 1; y >= 0; y--)
             {
                 using (new EditorGUILayout.HorizontalScope())
@@ -322,14 +323,7 @@ namespace FarmSimulator.Editor
 
         private IEnumerable<Vector2Int> AllCanvasCells()
         {
-            int minX = -((size.x - 1) / 2);
-            for (int y = 0; y < size.y; y++)
-            {
-                for (int x = 0; x < size.x; x++)
-                {
-                    yield return new Vector2Int(minX + x, y);
-                }
-            }
+            return GridBuildingFootprint.CreateRectangleOffsets(size);
         }
 
         private void RemoveCellsOutsideCanvas()
