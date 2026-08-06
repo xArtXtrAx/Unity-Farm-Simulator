@@ -274,8 +274,8 @@ namespace FarmSimulator.Presentation.Inventory
 
         private static bool TryConsumeCycleInput()
         {
-            int frame = Time.frameCount;
-            float now = Time.unscaledTime;
+            int frame = global::UnityEngine.Time.frameCount;
+            float now = global::UnityEngine.Time.unscaledTime;
             if (lastConsumedCycleFrame == frame ||
                 now - lastConsumedCycleTime < CycleInputDebounceSeconds)
             {
