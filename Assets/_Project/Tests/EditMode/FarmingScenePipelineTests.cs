@@ -123,16 +123,20 @@ namespace FarmSimulator.Tests.EditMode
                 Is.Not.Null);
 
             AssertPalette(
-                CozyFarmTileCatalog.GroundPalettePath,
+                CozyFarmTileCatalog.GetPalettePath(
+                    CozyPaletteCategory.Ground),
                 minimumOccupiedCells: 2);
             AssertPalette(
-                CozyFarmTileCatalog.PathsPalettePath,
+                CozyFarmTileCatalog.GetPalettePath(
+                    CozyPaletteCategory.Paths),
                 minimumOccupiedCells: 2);
             AssertPalette(
-                CozyFarmTileCatalog.FarmingPalettePath,
+                CozyFarmTileCatalog.GetPalettePath(
+                    CozyPaletteCategory.Farming),
                 minimumOccupiedCells: 19);
             AssertPalette(
-                CozyFarmTileCatalog.DecorationPalettePath,
+                CozyFarmTileCatalog.GetPalettePath(
+                    CozyPaletteCategory.Decoration),
                 minimumOccupiedCells: 4);
         }
 
