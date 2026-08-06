@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FarmSimulator.Application.Scenes;
+using FarmSimulator.Presentation.Player;
 using FarmSimulator.Presentation.Time;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -84,22 +86,10 @@ namespace FarmSimulator.Editor
 
             try
             {
-                ReplacePatch(
-                    scene,
-                    "Wood Floor",
-                    sprites["cozy_interior_floor_wood"]);
-                ReplacePatch(
-                    scene,
-                    "Back Interior Wall",
-                    sprites["cozy_interior_wall_cream"]);
-                ReplacePatch(
-                    scene,
-                    "Left Interior Wall",
-                    sprites["cozy_interior_wall_cream"]);
-                ReplacePatch(
-                    scene,
-                    "Right Interior Wall",
-                    sprites["cozy_interior_wall_cream"]);
+                ReplacePatch(scene, "Wood Floor", sprites["cozy_interior_floor_wood"]);
+                ReplacePatch(scene, "Back Interior Wall", sprites["cozy_interior_wall_cream"]);
+                ReplacePatch(scene, "Left Interior Wall", sprites["cozy_interior_wall_cream"]);
+                ReplacePatch(scene, "Right Interior Wall", sprites["cozy_interior_wall_cream"]);
 
                 ReplaceSingle(
                     scene,
@@ -108,9 +98,7 @@ namespace FarmSimulator.Editor
                     new Vector3(0.7f, 0.7f, 1f),
                     new Vector3(0f, -2.55f, 0f));
 
-                ReplaceBed(
-                    scene,
-                    sprites["cozy_interior_bed_cream"]);
+                ReplaceBed(scene, sprites["cozy_interior_bed_cream"]);
                 ReplaceSingle(
                     scene,
                     "Woven Floor Runner",
@@ -134,25 +122,19 @@ namespace FarmSimulator.Editor
                 }
             }
 
-            sceneImporter =
-                AssetImporter.GetAtPath(ProjectSceneNames.HouseInteriorPath);
+            sceneImporter = AssetImporter.GetAtPath(ProjectSceneNames.HouseInteriorPath);
             if (sceneImporter != null)
             {
-                sceneImporter.userData =
-                    HouseAndSleepScenePipeline.HouseImportSignature;
+                sceneImporter.userData = HouseAndSleepScenePipeline.HouseImportSignature;
                 sceneImporter.SaveAndReimport();
             }
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log(
-                "Applied Cozy Interior floor, walls, door, rug and bed.");
+            Debug.Log("Applied Cozy Interior floor, walls, door, rug and bed.");
         }
 
-        private static void ReplacePatch(
-            Scene scene,
-            string objectName,
-            Sprite sprite)
+        private static void ReplacePatch(Scene scene, string objectName, Sprite sprite)
         {
             Transform root = Find(scene, objectName);
             if (root == null)
@@ -160,8 +142,7 @@ namespace FarmSimulator.Editor
                 return;
             }
 
-            foreach (SpriteRenderer renderer in
-                     root.GetComponentsInChildren<SpriteRenderer>(true))
+            foreach (SpriteRenderer renderer in root.GetComponentsInChildren<SpriteRenderer>(true))
             {
                 renderer.sprite = sprite;
                 renderer.color = Color.white;
@@ -182,8 +163,7 @@ namespace FarmSimulator.Editor
                 return;
             }
 
-            SpriteRenderer renderer =
-                target.GetComponent<SpriteRenderer>();
+            SpriteRenderer renderer = target.GetComponent<SpriteRenderer>();
             if (renderer == null)
             {
                 renderer = target.gameObject.AddComponent<SpriteRenderer>();
@@ -195,9 +175,7 @@ namespace FarmSimulator.Editor
             target.localPosition = position;
         }
 
-        private static void ReplaceBed(
-            Scene scene,
-            Sprite sprite)
+        private static void ReplaceBed(Scene scene, Sprite sprite)
         {
             Transform bed = Find(scene, "Hero Bed");
             if (bed == null)
@@ -205,8 +183,7 @@ namespace FarmSimulator.Editor
                 return;
             }
 
-            foreach (SpriteRenderer renderer in
-                     bed.GetComponentsInChildren<SpriteRenderer>(true))
+            foreach (SpriteRenderer renderer in bed.GetComponentsInChildren<SpriteRenderer>(true))
             {
                 renderer.enabled = false;
             }
@@ -219,25 +196,21 @@ namespace FarmSimulator.Editor
                 visual.SetParent(bed, false);
             }
 
-            SpriteRenderer bedRenderer =
-                visual.GetComponent<SpriteRenderer>();
+            SpriteRenderer bedRenderer = visual.GetComponent<SpriteRenderer>();
             if (bedRenderer == null)
             {
-                bedRenderer =
-                    visual.gameObject.AddComponent<SpriteRenderer>();
+                bedRenderer = visual.gameObject.AddComponent<SpriteRenderer>();
             }
 
             bedRenderer.enabled = true;
             bedRenderer.sprite = sprite;
             bedRenderer.color = Color.white;
-            bedRenderer.sortingLayerName =
-                TopDownSortingLayers.World;
+            bedRenderer.sortingLayerName = TopDownSortingLayers.World;
             bedRenderer.sortingOrder = 34;
             visual.localPosition = Vector3.zero;
             visual.localScale = new Vector3(0.85f, 0.85f, 1f);
 
-            BoxCollider2D collider =
-                bed.GetComponent<BoxCollider2D>();
+            BoxCollider2D collider = bed.GetComponent<BoxCollider2D>();
             if (collider != null)
             {
                 collider.size = new Vector2(1.9f, 2.6f);
@@ -245,14 +218,11 @@ namespace FarmSimulator.Editor
             }
         }
 
-        private static Transform Find(
-            Scene scene,
-            string objectName)
+        private static Transform Find(Scene scene, string objectName)
         {
             foreach (GameObject root in scene.GetRootGameObjects())
             {
-                Transform[] transforms =
-                    root.GetComponentsInChildren<Transform>(true);
+                Transform[] transforms = root.GetComponentsInChildren<Transform>(true);
                 Transform result = transforms.FirstOrDefault(
                     candidate => candidate.name == objectName);
                 if (result != null)
