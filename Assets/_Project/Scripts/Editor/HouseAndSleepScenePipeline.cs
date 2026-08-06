@@ -22,13 +22,30 @@ namespace FarmSimulator.Editor
     public static class HouseAndSleepScenePipeline
     {
         public const string FarmImportSignature =
-            "farm-house-entry-scene-v1";
+            "farm-house-entry-scene-v2";
         public const string HouseImportSignature =
-            "house-interior-sleep-scene-v1";
+            "house-interior-sleep-scene-v2";
 
-        private const string TileSheetPath =
-            "Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/tiles.png";
         private const float HeroVisualScale = 1.5f;
+
+        private static readonly string[] RequiredSpriteNames =
+        {
+            "cozy_grass",
+            "cozy_dirt",
+            "cozy_wood_panel_light",
+            "cozy_wood_panel_dark",
+            "cozy_bench_dark",
+            "cozy_bench_light",
+            "cozy_flower_crates",
+            "cozy_crates_dark",
+            "cozy_crates_light",
+            "cozy_lamp_green",
+            "cozy_fence_horizontal",
+            "cozy_bridge_wood",
+            "cozy_bush_row",
+            "cozy_tree_spring",
+            "cozy_rock_row",
+        };
 
         static HouseAndSleepScenePipeline()
         {
@@ -96,85 +113,74 @@ namespace FarmSimulator.Editor
 
         private static bool TryLoadAssets(out SceneAssets assets)
         {
-            Dictionary<string, Sprite> sprites =
+            CozyFarmHouseArtPipeline.EnsureAssets();
+
+            Dictionary<string, Sprite> available =
                 AssetDatabase.LoadAllAssetRepresentationsAtPath(
-                        TileSheetPath)
+                        CozyFarmHouseArtPipeline.TileSheetAssetPath)
                     .OfType<Sprite>()
                     .ToDictionary(
                         sprite => sprite.name,
                         StringComparer.Ordinal);
 
-            sprites.TryGetValue("cozy_grass", out Sprite grass);
-            sprites.TryGetValue("cozy_dirt", out Sprite dirt);
+            var selected = new Dictionary<string, Sprite>(
+                StringComparer.Ordinal);
+            foreach (string spriteName in RequiredSpriteNames)
+            {
+                if (!available.TryGetValue(
+                        spriteName,
+                        out Sprite sprite))
+                {
+                    assets = null;
+                    Debug.LogWarning(
+                        $"House scenes are waiting for '{spriteName}'.");
+                    return false;
+                }
+
+                selected[spriteName] = sprite;
+            }
+
             GameObject player =
                 AssetDatabase.LoadAssetAtPath<GameObject>(
                     PlayerPrefabAssetCatalog.PrefabAssetPath);
-
-            assets = grass != null && dirt != null && player != null
-                ? new SceneAssets(grass, dirt, player)
-                : null;
-
-            if (assets == null)
+            if (player == null)
             {
+                assets = null;
                 Debug.LogWarning(
-                    "House scenes are waiting for cozy_grass, cozy_dirt " +
-                    "and the Player prefab.");
+                    "House scenes are waiting for the Player prefab.");
+                return false;
             }
 
-            return assets != null;
+            assets = new SceneAssets(player, selected);
+            return true;
         }
 
         private static void BuildFarm(Scene scene, SceneAssets assets)
         {
             GameObject root = CreateRoot(scene, "Farm World");
             CreateCamera(scene, new Color32(111, 153, 96, 255));
+
             TilePatch(
                 "Farm Grass",
                 root.transform,
-                assets.Grass,
+                assets["cozy_grass"],
                 Vector2.zero,
                 15,
                 9,
                 TopDownSortingLayers.Ground,
-                -100,
-                Color.white);
-
-            Transform house = Group("Hero House Exterior", root.transform);
-            house.localPosition = new Vector3(0f, 2.65f, 0f);
+                -100);
             TilePatch(
-                "House Body",
-                house,
-                assets.Dirt,
-                Vector2.zero,
-                5,
+                "House Path",
+                root.transform,
+                assets["cozy_dirt"],
+                new Vector2(0f, -1.35f),
                 3,
-                TopDownSortingLayers.World,
-                10,
-                new Color32(198, 151, 105, 255));
-            TilePatch(
-                "Roof",
-                house,
-                assets.Grass,
-                new Vector2(0f, 1.35f),
-                5,
-                1,
-                TopDownSortingLayers.World,
-                20,
-                new Color32(105, 76, 61, 255));
-            SpriteObject(
-                "Door",
-                house,
-                assets.Dirt,
-                new Vector2(0f, -1.2f),
-                TopDownSortingLayers.World,
-                30,
-                0.8f,
-                new Color32(91, 61, 45, 255));
+                4,
+                TopDownSortingLayers.Ground,
+                -90);
 
-            BoxCollider2D houseCollider =
-                house.gameObject.AddComponent<BoxCollider2D>();
-            houseCollider.offset = new Vector2(0f, 0.1f);
-            houseCollider.size = new Vector2(4.8f, 2.2f);
+            CreateFarmHouse(root.transform, assets);
+            CreateFarmDecor(root.transform, assets);
 
             Boundary(root.transform, new Vector2(14.4f, 8.2f));
             Spawn(
@@ -185,13 +191,13 @@ namespace FarmSimulator.Editor
             Spawn(
                 root.transform,
                 ProjectSpawnIds.FarmHouseDoor,
-                new Vector2(0f, 0.25f),
+                new Vector2(0f, 0f),
                 FacingDirection.Down);
 
             ScenePortal portal = Portal(
                 "House Entrance Portal",
                 root.transform,
-                new Vector2(0f, 1.35f));
+                new Vector2(0f, 0.95f));
             portal.Configure(
                 "Entrar a la casa",
                 ProjectSceneNames.HouseInterior,
@@ -206,67 +212,203 @@ namespace FarmSimulator.Editor
             Hud(root.transform);
         }
 
+        private static void CreateFarmHouse(
+            Transform parent,
+            SceneAssets assets)
+        {
+            Transform house = Group("Hero House Exterior", parent);
+            house.localPosition = new Vector3(0f, 2.45f, 0f);
+
+            SpritePatch(
+                "Cabin Wall Panels",
+                house,
+                assets["cozy_wood_panel_light"],
+                new Vector2(0f, -0.05f),
+                3,
+                2,
+                new Vector2(1.7f, 1.48f),
+                TopDownSortingLayers.World,
+                10,
+                Vector2.one);
+            SpritePatch(
+                "Cabin Roof Panels",
+                house,
+                assets["cozy_wood_panel_dark"],
+                new Vector2(0f, 1.28f),
+                3,
+                1,
+                new Vector2(1.72f, 1f),
+                TopDownSortingLayers.World,
+                20,
+                new Vector2(1f, 0.78f));
+
+            SpriteObject(
+                "Cabin Door",
+                house,
+                assets["cozy_wood_panel_dark"],
+                new Vector2(0f, -0.92f),
+                TopDownSortingLayers.World,
+                30,
+                new Vector2(0.42f, 0.72f));
+            SpriteObject(
+                "Flower Window Box",
+                house,
+                assets["cozy_flower_crates"],
+                new Vector2(-1.45f, -0.55f),
+                TopDownSortingLayers.World,
+                31,
+                new Vector2(0.85f, 0.85f));
+            SpriteObject(
+                "Cabin Eave",
+                house,
+                assets["cozy_bench_dark"],
+                new Vector2(0f, 1.83f),
+                TopDownSortingLayers.World,
+                32,
+                new Vector2(1.65f, 0.65f));
+            SpriteObject(
+                "Front Porch",
+                house,
+                assets["cozy_bridge_wood"],
+                new Vector2(0f, -1.63f),
+                TopDownSortingLayers.World,
+                25,
+                new Vector2(0.55f, 0.68f));
+
+            BoxCollider2D houseCollider =
+                house.gameObject.AddComponent<BoxCollider2D>();
+            houseCollider.offset = new Vector2(0f, 0.18f);
+            houseCollider.size = new Vector2(5.35f, 2.75f);
+        }
+
+        private static void CreateFarmDecor(
+            Transform parent,
+            SceneAssets assets)
+        {
+            SpriteObject(
+                "Left Orchard Tree",
+                parent,
+                assets["cozy_tree_spring"],
+                new Vector2(-5.45f, 0.15f),
+                TopDownSortingLayers.World,
+                4,
+                new Vector2(1.25f, 1.25f));
+            SpriteObject(
+                "Right Orchard Tree",
+                parent,
+                assets["cozy_tree_spring"],
+                new Vector2(5.35f, 0.55f),
+                TopDownSortingLayers.World,
+                4,
+                new Vector2(1.15f, 1.15f));
+            SpriteObject(
+                "Back Garden Bushes",
+                parent,
+                assets["cozy_bush_row"],
+                new Vector2(0f, 3.72f),
+                TopDownSortingLayers.World,
+                5,
+                new Vector2(1.15f, 1.15f));
+            SpriteObject(
+                "Garden Bench",
+                parent,
+                assets["cozy_bench_light"],
+                new Vector2(3.25f, 0.45f),
+                TopDownSortingLayers.World,
+                12,
+                Vector2.one);
+            SpriteObject(
+                "Garden Lamp",
+                parent,
+                assets["cozy_lamp_green"],
+                new Vector2(-3.35f, -0.35f),
+                TopDownSortingLayers.World,
+                12,
+                new Vector2(0.9f, 0.9f));
+            SpriteObject(
+                "Rock Border",
+                parent,
+                assets["cozy_rock_row"],
+                new Vector2(-3.9f, -2.55f),
+                TopDownSortingLayers.World,
+                6,
+                new Vector2(0.85f, 0.85f));
+            SpriteObject(
+                "Fence Border",
+                parent,
+                assets["cozy_fence_horizontal"],
+                new Vector2(4.4f, -2.45f),
+                TopDownSortingLayers.World,
+                6,
+                new Vector2(1.5f, 1.15f));
+        }
+
         private static void BuildHouse(Scene scene, SceneAssets assets)
         {
             GameObject root = CreateRoot(scene, "House Interior World");
-            CreateCamera(scene, new Color32(55, 42, 36, 255));
-            TilePatch(
-                "Interior Floor",
+            CreateCamera(scene, new Color32(48, 38, 32, 255));
+
+            SpritePatch(
+                "Wood Floor",
                 root.transform,
-                assets.Dirt,
+                assets["cozy_wood_panel_light"],
                 Vector2.zero,
-                9,
-                6,
+                5,
+                3,
+                new Vector2(1.7f, 1.5f),
                 TopDownSortingLayers.Ground,
                 -100,
-                new Color32(211, 174, 124, 255));
-            TilePatch(
-                "Back Wall",
+                Vector2.one);
+            SpritePatch(
+                "Back Interior Wall",
                 root.transform,
-                assets.Grass,
-                new Vector2(0f, 2.5f),
-                9,
+                assets["cozy_wood_panel_dark"],
+                new Vector2(0f, 2.3f),
+                5,
                 1,
+                new Vector2(1.7f, 1f),
                 TopDownSortingLayers.World,
-                20,
-                new Color32(128, 91, 68, 255));
-            TilePatch(
-                "Left Wall",
+                10,
+                new Vector2(1f, 0.72f));
+            SpritePatch(
+                "Left Interior Wall",
                 root.transform,
-                assets.Grass,
-                new Vector2(-4f, 0f),
+                assets["cozy_wood_panel_dark"],
+                new Vector2(-4.12f, 0f),
                 1,
-                6,
+                3,
+                new Vector2(1f, 1.48f),
                 TopDownSortingLayers.World,
-                20,
-                new Color32(128, 91, 68, 255));
-            TilePatch(
-                "Right Wall",
+                10,
+                new Vector2(0.55f, 1f));
+            SpritePatch(
+                "Right Interior Wall",
                 root.transform,
-                assets.Grass,
-                new Vector2(4f, 0f),
+                assets["cozy_wood_panel_dark"],
+                new Vector2(4.12f, 0f),
                 1,
-                6,
+                3,
+                new Vector2(1f, 1.48f),
                 TopDownSortingLayers.World,
-                20,
-                new Color32(128, 91, 68, 255));
+                10,
+                new Vector2(0.55f, 1f));
 
-            Boundary(root.transform, new Vector2(8.2f, 5.3f));
+            Boundary(root.transform, new Vector2(8.35f, 5.35f));
             Spawn(
                 root.transform,
                 ProjectSpawnIds.HouseEntrance,
-                new Vector2(0f, -1.55f),
+                new Vector2(0f, -1.45f),
                 FacingDirection.Up);
             Spawn(
                 root.transform,
                 ProjectSpawnIds.HouseBedWake,
-                new Vector2(1.55f, 0.8f),
+                new Vector2(1.45f, 0.55f),
                 FacingDirection.Right);
 
             ScenePortal exit = Portal(
                 "House Exit Portal",
                 root.transform,
-                new Vector2(0f, -2.25f));
+                new Vector2(0f, -2.08f));
             exit.Configure(
                 "Salir a la granja",
                 ProjectSceneNames.Farm,
@@ -274,34 +416,24 @@ namespace FarmSimulator.Editor
             SpriteObject(
                 "Interior Door",
                 root.transform,
-                assets.Dirt,
-                new Vector2(0f, -2.45f),
+                assets["cozy_wood_panel_dark"],
+                new Vector2(0f, -2.28f),
                 TopDownSortingLayers.World,
                 25,
-                0.8f,
-                new Color32(91, 61, 45, 255));
+                new Vector2(0.42f, 0.68f));
 
             CreateBed(
                 root.transform,
                 assets,
-                new Vector2(2.75f, 0.8f));
-            TilePatch(
-                "Small Table",
-                root.transform,
-                assets.Dirt,
-                new Vector2(-2.65f, 1.15f),
-                2,
-                1,
-                TopDownSortingLayers.World,
-                15,
-                new Color32(113, 76, 54, 255));
+                new Vector2(2.75f, 0.55f));
+            CreateInteriorFurniture(root.transform, assets);
 
             Player(
                 scene,
                 root.transform,
                 assets.Player,
                 ProjectSpawnIds.HouseEntrance,
-                new Vector2(0f, -1.55f));
+                new Vector2(0f, -1.45f));
             Hud(root.transform);
         }
 
@@ -312,34 +444,103 @@ namespace FarmSimulator.Editor
         {
             Transform bed = Group("Hero Bed", parent);
             bed.localPosition = position;
+
             SpriteObject(
                 "Bed Frame",
                 bed,
-                assets.Dirt,
+                assets["cozy_wood_panel_dark"],
                 Vector2.zero,
                 TopDownSortingLayers.World,
                 30,
-                1.45f,
-                new Color32(113, 76, 54, 255));
+                new Vector2(0.7f, 1.15f));
             SpriteObject(
-                "Bed Blanket",
+                "Bed Mattress",
                 bed,
-                assets.Grass,
-                new Vector2(0f, 0.12f),
+                assets["cozy_wood_panel_light"],
+                new Vector2(0f, 0.02f),
                 TopDownSortingLayers.World,
                 31,
-                1.15f,
-                new Color32(111, 146, 174, 255));
+                new Vector2(0.54f, 0.94f));
+            SpriteObject(
+                "Bed Pillow",
+                bed,
+                assets["cozy_bench_light"],
+                new Vector2(0f, 0.62f),
+                TopDownSortingLayers.World,
+                32,
+                new Vector2(0.38f, 0.42f));
+            SpriteObject(
+                "Bed Footboard",
+                bed,
+                assets["cozy_fence_horizontal"],
+                new Vector2(0f, -0.72f),
+                TopDownSortingLayers.World,
+                33,
+                new Vector2(0.65f, 0.8f));
 
             BoxCollider2D collider =
                 bed.gameObject.AddComponent<BoxCollider2D>();
-            collider.size = new Vector2(1.35f, 1.1f);
+            collider.size = new Vector2(1.35f, 2f);
 
             BedInteractable sleep =
                 bed.gameObject.AddComponent<BedInteractable>();
             sleep.Configure(
                 "Dormir hasta mañana",
                 ProjectSpawnIds.HouseBedWake);
+        }
+
+        private static void CreateInteriorFurniture(
+            Transform parent,
+            SceneAssets assets)
+        {
+            SpriteObject(
+                "Flower Cabinet",
+                parent,
+                assets["cozy_flower_crates"],
+                new Vector2(-2.85f, 1.15f),
+                TopDownSortingLayers.World,
+                20,
+                new Vector2(0.95f, 0.95f));
+            SpriteObject(
+                "Storage Crates",
+                parent,
+                assets["cozy_crates_dark"],
+                new Vector2(-2.75f, 0.05f),
+                TopDownSortingLayers.World,
+                20,
+                Vector2.one);
+            SpriteObject(
+                "Reading Bench",
+                parent,
+                assets["cozy_bench_light"],
+                new Vector2(-2.45f, -1.15f),
+                TopDownSortingLayers.World,
+                20,
+                new Vector2(1.05f, 1.05f));
+            SpriteObject(
+                "Interior Lamp",
+                parent,
+                assets["cozy_lamp_green"],
+                new Vector2(-3.45f, -0.7f),
+                TopDownSortingLayers.World,
+                22,
+                new Vector2(0.82f, 0.82f));
+            SpriteObject(
+                "Woven Floor Runner",
+                parent,
+                assets["cozy_bridge_wood"],
+                new Vector2(-0.15f, 0.85f),
+                TopDownSortingLayers.Ground,
+                -80,
+                new Vector2(0.58f, 0.72f));
+            SpriteObject(
+                "Bedside Crates",
+                parent,
+                assets["cozy_crates_light"],
+                new Vector2(2.75f, -1.05f),
+                TopDownSortingLayers.World,
+                20,
+                new Vector2(0.75f, 0.75f));
         }
 
         private static void Player(
@@ -512,7 +713,7 @@ namespace FarmSimulator.Editor
                     new Vector2(-x, y),
                     new Vector2(x, y),
                     new Vector2(x, -y),
-                    new Vector2(-x, -y)
+                    new Vector2(-x, -y),
                 };
         }
 
@@ -557,13 +758,37 @@ namespace FarmSimulator.Editor
             int columns,
             int rows,
             string layer,
+            int order)
+        {
+            SpritePatch(
+                name,
+                parent,
+                sprite,
+                center,
+                columns,
+                rows,
+                Vector2.one,
+                layer,
+                order,
+                Vector2.one);
+        }
+
+        private static void SpritePatch(
+            string name,
+            Transform parent,
+            Sprite sprite,
+            Vector2 center,
+            int columns,
+            int rows,
+            Vector2 spacing,
+            string layer,
             int order,
-            Color tint)
+            Vector2 scale)
         {
             Transform patch = Group(name, parent);
             patch.localPosition = center;
-            float startX = -(columns - 1) * 0.5f;
-            float startY = -(rows - 1) * 0.5f;
+            float startX = -(columns - 1) * spacing.x * 0.5f;
+            float startY = -(rows - 1) * spacing.y * 0.5f;
 
             for (int y = 0; y < rows; y++)
             {
@@ -573,34 +798,40 @@ namespace FarmSimulator.Editor
                         $"{name} {x}-{y}",
                         patch,
                         sprite,
-                        new Vector2(startX + x, startY + y),
+                        new Vector2(
+                            startX + x * spacing.x,
+                            startY + y * spacing.y),
                         layer,
                         order,
-                        1f,
-                        tint);
+                        scale);
                 }
             }
         }
 
-        private static void SpriteObject(
+        private static Transform SpriteObject(
             string name,
             Transform parent,
             Sprite sprite,
             Vector2 position,
             string layer,
             int order,
-            float scale,
-            Color tint)
+            Vector2 scale,
+            float rotationDegrees = 0f)
         {
             Transform go = Group(name, parent);
             go.localPosition = position;
-            go.localScale = new Vector3(scale, scale, 1f);
+            go.localScale = new Vector3(scale.x, scale.y, 1f);
+            go.localRotation = Quaternion.Euler(
+                0f,
+                0f,
+                rotationDegrees);
             SpriteRenderer renderer =
                 go.gameObject.AddComponent<SpriteRenderer>();
             renderer.sprite = sprite;
             renderer.sortingLayerName = layer;
             renderer.sortingOrder = order;
-            renderer.color = tint;
+            renderer.color = Color.white;
+            return go;
         }
 
         private static void SaveGeneratedScene(
@@ -705,19 +936,19 @@ namespace FarmSimulator.Editor
 
         private sealed class SceneAssets
         {
+            private readonly IReadOnlyDictionary<string, Sprite> sprites;
+
             public SceneAssets(
-                Sprite grass,
-                Sprite dirt,
-                GameObject player)
+                GameObject player,
+                IReadOnlyDictionary<string, Sprite> curatedSprites)
             {
-                Grass = grass;
-                Dirt = dirt;
                 Player = player;
+                sprites = curatedSprites;
             }
 
-            public Sprite Grass { get; }
-            public Sprite Dirt { get; }
             public GameObject Player { get; }
+
+            public Sprite this[string name] => sprites[name];
         }
     }
 }
