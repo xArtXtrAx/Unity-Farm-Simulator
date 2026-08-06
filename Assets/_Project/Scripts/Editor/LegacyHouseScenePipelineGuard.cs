@@ -6,6 +6,9 @@ namespace FarmSimulator.Editor
     [InitializeOnLoad]
     public static class LegacyHouseScenePipelineGuard
     {
+        private const string LegacyMenu =
+            "Tools/Farm Simulator/Rebuild House and Sleep Scenes";
+
         static LegacyHouseScenePipelineGuard()
         {
             EditorApplication.delayCall += DisableLegacyAutoGeneration;
@@ -16,15 +19,12 @@ namespace FarmSimulator.Editor
             EditorApplication.delayCall -= HouseAndSleepScenePipeline.EnsureScenes;
         }
 
-        [MenuItem(
-            "Tools/Farm Simulator/Legacy/Rebuild House and Sleep Scenes",
-            true)]
+        [MenuItem(LegacyMenu, true)]
         private static bool ValidateLegacyRebuild()
         {
             Debug.LogWarning(
-                "The legacy HouseAndSleepScenePipeline is obsolete and must not be " +
-                "used for the current Farm or HouseInterior. Use Farm Development " +
-                "Kit > Scene Recovery instead.");
+                "The legacy HouseAndSleepScenePipeline is obsolete and disabled. " +
+                "Use Farm Development Kit > Scene Recovery instead.");
             return false;
         }
     }
