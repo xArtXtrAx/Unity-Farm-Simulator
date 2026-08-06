@@ -232,6 +232,8 @@ namespace FarmSimulator.Editor
                             }
                         }
 
+                        pixels = NormalizeToTileCell(pixels, width, height);
+
                         var generated = new Texture2D(
                             width,
                             height,
@@ -281,6 +283,58 @@ namespace FarmSimulator.Editor
             return result;
         }
 
+        private static Color[] NormalizeToTileCell(
+            IReadOnlyList<Color> source,
+            int width,
+            int height)
+        {
+            int minX = width;
+            int minY = height;
+            int maxX = -1;
+            int maxY = -1;
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    if (source[(y * width) + x].a <= 0.01f)
+                    {
+                        continue;
+                    }
+
+                    minX = Mathf.Min(minX, x);
+                    minY = Mathf.Min(minY, y);
+                    maxX = Mathf.Max(maxX, x);
+                    maxY = Mathf.Max(maxY, y);
+                }
+            }
+
+            if (maxX < minX || maxY < minY)
+            {
+                return source.ToArray();
+            }
+
+            int contentWidth = maxX - minX + 1;
+            int contentHeight = maxY - minY + 1;
+            int destinationX = (width - contentWidth) / 2;
+            int destinationY = contentHeight < height ? 1 : 0;
+            destinationY = Mathf.Min(destinationY, height - contentHeight);
+
+            var result = new Color[width * height];
+            for (int y = 0; y < contentHeight; y++)
+            {
+                for (int x = 0; x < contentWidth; x++)
+                {
+                    int sourceIndex = ((minY + y) * width) + minX + x;
+                    int destinationIndex =
+                        ((destinationY + y) * width) + destinationX + x;
+                    result[destinationIndex] = source[sourceIndex];
+                }
+            }
+
+            return result;
+        }
+
         private static void ConfigureGeneratedSprite(string path)
         {
             TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
@@ -295,8 +349,8 @@ namespace FarmSimulator.Editor
 
             var settings = new TextureImporterSettings();
             importer.ReadTextureSettings(settings);
-            settings.spriteAlignment = (int)SpriteAlignment.Custom;
-            settings.spritePivot = new Vector2(0.5f, 0f);
+            settings.spriteAlignment = (int)SpriteAlignment.Center;
+            settings.spritePivot = new Vector2(0.5f, 0.5f);
             importer.SetTextureSettings(settings);
 
             importer.filterMode = FilterMode.Point;
