@@ -11,7 +11,7 @@ Este documento es un anexo transaccional de `BITÁCORA_GPT.MD`.
 - Unity 6.3 LTS `6000.3.21f1`.
 - `com.unity.2d.tilemap` instalado.
 - Tile Manager y paletas automáticas operativas.
-- EditMode completo aprobado.
+- EditMode completo aprobado antes del último ajuste de prefabs.
 - PlayMode aprobado **10/10**.
 - Transparencia y centrado manual de cultivos seguían mostrando defectos al pintarlos como tiles.
 
@@ -77,9 +77,15 @@ Building Root
 - la detección de superposición;
 - las celdas ocupadas persistentes.
 
-El `Building Authoring` permite editar la posición local del ancla y las celdas irregulares. Por defecto, las casas usan la posición del portal/puerta como ancla. Los prefabs deben regenerarse después de editar esta información.
+Los sprites generados usan pivote inferior central. Los prefabs reutilizables se normalizan ahora alrededor de esa base visual:
 
-Commits del incremento:
+- `Building Visual` queda en posición local `(0, 0)`;
+- portal, spawn y collider se convierten desde los metadatos de escena al espacio local de base;
+- la huella lógica se autoriza independientemente del techo y del tamaño total del sprite;
+- `Regenerate + place on scene grid` reconstruye el prefab antes de instanciarlo, evitando máscaras desactualizadas;
+- el Footprint Editor superpone sobre el sprite la misma máscara exacta usada por Scene, snap y colisiones.
+
+Commits del incremento de ancla y máscara:
 
 - `eccfeb5c77344f859e1c186706c8527625c4cd6d`
 - `3658f3d0f7c52936429a2b50609721438e03525f`
@@ -89,17 +95,24 @@ Commits del incremento:
 - `2194e5d553b119457c5c6dbedc9e3f3bf3325422`
 - `b63f76458b5bced669fa8f455f95aa9ce0ea7395`
 
-Estado: **IMPLEMENTADO, pendiente de compilación, validación visual y EditMode local**.
+Commits de normalización final:
+
+- `79585178ce8f752f2c0172721c861809e5078064`
+- `7903348eaaccf428faab231ab4ba2099f1a62b61`
+- `0484756f8cc0e5a1752c72bfb26682af582ee72b`
+- `e9583964368838c463dd9a1c185020b73091980d`
+
+Estado: **CORREGIDO, pendiente de compilación, validación visual y EditMode local**. No se considera verificado hasta confirmación de Arturo.
 
 ## Próxima validación
 
-1. Hacer Pull.
-2. Ejecutar `Rebuild Building Definitions`.
-3. Abrir `Footprint Editor` y confirmar que el ancla coincide con la puerta/base.
-4. Ejecutar `Generate all prefabs`.
-5. Eliminar instancias antiguas y colocar prefabs regenerados.
-6. Mover una casa y confirmar que la huella sigue el `Footprint Anchor`.
-7. Verificar cambio verde/rojo al superponer edificios.
+1. Hacer Pull y esperar la recompilación.
+2. Eliminar de la escena las instancias generadas antes de la normalización.
+3. Abrir una casa en `Footprint Editor` y confirmar que la previsualización combina sprite y máscara.
+4. Pintar diez o doce celdas y pulsar `Save + regenerate prefab`, o usar directamente `Regenerate + place on scene grid` desde Building Browser.
+5. Confirmar que Scene muestra exactamente el mismo patrón y número de celdas.
+6. Confirmar que la máscara cubre la base de la casa en vez de quedar separada debajo.
+7. Mover una casa y verificar que la huella la sigue y cambia verde/rojo al intersectar otra máscara.
 8. Ejecutar EditMode completo.
 
 ## Regla que se mantiene
