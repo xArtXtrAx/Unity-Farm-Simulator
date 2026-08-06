@@ -13,7 +13,7 @@ namespace FarmSimulator.Presentation.Scenes
         [SerializeField]
         private string defaultSpawnId;
 
-        private void Start()
+        private void Awake()
         {
             ResolveNow();
         }
