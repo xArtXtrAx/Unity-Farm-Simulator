@@ -1,132 +1,94 @@
-# Bitácora — Pipeline de Tilemaps y Tile Palettes
+# Bitácora — Pipeline de Tilemaps y cultivos como entidades
 
 Fecha: 2026-08-06  
 Rama: `agent/cozy-art-pipeline`  
 PR: #14 — `Automate Cozy Tile Palette authoring`
 
-Este documento es un anexo transaccional de `BITÁCORA_GPT.MD` para la iteración de autoría de mapas. Debe incorporarse al documento maestro durante el cierre del PR.
+Este documento es un anexo transaccional de `BITÁCORA_GPT.MD`.
 
-## Estado validado antes de este incremento
+## Estado validado antes de este cambio
 
 - Unity 6.3 LTS `6000.3.21f1`.
-- Paquete `com.unity.2d.tilemap` instalado y ventana Tile Palette operativa.
-- Paletas categorizadas generadas automáticamente.
-- Botones del Tile Manager cargan paleta y Tilemap objetivo.
-- Todas las pruebas EditMode aprobadas.
-- PlayMode aprobado **10/10** después de eliminar la dependencia de orden del hotbar.
+- `com.unity.2d.tilemap` instalado.
+- Tile Manager y paletas automáticas operativas.
+- EditMode completo aprobado.
+- PlayMode aprobado **10/10**.
+- Transparencia y centrado manual de cultivos seguían mostrando defectos al pintarlos como tiles.
 
-## Incidencias encontradas durante la validación manual
+## Decisión de arquitectura
 
-1. `Farming` contenía tierra y cultivos en el mismo Tilemap.
-2. Un cultivo pintado en la misma coordenada reemplazaba la tierra arada.
-3. Semillas y algunas etapas conservaban un cuadro de fondo opaco.
-4. Las etapas no compartían una base visual consistente.
-5. La vista Scene estaba en perspectiva 3D; para autoría debe usarse 2D frontal ortográfica.
+Los cultivos dejan de ser tiles de autoría.
 
-Los bugs correspondientes quedaron registrados en `BUGS.MD` como `BUG-0009` y `BUG-0010`.
-
-## Implementación realizada
-
-### Capas de autoría
-
-La jerarquía objetivo pasa de:
+La estructura final es:
 
 ```text
-Ground
-Paths
-Farming
-Decoration
+Farm Authoring Grid
+├── Ground
+├── Paths
+├── Soil
+└── Decoration
+
+Farm Plot Field
+└── Plot x-y
+    ├── Soil Visual
+    └── Crop Entity Visual (SpriteRenderer)
 ```
 
-a:
+Responsabilidades:
 
-```text
-Ground
-Paths
-Soil
-Crops
-Decoration
-```
+- `Ground`, `Paths`, `Soil` y `Decoration` se pintan con Tile Palette.
+- semillas, brotes, plantas maduras y cosechas son sprites runtime propiedad de `FarmPlotBehaviour`.
+- el estado de crecimiento sigue viviendo en `FarmPlotState`.
+- `FarmPlotBehaviour.Render()` cambia el sprite de la entidad visual al avanzar el día.
+- una planta nunca sustituye el tile de suelo porque ya no ocupa una celda del Tilemap.
 
-Cambios:
+## Implementación
 
-- `FarmTilemapLayers` expone `Soil` y `Crops` por separado.
-- `FarmSceneFarmingUpgrader` genera `Farming Core Loop v3`.
-- `Soil` usa sorting de suelo.
-- `Crops` usa un orden superior y puede ocupar la misma coordenada sin sustituir a `Soil`.
-- El Tile Manager presenta cinco botones y cinco paletas.
+- `FarmTilemapLayers` elimina la referencia `Crops`.
+- `CozyPaletteCategory` queda en `Ground`, `Paths`, `Soil` y `Decoration`.
+- se elimina la paleta agrícola pintable `Cozy Farm - Crops`.
+- `LegacyCropPaletteCleanup` borra la paleta antigua al recompilar.
+- `CozyFarmTileCatalog` continúa generando 18 sprites transparentes, pero exclusivamente para runtime.
+- `FarmSceneFarmingUpgrader` genera `Farming Core Loop v4`.
+- cada parcela contiene un `Crop Entity Visual` con `SpriteRenderer`.
+- el runtime carga las seis etapas transparentes de nabo, zanahoria y col.
+- la posición, escala y etapa se actualizan sin modificar ningún Tilemap.
 
-Commits:
+Commits principales:
 
-- `94bb3fba22b8e609cf568a4abe9fe880dda3dee5`
-- `d1a7654d3b6c574eddd252c63067b9bdeb0727ef`
-- `5f30046020c8e6181c2f596b0b9f0812436e65cb`
+- `d731f7d3c1fe9ee1630e95f1e958939a60a3d3ce`
+- `0d4796dfeb93bc2dbf7fb35a437ef2682ffd0a30`
+- `0132fea7b46c184b19785a630ad7151cfad1b8e2`
+- `25027bdcb1f8da0f3e0901e4f42e4eaf97ef1025`
+- `552c15054b73507c1b8399940f4a6c656b8234a8`
+- `dfefec9eca7a20048af791d1309bca7d9c0adb8f`
+- `7232212635f187e489696eb499879e3920c4e186`
 
-### Normalización de cultivos
+## Pruebas actualizadas
 
-El catálogo ya no usa directamente los recortes opacos de `crops.png` para los tiles de autoría.
+`FarmingScenePipelineTests` comprueba:
 
-Durante `Rebuild`:
-
-1. habilita temporalmente lectura de la textura fuente;
-2. extrae cada uno de los 18 recortes curados;
-3. usa el color de la esquina inferior izquierda como máscara cuando es opaco;
-4. genera PNG RGBA independientes;
-5. los importa con 16 PPU, Point, sin mipmaps, sin compresión y Clamp;
-6. fija pivote inferior centrado `(0.5, 0.0)`;
-7. crea los tiles a partir de esos sprites normalizados.
-
-Salida generada:
-
-```text
-Assets/_Project/Tiles/Generated/Crops
-```
-
-Commit:
-
-- `3fbd03dafb59aeb53f8e313e9d9e13eb531adeeb`
-
-### Pruebas
-
-`FarmingScenePipelineTests` ahora comprueba:
-
-- existencia de cinco Tilemaps;
-- `Soil` y `Crops` como objetos distintos;
-- orden de dibujo de cultivos por encima del suelo;
-- cinco Palette Assets;
-- 18 sprites agrícolas generados;
-- transparencia habilitada;
-- 16 PPU;
-- pivote inferior centrado.
-
-Commit:
-
-- `067aa4f43416c6ff836eb68c44e12e125f481513`
+- nueve parcelas configuradas;
+- cuatro Tilemaps de autoría;
+- ausencia de un Tilemap `Crops`;
+- un `SpriteRenderer` de cultivo por parcela;
+- cuatro paletas de mundo;
+- 18 sprites runtime importados con transparencia, 16 PPU y pivote central.
 
 ## Próximo paso exacto
 
 1. Hacer Pull de `agent/cozy-art-pipeline`.
 2. Esperar compilación e importación.
-3. Abrir `Farm`.
-4. Ejecutar `Tools > Farm Simulator > Tile Manager`.
-5. Pulsar `Rebuild Cozy Tile Catalog + Palettes`.
-6. Ejecutar `Tools > Farm Simulator > Apply Farming Field To Farm Scene`.
-7. Confirmar jerarquía `Ground / Paths / Soil / Crops / Decoration`.
-8. En vista Scene, activar **2D** y usar proyección ortográfica frontal.
-9. Pintar tierra en `Soil` y un cultivo en la misma celda desde `Crops`.
-10. Confirmar que ambos se ven simultáneamente, sin cuadro opaco y con la planta apoyada en la base.
-11. Guardar, cerrar y reabrir `Farm` para verificar persistencia.
-12. Ejecutar EditMode y PlayMode completos.
-13. Si la validación es satisfactoria, cambiar `BUG-0009` y `BUG-0010` de `CORREGIDO` a `VERIFICADO`.
+3. Ejecutar `Rebuild Cozy Tile Catalog + Palettes`.
+4. Ejecutar `Apply Farming Field To Farm Scene`.
+5. Confirmar que ya no existe botón ni paleta `Crops`.
+6. Confirmar jerarquía `Ground / Paths / Soil / Decoration`.
+7. Entrar en Play Mode.
+8. Arar, sembrar y verificar que la planta aparece como `Crop Entity Visual` sobre la tierra.
+9. Dormir y comprobar el cambio de etapa.
+10. Confirmar que el suelo inferior nunca cambia de color ni desaparece.
+11. Ejecutar EditMode y PlayMode completos.
 
 ## Exclusiones
 
-Este incremento no modifica:
-
-- reglas de crecimiento del dominio;
-- consumo de semillas;
-- sueño y avance de día;
-- inventario persistente;
-- portales;
-- casa e interiores;
-- prefab o collider del héroe.
+No se modificaron reglas de crecimiento, consumo de semillas, inventario persistente, sueño, portales, casa, interiores ni collider del héroe.
