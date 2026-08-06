@@ -29,6 +29,21 @@ namespace FarmSimulator.Tests.EditMode
         }
 
         [Test]
+        public void EvenWidthCanvasUsesSameColumnsAsHouseFootprintAuthoring()
+        {
+            Vector2Int[] cells = GridBuildingFootprint
+                .CreateRectangleOffsets(new Vector2Int(4, 3))
+                .ToArray();
+
+            Assert.That(GridBuildingFootprint.GetCanvasMinimumX(4), Is.EqualTo(-2));
+            Assert.That(cells, Has.Length.EqualTo(12));
+            Assert.That(cells.Min(cell => cell.x), Is.EqualTo(-2));
+            Assert.That(cells.Max(cell => cell.x), Is.EqualTo(1));
+            Assert.That(cells, Does.Contain(Vector2Int.zero));
+            Assert.That(cells, Does.Not.Contain(new Vector2Int(2, 0)));
+        }
+
+        [Test]
         public void OverlapDetectsSharedCellsOnly()
         {
             var firstObject = new GameObject("First");
