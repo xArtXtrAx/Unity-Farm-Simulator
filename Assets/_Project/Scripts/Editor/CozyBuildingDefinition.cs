@@ -90,5 +90,10 @@ namespace FarmSimulator.Editor
             supportsInterior = true;
             generatedSprite = sprite;
         }
+
+        public void AssignGeneratedPrefab(GameObject prefab)
+        {
+            generatedPrefab = prefab;
+        }
     }
 }
