@@ -125,6 +125,7 @@ Commits:
 - `f4ddd073822f93493ca4f16eb717ddd3499d7d9b`
 - `3782565ee49a30235ba17b23308c7a38a894c525`
 - `e0d8c96a471ff191abb040351c1f1b00013d210b`
+- `854fd76cc125e004db1a093a037c356db42e1670`
 
 La selección visual exacta del rectángulo del atlas queda pendiente de validación local en Unity. Si requiere ajuste, solo se modifica `StarterHouseSource`; la escena y la lógica no cambian.
 
@@ -142,3 +143,118 @@ La selección visual exacta del rectángulo del atlas queda pendiente de validac
 ## Exclusiones
 
 No se modificaron reglas de crecimiento, consumo de semillas, inventario persistente, sueño, portales, interiores ni collider del héroe.
+
+---
+
+## Traspaso para la próxima ventana
+
+### Estado al cerrar esta ventana
+
+- Rama activa: `agent/cozy-art-pipeline`.
+- PR activo: #14, todavía en borrador.
+- Último commit funcional y documental: `854fd76cc125e004db1a093a037c356db42e1670`.
+- La casa modular `Cozy House Facade v3` fue sustituida en el reconstruidor por una casa completa procedente del atlas Full-Pack.
+- El sprite generado esperado es:
+
+```text
+Assets/_Project/Art/Generated/CozyFarm/Buildings/starter-green-gable-house.png
+```
+
+- El root funcional `Hero House Exterior` no se reemplaza. Se conservan portal, collider, punto de aparición y transición al interior.
+- El rectángulo del atlas y los datos de la variante inicial están centralizados en `CozyFarmBuildingCatalog`; cualquier corrección visual debe hacerse allí, no reconstruyendo la escena a mano.
+- La integración todavía no se considera validada hasta verla en la instalación local de Unity del usuario.
+
+### Prueba que debe realizar el usuario
+
+Después de hacer **Fetch origin → Pull origin** y esperar a que Unity termine de importar y compilar:
+
+1. Ejecutar:
+
+```text
+Tools → Farm Simulator → Generate Cozy Full-Pack Building Sprites
+```
+
+2. Confirmar que se genera el archivo:
+
+```text
+Assets/_Project/Art/Generated/CozyFarm/Buildings/starter-green-gable-house.png
+```
+
+3. Ejecutar:
+
+```text
+Tools → Farm Simulator → Apply Cozy House Exterior To Farm Scene
+```
+
+4. Abrir `Assets/_Project/Scenes/Farm.unity` y comprobar en modo 2D:
+
+- aparece una casa completa real del atlas `buildings.png`;
+- el fondo alrededor de la casa es transparente;
+- no se incluyen fragmentos de casas o accesorios vecinos;
+- el techo, paredes y base no están recortados;
+- la escala es coherente con el héroe y el resto del escenario;
+- la puerta queda razonablemente alineada con el acceso actual;
+- la jerarquía contiene `Cozy Full-Pack House v4`;
+- la Console no muestra errores rojos.
+
+5. Entrar en Play Mode y validar:
+
+- el héroe no atraviesa las paredes de la casa;
+- puede acercarse a la puerta y entrar;
+- la escena interior carga correctamente;
+- puede salir y reaparece frente a la casa;
+- el hotbar, las parcelas y el ciclo agrícola continúan funcionando;
+- no reaparece `Inventory hotbar has not been initialized`.
+
+6. Ejecutar las suites completas:
+
+```text
+EditMode → Run All
+PlayMode → Run All
+```
+
+### Evidencia solicitada
+
+Para continuar en la próxima ventana, registrar uno de estos resultados:
+
+- **Aprobado:** captura de la casa en Scene o Game, confirmación del portal y total de pruebas aprobadas.
+- **Recorte incorrecto:** captura donde se vea qué borde está cortado o qué elemento vecino aparece.
+- **Escala o puerta incorrectas:** captura frontal con el héroe junto a la fachada.
+- **Error técnico:** texto completo del primer error rojo de Console y archivo/línea indicados por Unity.
+
+### Plan posterior a la validación
+
+1. **Corrección visual mínima, si es necesaria**
+   - ajustar `StarterHouseSource`, pivote, escala o desplazamiento local;
+   - no modificar el portal ni la lógica de escenas salvo que la puerta real requiera mover el punto de interacción;
+   - añadir o actualizar una prueba de regresión para el dato corregido.
+
+2. **Catálogo de variantes de edificios**
+   - registrar varias casas del atlas con identificadores estables;
+   - incluir nombre, región de origen, pivote, escala recomendada y ancla de puerta;
+   - generar todos los sprites mediante una sola orden reproducible.
+
+3. **Selector de casa en Unity**
+   - ampliar la herramienta de editor para escoger una variante desde un menú o desplegable;
+   - reconstruir la fachada sin tocar portal, collider ni escenas manualmente;
+   - permitir futuras mejoras o estaciones visuales.
+
+4. **Metadatos funcionales por edificio**
+   - definir ancla de entrada, límites de colisión y punto de sombra para cada variante;
+   - alinear automáticamente portal y collider con el estilo seleccionado;
+   - preparar la misma infraestructura para granero, molino, mercado y otros edificios del atlas.
+
+5. **Continuación del pipeline de arte**
+   - ampliar el slicer/catálogo del Full-Pack para terreno, caminos, agua, vegetación, cercas y decoración;
+   - crear paletas más completas y categorías legibles;
+   - evaluar Rule Tiles para conexiones automáticas de caminos, agua y cercas.
+
+6. **Cierre de la iteración**
+   - ejecutar EditMode y PlayMode completos;
+   - actualizar `BUGS.MD` con cualquier regresión encontrada;
+   - actualizar esta bitácora con la variante aprobada y los resultados;
+   - sacar el PR #14 de borrador cuando el pipeline de casa, Tilemaps y cultivos quede validado localmente.
+
+### Decisión que debe conservarse
+
+Los Tilemaps se usan para autoría del mundo estático. Los cultivos siguen siendo entidades runtime con `SpriteRenderer`. Los edificios completos se extraen del atlas Full-Pack mediante un catálogo reproducible; no se deben volver a aproximar con paneles del paquete piloto cuando exista una variante completa disponible.
