@@ -25,6 +25,8 @@ namespace FarmSimulator.Editor
         public const string PaletteRoot = GeneratedRoot + "/Palettes";
         public const int TileSize = 16;
 
+        private const string DragPayloadKey = "FarmSimulator.CozySeasonalTileDrag";
+
         private static readonly CozyTileSeason[] Seasons =
         {
             CozyTileSeason.Spring,
@@ -56,7 +58,16 @@ namespace FarmSimulator.Editor
             window.Show();
         }
 
-        private void OnEnable() => Reload();
+        private void OnEnable()
+        {
+            SceneView.duringSceneGui += DuringSceneGui;
+            Reload();
+        }
+
+        private void OnDisable()
+        {
+            SceneView.duringSceneGui -= DuringSceneGui;
+        }
 
         private void OnGUI()
         {
@@ -64,8 +75,8 @@ namespace FarmSimulator.Editor
                 "Farm Development Kit — Cozy Seasonal Tiles",
                 EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "Slices every non-empty 16×16 cell under CozyFarm/Full/Tiles, " +
-                "separates the complete atlas into four seasons and builds four Unity Tile Palettes.",
+                "Drag any thumbnail directly onto the Scene grid to paint one cell, " +
+                "or open the complete seasonal Tile Palette for normal brush painting.",
                 MessageType.Info);
 
             using (new EditorGUILayout.HorizontalScope())
@@ -80,7 +91,10 @@ namespace FarmSimulator.Editor
                     RebuildAllPalettes();
                     Reload();
                 }
-                if (GUILayout.Button("Refresh", GUILayout.Height(28f))) Reload();
+                if (GUILayout.Button("Refresh", GUILayout.Height(28f)))
+                {
+                    Reload();
+                }
             }
 
             EditorGUILayout.Space();
@@ -150,15 +164,34 @@ namespace FarmSimulator.Editor
 
                 DrawCheckerBackground(previewRect);
                 DrawSpritePreview(entry.Sprite, previewRect);
+                EditorGUIUtility.AddCursorRect(previewRect, MouseCursor.Link);
 
-                if (GUI.Button(previewRect, GUIContent.none, GUIStyle.none))
+                Event current = Event.current;
+                if (current.type == EventType.MouseDown &&
+                    current.button == 0 &&
+                    previewRect.Contains(current.mousePosition))
                 {
                     Selection.activeObject = entry.Sprite;
-                    EditorGUIUtility.PingObject(entry.Sprite);
+                    current.Use();
+                }
+                else if (current.type == EventType.MouseDrag &&
+                         current.button == 0 &&
+                         previewRect.Contains(current.mousePosition))
+                {
+                    Tile tile = GetOrCreateTile(entry);
+                    if (tile != null)
+                    {
+                        DragAndDrop.PrepareStartDrag();
+                        DragAndDrop.objectReferences = new UnityEngine.Object[] { tile };
+                        DragAndDrop.SetGenericData(
+                            DragPayloadKey,
+                            new TileDragPayload(tile, LayerNames[paintLayerIndex]));
+                        DragAndDrop.StartDrag(entry.Sprite.name);
+                        current.Use();
+                    }
                 }
 
-                string label = entry.Sprite.name;
-                var content = new GUIContent(label, label);
+                var content = new GUIContent(entry.Sprite.name, entry.Sprite.name);
                 GUILayout.Label(
                     content,
                     EditorStyles.centeredGreyMiniLabel,
@@ -167,9 +200,122 @@ namespace FarmSimulator.Editor
             }
         }
 
+        private static void DuringSceneGui(SceneView sceneView)
+        {
+            Event current = Event.current;
+            if (current.type != EventType.DragUpdated &&
+                current.type != EventType.DragPerform)
+            {
+                return;
+            }
+
+            var payload = DragAndDrop.GetGenericData(DragPayloadKey) as TileDragPayload;
+            if (payload == null || payload.Tile == null)
+            {
+                return;
+            }
+
+            Tilemap target = FindTilemap(payload.LayerName);
+            if (target == null)
+            {
+                DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
+                sceneView.ShowNotification(new GUIContent(
+                    $"No Tilemap named '{payload.LayerName}' is loaded."));
+                current.Use();
+                return;
+            }
+
+            if (!TryGetCellUnderMouse(target, current.mousePosition, out Vector3Int cell))
+            {
+                DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
+                current.Use();
+                return;
+            }
+
+            DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+            sceneView.ShowNotification(new GUIContent(
+                $"{payload.LayerName}  cell ({cell.x}, {cell.y})"));
+
+            if (current.type == EventType.DragPerform)
+            {
+                DragAndDrop.AcceptDrag();
+                Undo.RecordObject(target, "Paint Cozy seasonal tile");
+                target.SetTile(cell, payload.Tile);
+                EditorUtility.SetDirty(target);
+                UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(target.gameObject.scene);
+                Selection.activeGameObject = target.gameObject;
+                DragAndDrop.SetGenericData(DragPayloadKey, null);
+            }
+
+            current.Use();
+        }
+
+        private static bool TryGetCellUnderMouse(
+            Tilemap target,
+            Vector2 guiPosition,
+            out Vector3Int cell)
+        {
+            Ray ray = HandleUtility.GUIPointToWorldRay(guiPosition);
+            Plane plane = new Plane(Vector3.forward, new Vector3(0f, 0f, target.transform.position.z));
+            if (!plane.Raycast(ray, out float distance))
+            {
+                cell = default;
+                return false;
+            }
+
+            Vector3 world = ray.GetPoint(distance);
+            cell = target.WorldToCell(world);
+            return true;
+        }
+
+        private static Tilemap FindTilemap(string layerName)
+        {
+            return UnityEngine.Object.FindObjectsByType<Tilemap>(
+                    FindObjectsInactive.Include,
+                    FindObjectsSortMode.None)
+                .FirstOrDefault(tilemap => string.Equals(
+                    tilemap.name,
+                    layerName,
+                    StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static Tile GetOrCreateTile(SpriteEntry entry)
+        {
+            string seasonName = entry.Season.ToString();
+            string seasonRoot = GeneratedRoot + "/" + seasonName;
+            string tileFolder = seasonRoot + "/Tiles";
+            EnsureFolder(GeneratedRoot);
+            EnsureFolder(seasonRoot);
+            EnsureFolder(tileFolder);
+
+            string guid = AssetDatabase.AssetPathToGUID(entry.AssetPath);
+            string tilePath = tileFolder + "/" +
+                Sanitize(guid + "_" + entry.Sprite.name) + ".asset";
+            Tile tile = AssetDatabase.LoadAssetAtPath<Tile>(tilePath);
+            if (tile == null)
+            {
+                tile = ScriptableObject.CreateInstance<Tile>();
+                tile.name = entry.Sprite.name;
+                tile.sprite = entry.Sprite;
+                tile.colliderType = Tile.ColliderType.None;
+                AssetDatabase.CreateAsset(tile, tilePath);
+                AssetDatabase.SaveAssets();
+            }
+            else if (tile.sprite != entry.Sprite)
+            {
+                tile.sprite = entry.Sprite;
+                EditorUtility.SetDirty(tile);
+            }
+
+            return tile;
+        }
+
         private static void DrawSpritePreview(Sprite sprite, Rect destination)
         {
-            if (sprite == null || sprite.texture == null) return;
+            if (sprite == null || sprite.texture == null)
+            {
+                return;
+            }
 
             Rect textureRect = sprite.textureRect;
             Texture2D texture = sprite.texture;
@@ -230,7 +376,10 @@ namespace FarmSimulator.Editor
         public static List<SpriteEntry> DiscoverSprites()
         {
             var result = new List<SpriteEntry>();
-            if (!AssetDatabase.IsValidFolder(TileSourceRoot)) return result;
+            if (!AssetDatabase.IsValidFolder(TileSourceRoot))
+            {
+                return result;
+            }
 
             foreach (string guid in AssetDatabase.FindAssets("t:Texture2D", new[] { TileSourceRoot }))
             {
@@ -293,7 +442,10 @@ namespace FarmSimulator.Editor
         private static void SliceSheet(string path)
         {
             TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
-            if (importer == null) return;
+            if (importer == null)
+            {
+                return;
+            }
 
             importer.textureType = TextureImporterType.Sprite;
             importer.spriteImportMode = SpriteImportMode.Multiple;
@@ -305,7 +457,10 @@ namespace FarmSimulator.Editor
             importer.SaveAndReimport();
 
             Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-            if (texture == null) return;
+            if (texture == null)
+            {
+                return;
+            }
 
             Color32[] pixels = texture.GetPixels32();
             int columns = texture.width / TileSize;
@@ -317,7 +472,11 @@ namespace FarmSimulator.Editor
             {
                 for (int column = 0; column < columns; column++)
                 {
-                    if (!HasVisiblePixel(pixels, texture.width, column, row)) continue;
+                    if (!HasVisiblePixel(pixels, texture.width, column, row))
+                    {
+                        continue;
+                    }
+
                     float centerX = column * TileSize + TileSize * 0.5f;
                     CozyTileSeason tileSeason = ResolveSeason(path, string.Empty, centerX, texture.width);
                     metadata.Add(new SpriteMetaData
@@ -346,7 +505,10 @@ namespace FarmSimulator.Editor
                 int offset = (startY + y) * width + startX;
                 for (int x = 0; x < TileSize; x++)
                 {
-                    if (pixels[offset + x].a != 0) return true;
+                    if (pixels[offset + x].a != 0)
+                    {
+                        return true;
+                    }
                 }
             }
             return false;
@@ -368,33 +530,10 @@ namespace FarmSimulator.Editor
 
         private static void BuildPalette(CozyTileSeason value, IReadOnlyList<SpriteEntry> seasonEntries)
         {
-            string seasonName = value.ToString();
-            string seasonRoot = GeneratedRoot + "/" + seasonName;
-            string tileFolder = seasonRoot + "/Tiles";
-            EnsureFolder(seasonRoot);
-            EnsureFolder(tileFolder);
-
-            var tiles = new List<Tile>();
-            foreach (SpriteEntry entry in seasonEntries)
-            {
-                string guid = AssetDatabase.AssetPathToGUID(entry.AssetPath);
-                string tilePath = tileFolder + "/" + Sanitize(guid + "_" + entry.Sprite.name) + ".asset";
-                Tile tile = AssetDatabase.LoadAssetAtPath<Tile>(tilePath);
-                if (tile == null)
-                {
-                    tile = ScriptableObject.CreateInstance<Tile>();
-                    AssetDatabase.CreateAsset(tile, tilePath);
-                }
-                tile.name = entry.Sprite.name;
-                tile.sprite = entry.Sprite;
-                tile.colliderType = Tile.ColliderType.None;
-                EditorUtility.SetDirty(tile);
-                tiles.Add(tile);
-            }
-
+            var tiles = seasonEntries.Select(GetOrCreateTile).Where(tile => tile != null).ToList();
             UnityTilePaletteBridge.CreateOrReplacePalette(
                 PaletteRoot,
-                "Cozy Farm - " + seasonName,
+                "Cozy Farm - " + value,
                 tilemap => PopulatePalette(tilemap, tiles));
         }
 
@@ -420,13 +559,7 @@ namespace FarmSimulator.Editor
                 palette = AssetDatabase.LoadAssetAtPath<GameObject>(palettePath);
             }
 
-            Tilemap target = UnityEngine.Object.FindObjectsByType<Tilemap>(
-                    FindObjectsInactive.Include,
-                    FindObjectsSortMode.None)
-                .FirstOrDefault(tilemap => string.Equals(
-                    tilemap.name,
-                    layerName,
-                    StringComparison.OrdinalIgnoreCase));
+            Tilemap target = FindTilemap(layerName);
             if (target == null)
             {
                 EditorUtility.DisplayDialog(
@@ -453,8 +586,10 @@ namespace FarmSimulator.Editor
         {
             string token = ((assetPath ?? string.Empty) + " " + (spriteName ?? string.Empty))
                 .ToLowerInvariant();
-            if (token.Contains("spring") || token.Contains("primavera")) return CozyTileSeason.Spring;
-            if (token.Contains("summer") || token.Contains("verano")) return CozyTileSeason.Summer;
+            if (token.Contains("spring") || token.Contains("primavera"))
+                return CozyTileSeason.Spring;
+            if (token.Contains("summer") || token.Contains("verano"))
+                return CozyTileSeason.Summer;
             if (token.Contains("autumn") || token.Contains("fall") || token.Contains("otono") || token.Contains("otoño"))
                 return CozyTileSeason.Autumn;
             if (token.Contains("winter") || token.Contains("invierno") || token.Contains("snow"))
@@ -498,13 +633,29 @@ namespace FarmSimulator.Editor
 
         private static string Sanitize(string value)
         {
-            if (string.IsNullOrEmpty(value)) return "tile";
+            if (string.IsNullOrEmpty(value))
+            {
+                return "tile";
+            }
+
             char[] invalid = Path.GetInvalidFileNameChars();
             return new string(value.Select(character =>
                     invalid.Contains(character) || character == '/' || character == '\\'
                         ? '_'
                         : character)
                 .ToArray());
+        }
+
+        private sealed class TileDragPayload
+        {
+            public TileDragPayload(Tile tile, string layerName)
+            {
+                Tile = tile;
+                LayerName = layerName;
+            }
+
+            public Tile Tile { get; }
+            public string LayerName { get; }
         }
 
         public readonly struct SpriteEntry
