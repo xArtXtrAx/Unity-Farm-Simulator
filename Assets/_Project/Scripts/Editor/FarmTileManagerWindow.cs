@@ -21,41 +21,31 @@ namespace FarmSimulator.Editor
                 "Farm Tile Manager",
                 EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "Use the generated Grid/Tilemap layers as painting targets. " +
-                "The starter palette contains ground, farming and crop " +
-                "sprites already normalized to the one-unit game grid.",
+                "The manager creates and activates a real Unity Tile Palette. " +
+                "Open Farm, then choose a layer to paint directly on its Tilemap.",
                 MessageType.Info);
 
             EditorGUILayout.Space();
-            if (GUILayout.Button("Rebuild Cozy Tile Catalog"))
+            if (GUILayout.Button("Rebuild Cozy Tile Catalog + Palette"))
             {
-                CozyFarmTileCatalog.Rebuild();
-                PingPalette();
+                GameObject palette = CozyFarmTileCatalog.Rebuild();
+                Selection.activeObject = palette;
+                EditorGUIUtility.PingObject(palette);
             }
 
-            if (GUILayout.Button("Open Unity Tile Palette"))
+            if (GUILayout.Button("Open Palette On Ground Layer"))
             {
-                bool opened = EditorApplication.ExecuteMenuItem(
-                    "Window/2D/Tile Palette");
-                if (!opened)
-                {
-                    EditorUtility.DisplayDialog(
-                        "Tile Palette",
-                        "Unity could not open the Tile Palette window. " +
-                        "Install or enable the 2D Tilemap Editor package " +
-                        "from Package Manager.",
-                        "OK");
-                }
+                ActivateLayer(layers => layers.Ground);
             }
 
-            if (GUILayout.Button("Ping Starter Palette Prefab"))
+            if (GUILayout.Button("Ping Generated Palette Asset"))
             {
                 PingPalette();
             }
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField(
-                "Active Farm layer",
+                "Paint target",
                 EditorStyles.boldLabel);
 
             using (new EditorGUILayout.HorizontalScope())
@@ -72,10 +62,9 @@ namespace FarmSimulator.Editor
 
             EditorGUILayout.Space();
             EditorGUILayout.HelpBox(
-                "One-time palette setup: open Window > 2D > Tile Palette, " +
-                "then drag 'Cozy Farm Starter Palette.prefab' into the " +
-                "palette toolbar. Unity converts the prepared Grid prefab " +
-                "into a paintable Tile Palette.",
+                "No manual prefab conversion is required. Each layer button " +
+                "opens Tile Palette, loads 'Cozy Farm Starter Palette' and " +
+                "sets the selected Farm Tilemap as the active paint target.",
                 MessageType.None);
         }
 
@@ -83,11 +72,15 @@ namespace FarmSimulator.Editor
             string label,
             System.Func<FarmTilemapLayers, Tilemap> selector)
         {
-            if (!GUILayout.Button(label))
+            if (GUILayout.Button(label))
             {
-                return;
+                ActivateLayer(selector);
             }
+        }
 
+        private static void ActivateLayer(
+            System.Func<FarmTilemapLayers, Tilemap> selector)
+        {
             FarmTilemapLayers layers = FindLayersInActiveScene();
             Tilemap tilemap = layers == null ? null : selector(layers);
             if (tilemap == null)
@@ -99,8 +92,17 @@ namespace FarmSimulator.Editor
                 return;
             }
 
-            Selection.activeGameObject = tilemap.gameObject;
-            EditorGUIUtility.PingObject(tilemap.gameObject);
+            GameObject palette = CozyFarmTileCatalog.LoadPalette();
+            if (!UnityTilePaletteBridge.OpenAndActivate(
+                    palette,
+                    tilemap))
+            {
+                EditorUtility.DisplayDialog(
+                    "Farm Tile Manager",
+                    "Unity could not activate the Tile Palette. Confirm that " +
+                    "2D Tilemap Editor is installed, then rebuild the catalog.",
+                    "OK");
+            }
         }
 
         private static FarmTilemapLayers FindLayersInActiveScene()
@@ -114,15 +116,7 @@ namespace FarmSimulator.Editor
 
         private static void PingPalette()
         {
-            GameObject palette = AssetDatabase.LoadAssetAtPath<GameObject>(
-                CozyFarmTileCatalog.PalettePrefabPath);
-            if (palette == null)
-            {
-                CozyFarmTileCatalog.Rebuild();
-                palette = AssetDatabase.LoadAssetAtPath<GameObject>(
-                    CozyFarmTileCatalog.PalettePrefabPath);
-            }
-
+            GameObject palette = CozyFarmTileCatalog.LoadPalette();
             Selection.activeObject = palette;
             EditorGUIUtility.PingObject(palette);
         }
