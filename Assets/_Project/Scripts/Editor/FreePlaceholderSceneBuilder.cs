@@ -29,10 +29,16 @@ namespace FarmSimulator.Editor
         [MenuItem(MenuPath)]
         public static void ReplaceScenes()
         {
+            bool farmExists = AssetDatabase.LoadAssetAtPath<SceneAsset>(FarmScenePath) != null;
+            bool houseExists = AssetDatabase.LoadAssetAtPath<SceneAsset>(HouseScenePath) != null;
+            string action = farmExists || houseExists
+                ? "Existing scenes will be backed up and replaced. Missing scenes will be created."
+                : "Farm and HouseInterior are missing and will be created.";
+
             if (!EditorUtility.DisplayDialog(
                     "Build free placeholder scenes",
                     "This generates any missing free placeholder assets, configures the scene profile, " +
-                    "backs up Farm and HouseInterior, and rebuilds both scenes with redistributable art.",
+                    action + " The generated scenes use only redistributable placeholder art.",
                     "Build scenes",
                     "Cancel"))
             {
@@ -45,8 +51,14 @@ namespace FarmSimulator.Editor
                 EnsureInteriorTiles();
                 ConfigureProfile();
 
-                // The modern authoring command owns backup, scene construction and build settings.
-                ModernFarmSceneAuthoring.ReplaceScenesWithBackup();
+                if (farmExists || houseExists)
+                {
+                    ModernFarmSceneAuthoring.ReplaceScenesWithBackup();
+                }
+                else
+                {
+                    ModernFarmSceneAuthoring.GenerateMissingScenes();
+                }
 
                 EditorApplication.delayCall += PostProcessGeneratedScenes;
             }
@@ -251,6 +263,15 @@ namespace FarmSimulator.Editor
                 return;
             }
 
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(FarmScenePath) == null ||
+                AssetDatabase.LoadAssetAtPath<SceneAsset>(HouseScenePath) == null)
+            {
+                Debug.LogWarning(
+                    "[Free Placeholder Scenes] Waiting for Farm and HouseInterior to finish importing.");
+                EditorApplication.delayCall += PostProcessGeneratedScenes;
+                return;
+            }
+
             PostProcessScene(FarmScenePath, scene =>
             {
                 GameObject house = Find(scene, "Hero House Visual");
@@ -289,7 +310,7 @@ namespace FarmSimulator.Editor
             AssetDatabase.Refresh();
             EditorUtility.DisplayDialog(
                 "Free placeholder scenes",
-                "Farm and HouseInterior were rebuilt with redistributable placeholder art.\n\n" +
+                "Farm and HouseInterior were built with redistributable placeholder art.\n\n" +
                 "Review both scenes, then commit their .unity and .meta files plus the two new interior tiles.",
                 "OK");
         }
