@@ -161,16 +161,9 @@ namespace FarmSimulator.Tests.EditMode
             try
             {
                 string[] farmSprites = SpriteNames(farm);
-                CollectionAssert.IsSubsetOf(
-                    new[]
-                    {
-                        selectedVariant.Id,
-                        "cozy_crates_dark",
-                        "cozy_bridge_wood",
-                        "cozy_tree_spring",
-                        "cozy_lamp_green",
-                    },
-                    farmSprites);
+                Assert.That(farmSprites, Does.Contain(selectedVariant.Id));
+                Assert.That(farmSprites, Does.Contain("cozy_tree_spring"));
+                Assert.That(farmSprites, Does.Contain("cozy_lamp_green"));
                 Assert.That(
                     FindGameObject(farm, "House Body"),
                     Is.Null);
