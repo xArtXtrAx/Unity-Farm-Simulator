@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using FarmSimulator.Presentation.Buildings;
 using FarmSimulator.Presentation.Player;
 using UnityEditor;
 using UnityEngine;
@@ -29,14 +30,9 @@ namespace FarmSimulator.Editor
                 "OK");
         }
 
-        public static int GenerateAll(
-            IReadOnlyList<CozyBuildingDefinition> definitions)
+        public static int GenerateAll(IReadOnlyList<CozyBuildingDefinition> definitions)
         {
-            if (definitions == null)
-            {
-                throw new ArgumentNullException(nameof(definitions));
-            }
-
+            if (definitions == null) throw new ArgumentNullException(nameof(definitions));
             EnsureFolder(PrefabRoot);
             int generated = 0;
             foreach (CozyBuildingDefinition definition in definitions)
@@ -44,7 +40,6 @@ namespace FarmSimulator.Editor
                 Generate(definition);
                 generated++;
             }
-
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             return generated;
@@ -52,15 +47,9 @@ namespace FarmSimulator.Editor
 
         public static GameObject Generate(CozyBuildingDefinition definition)
         {
-            if (definition == null)
-            {
-                throw new ArgumentNullException(nameof(definition));
-            }
+            if (definition == null) throw new ArgumentNullException(nameof(definition));
             if (definition.GeneratedSprite == null)
-            {
-                throw new InvalidOperationException(
-                    $"Building '{definition.Id}' has no generated sprite.");
-            }
+                throw new InvalidOperationException($"Building '{definition.Id}' has no generated sprite.");
 
             EnsureFolder(PrefabRoot);
             string path = GetPrefabPath(definition);
@@ -68,11 +57,12 @@ namespace FarmSimulator.Editor
             try
             {
                 root.transform.position = Vector3.zero;
+                root.AddComponent<GridBuildingFootprint>()
+                    .Configure(definition.Id, definition.GridSize);
 
                 Transform composition = Child(CompositionRootName, root.transform);
                 Transform visual = Child(VisualName, composition);
-                SpriteRenderer renderer =
-                    visual.gameObject.AddComponent<SpriteRenderer>();
+                SpriteRenderer renderer = visual.gameObject.AddComponent<SpriteRenderer>();
                 renderer.sprite = definition.GeneratedSprite;
                 renderer.color = Color.white;
                 renderer.sortingLayerName = TopDownSortingLayers.World;
@@ -89,19 +79,13 @@ namespace FarmSimulator.Editor
                 collider.size = definition.ColliderSize;
                 collider.offset = definition.ColliderOffset;
 
-                Child(DoorAnchorName, root.transform).localPosition =
-                    definition.PortalOffset;
-                Child(PortalAnchorName, root.transform).localPosition =
-                    definition.PortalOffset;
-                Child(SpawnAnchorName, root.transform).localPosition =
-                    definition.SpawnOffset;
+                Child(DoorAnchorName, root.transform).localPosition = definition.PortalOffset;
+                Child(PortalAnchorName, root.transform).localPosition = definition.PortalOffset;
+                Child(SpawnAnchorName, root.transform).localPosition = definition.SpawnOffset;
 
                 GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
                 if (prefab == null)
-                {
-                    throw new InvalidOperationException(
-                        $"Could not save generated building prefab '{path}'.");
-                }
+                    throw new InvalidOperationException($"Could not save generated building prefab '{path}'.");
 
                 definition.AssignGeneratedPrefab(prefab);
                 EditorUtility.SetDirty(definition);
@@ -130,10 +114,7 @@ namespace FarmSimulator.Editor
             for (int index = 1; index < parts.Length; index++)
             {
                 string next = current + "/" + parts[index];
-                if (!AssetDatabase.IsValidFolder(next))
-                {
-                    AssetDatabase.CreateFolder(current, parts[index]);
-                }
+                if (!AssetDatabase.IsValidFolder(next)) AssetDatabase.CreateFolder(current, parts[index]);
                 current = next;
             }
         }
