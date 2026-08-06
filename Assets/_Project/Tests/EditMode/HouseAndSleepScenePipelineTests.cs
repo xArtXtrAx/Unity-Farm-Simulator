@@ -151,7 +151,7 @@ namespace FarmSimulator.Tests.EditMode
                     CozyFarmBuildingCatalog.DefaultHouseId);
             }
 
-            CozyFarmHouseExteriorUpgrader.ApplyVariant(selectedVariant.Id);
+            FarmSceneGridLayoutResetter.ApplyFromMenu();
 
             Scene farm =
                 EditorSceneManager.OpenScene(
@@ -162,8 +162,9 @@ namespace FarmSimulator.Tests.EditMode
             {
                 string[] farmSprites = SpriteNames(farm);
                 Assert.That(farmSprites, Does.Contain(selectedVariant.Id));
-                Assert.That(farmSprites, Does.Contain("cozy_tree_spring"));
+                Assert.That(farmSprites, Does.Contain("cozy_bench_light"));
                 Assert.That(farmSprites, Does.Contain("cozy_lamp_green"));
+                Assert.That(farmSprites, Does.Not.Contain("cozy_tree_spring"));
                 Assert.That(
                     FindGameObject(farm, "House Body"),
                     Is.Null);
@@ -172,6 +173,9 @@ namespace FarmSimulator.Tests.EditMode
                     Is.Null);
                 Assert.That(
                     FindGameObject(farm, CozyFarmHouseExteriorUpgrader.VisualRootName),
+                    Is.Not.Null);
+                Assert.That(
+                    FindGameObject(farm, FarmSceneGridLayoutResetter.LayoutRootName),
                     Is.Not.Null);
                 AssertRenderersAreUntinted(farm);
             }
