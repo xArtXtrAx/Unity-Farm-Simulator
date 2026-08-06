@@ -19,16 +19,15 @@ namespace FarmSimulator.Presentation.Interaction
 
         [SerializeField]
         [Min(0.1f)]
-        private float lateralTolerance =
-            DefaultLateralTolerance;
+        private float lateralTolerance = DefaultLateralTolerance;
 
         private TopDownPlayerMotor motor;
         private InteractableBehaviour selected;
+        private string selectedPrompt;
 
         public static event Action<string, bool> PromptChanged;
 
-        public InteractableBehaviour SelectedInteractable =>
-            selected;
+        public InteractableBehaviour SelectedInteractable => selected;
 
         private void Awake()
         {
@@ -50,27 +49,23 @@ namespace FarmSimulator.Presentation.Interaction
             SetSelected(null);
         }
 
-        public void Configure(
-            float range,
-            float maximumLateralDistance)
+        public void Configure(float range, float maximumLateralDistance)
         {
             interactionRange = Mathf.Max(0.1f, range);
-            lateralTolerance = Mathf.Max(
-                0.1f,
-                maximumLateralDistance);
+            lateralTolerance = Mathf.Max(0.1f, maximumLateralDistance);
         }
 
         public bool TryInteract()
         {
             RefreshSelection();
 
-            if (selected == null ||
-                !selected.CanInteract(gameObject))
+            if (selected == null || !selected.CanInteract(gameObject))
             {
                 return false;
             }
 
             selected.Interact(gameObject);
+            RefreshSelection();
             return true;
         }
 
@@ -80,8 +75,7 @@ namespace FarmSimulator.Presentation.Interaction
             float bestScore = float.NegativeInfinity;
             Vector2 origin = transform.position;
             Vector2 facing = FacingVector(motor.Facing);
-            Vector2 lateralAxis =
-                new Vector2(-facing.y, facing.x);
+            Vector2 lateralAxis = new Vector2(-facing.y, facing.x);
 
             InteractableBehaviour[] candidates =
                 FindObjectsByType<InteractableBehaviour>(
@@ -96,16 +90,14 @@ namespace FarmSimulator.Presentation.Interaction
                     continue;
                 }
 
-                Vector2 delta =
-                    candidate.InteractionPosition - origin;
+                Vector2 delta = candidate.InteractionPosition - origin;
                 float distance = delta.magnitude;
                 if (distance > interactionRange)
                 {
                     continue;
                 }
 
-                float forwardDistance =
-                    Vector2.Dot(delta, facing);
+                float forwardDistance = Vector2.Dot(delta, facing);
                 float sideDistance =
                     Mathf.Abs(Vector2.Dot(delta, lateralAxis));
 
@@ -133,31 +125,35 @@ namespace FarmSimulator.Presentation.Interaction
             SetSelected(best);
         }
 
-        private void SetSelected(
-            InteractableBehaviour candidate)
+        private void SetSelected(InteractableBehaviour candidate)
         {
-            if (selected == candidate)
+            string prompt = candidate?.InteractionPrompt ?? string.Empty;
+
+            if (selected == candidate &&
+                string.Equals(
+                    selectedPrompt,
+                    prompt,
+                    StringComparison.Ordinal))
             {
                 return;
             }
 
             selected = candidate;
+            selectedPrompt = prompt;
+
             if (selected == null)
             {
                 PromptChanged?.Invoke(string.Empty, false);
                 return;
             }
 
-            PromptChanged?.Invoke(
-                selected.InteractionPrompt,
-                true);
+            PromptChanged?.Invoke(selectedPrompt, true);
         }
 
         private static bool ReadInteractionPressed()
         {
             Keyboard keyboard = Keyboard.current;
-            if (keyboard != null &&
-                keyboard.eKey.wasPressedThisFrame)
+            if (keyboard != null && keyboard.eKey.wasPressedThisFrame)
             {
                 return true;
             }
@@ -172,8 +168,7 @@ namespace FarmSimulator.Presentation.Interaction
                 gamepad.buttonSouth.wasPressedThisFrame;
         }
 
-        private static Vector2 FacingVector(
-            FacingDirection direction)
+        private static Vector2 FacingVector(FacingDirection direction)
         {
             return direction switch
             {
