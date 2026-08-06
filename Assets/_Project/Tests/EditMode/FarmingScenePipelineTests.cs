@@ -101,7 +101,7 @@ namespace FarmSimulator.Tests.EditMode
         }
 
         [Test]
-        public void CozyStarterTileCatalogContainsPaintableAssets()
+        public void CozyStarterTileCatalogContainsPaintableAssetsAndPalettes()
         {
             CozyFarmTileCatalog.Rebuild();
 
@@ -122,14 +122,39 @@ namespace FarmSimulator.Tests.EditMode
                     CozyFarmTileCatalog.TilledSoilTilePath),
                 Is.Not.Null);
 
+            AssertPalette(
+                CozyFarmTileCatalog.GroundPalettePath,
+                minimumOccupiedCells: 2);
+            AssertPalette(
+                CozyFarmTileCatalog.PathsPalettePath,
+                minimumOccupiedCells: 2);
+            AssertPalette(
+                CozyFarmTileCatalog.FarmingPalettePath,
+                minimumOccupiedCells: 19);
+            AssertPalette(
+                CozyFarmTileCatalog.DecorationPalettePath,
+                minimumOccupiedCells: 4);
+        }
+
+        private static void AssertPalette(
+            string palettePath,
+            int minimumOccupiedCells)
+        {
             GameObject palette =
-                AssetDatabase.LoadAssetAtPath<GameObject>(
-                    CozyFarmTileCatalog.PalettePrefabPath);
-            Assert.That(palette, Is.Not.Null);
-            Assert.That(palette.GetComponent<Grid>(), Is.Not.Null);
+                AssetDatabase.LoadAssetAtPath<GameObject>(palettePath);
             Assert.That(
-                palette.GetComponentInChildren<Tilemap>(true),
-                Is.Not.Null);
+                palette,
+                Is.Not.Null,
+                $"Expected generated palette at '{palettePath}'.");
+            Assert.That(palette.GetComponent<Grid>(), Is.Not.Null);
+
+            Tilemap tilemap =
+                palette.GetComponentInChildren<Tilemap>(true);
+            Assert.That(tilemap, Is.Not.Null);
+            Assert.That(
+                CountOccupiedCells(tilemap),
+                Is.GreaterThanOrEqualTo(minimumOccupiedCells),
+                $"Palette '{palettePath}' does not contain its expected tiles.");
         }
 
         private static int CountOccupiedCells(Tilemap tilemap)
