@@ -25,6 +25,12 @@ namespace FarmSimulator.Tests.PlayMode
             InventoryHotbarView view =
                 Object.FindFirstObjectByType<InventoryHotbarView>();
             Assert.That(view, Is.Not.Null);
+
+            // The inventory intentionally persists between scenes and tests can
+            // run in any order. Normalize the selected slot before asserting
+            // the Lab hotbar contents and presentation.
+            view.SelectSlot(0);
+
             Assert.That(view.SlotCount, Is.EqualTo(8));
             Assert.That(view.SelectedIndex, Is.Zero);
             Assert.That(view.SelectedItemName, Is.EqualTo("Azada"));
@@ -53,6 +59,9 @@ namespace FarmSimulator.Tests.PlayMode
             Assert.That(view, Is.Not.Null);
             Assert.That(player, Is.Not.Null);
 
+            // Ensure this test is independent of any selection left by a
+            // previously executed PlayMode test.
+            view.SelectSlot(0);
             bool changed = view.CycleSelection(1);
 
             Assert.That(changed, Is.True);
