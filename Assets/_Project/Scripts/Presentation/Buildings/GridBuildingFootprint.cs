@@ -81,10 +81,15 @@ namespace FarmSimulator.Presentation.Buildings
             return other.GetOccupiedCells().Any(occupied.Contains);
         }
 
+        public static int GetCanvasMinimumX(int width)
+        {
+            return -(Mathf.Max(1, width) / 2);
+        }
+
         public static IEnumerable<Vector2Int> CreateRectangleOffsets(Vector2Int size)
         {
             size = new Vector2Int(Mathf.Max(1, size.x), Mathf.Max(1, size.y));
-            int startX = -((size.x - 1) / 2);
+            int startX = GetCanvasMinimumX(size.x);
             for (int y = 0; y < size.y; y++)
             {
                 for (int x = 0; x < size.x; x++)
