@@ -42,6 +42,8 @@ Responsabilidades:
 - `FarmPlotBehaviour.Render()` cambia el sprite de la entidad visual al avanzar el día.
 - una planta nunca sustituye el tile de suelo porque ya no ocupa una celda del Tilemap.
 
+Esta separación sigue el patrón habitual de los simuladores agrícolas 2D: el mapa estático se autoriza con Tilemaps y los elementos con estado, crecimiento e interacción se representan como entidades runtime. Esto permite cultivos de distintos tamaños, animaciones, sombras, partículas y estados especiales sin quedar limitados a una celda de Tilemap.
+
 ## Implementación
 
 - `FarmTilemapLayers` elimina la referencia `Crops`.
@@ -63,6 +65,16 @@ Commits principales:
 - `552c15054b73507c1b8399940f4a6c656b8234a8`
 - `dfefec9eca7a20048af791d1309bca7d9c0adb8f`
 - `7232212635f187e489696eb499879e3920c4e186`
+
+## Regresión de compilación detectada
+
+Durante el refactor de `FarmPlotBehaviour`, `ValidateStages()` utilizó `Sprite[].Any(...)` sin importar `System.Linq`. Unity detuvo la compilación con `CS1061`.
+
+Se sustituyó la consulta LINQ por un ciclo explícito que valida cada entrada del arreglo. La solución evita una dependencia innecesaria y no genera enumeradores ni asignaciones adicionales.
+
+- Bug: `BUG-0011`.
+- Corrección: `02d1d696137a2692983e02d342ded5a7f41020df`.
+- Estado: **CORREGIDO**, pendiente de confirmar compilación y suites completas en Unity.
 
 ## Pruebas actualizadas
 
@@ -88,6 +100,7 @@ Commits principales:
 9. Dormir y comprobar el cambio de etapa.
 10. Confirmar que el suelo inferior nunca cambia de color ni desaparece.
 11. Ejecutar EditMode y PlayMode completos.
+12. Cuando Unity compile y las suites pasen, cambiar `BUG-0011` a **VERIFICADO**.
 
 ## Exclusiones
 
