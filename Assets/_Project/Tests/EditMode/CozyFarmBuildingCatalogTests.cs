@@ -20,6 +20,14 @@ namespace FarmSimulator.Tests.EditMode
         }
 
         [Test]
+        public void StarterHousePresetKeepsTheValidatedFullPackCoordinates()
+        {
+            Assert.That(
+                CozyFarmBuildingCatalog.StarterHouseSource,
+                Is.EqualTo(new RectInt(681, 548, 68, 86)));
+        }
+
+        [Test]
         public void GeneratedStarterHouseLivesOutsideThirdPartySource()
         {
             Assert.That(
