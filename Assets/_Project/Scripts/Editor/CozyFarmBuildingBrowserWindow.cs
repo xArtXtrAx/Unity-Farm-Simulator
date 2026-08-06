@@ -136,12 +136,11 @@ namespace FarmSimulator.Editor
 
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    using (new EditorGUI.DisabledScope(definition.GeneratedPrefab == null))
+                    if (GUILayout.Button("Regenerate + place on scene grid"))
                     {
-                        if (GUILayout.Button("Place on scene grid"))
-                        {
-                            CozyBuildingGridPlacementUtility.PlacePrefab(definition.GeneratedPrefab);
-                        }
+                        GameObject prefab = CozyFarmBuildingPrefabGenerator.Generate(definition);
+                        CozyBuildingGridPlacementUtility.PlacePrefab(prefab);
+                        Reload();
                     }
                     using (new EditorGUI.DisabledScope(definition.Category != CozyBuildingCategory.House))
                     {
