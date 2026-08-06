@@ -46,7 +46,8 @@ namespace FarmSimulator.Presentation.Player
             }
 
             Vector2 displacement =
-                DesiredMovement * speed * Time.fixedDeltaTime;
+                DesiredMovement * speed *
+                global::UnityEngine.Time.fixedDeltaTime;
             body.MovePosition(body.position + displacement);
         }
 
