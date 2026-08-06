@@ -32,6 +32,17 @@ Este archivo complementa `BUGS.MD` durante el PR #14.
 - **Solución:** se movió el rectángulo exclusivamente en `CozyFarmBuildingCatalog` a `RectInt(681, 548, 68, 86)` y se añadió una prueba que fija esas coordenadas.
 - **Validación pendiente:** regenerar el sprite, aplicar la casa a `Farm`, confirmar que el edificio está completo y aislado, y ejecutar EditMode y PlayMode. No pasar a **VERIFICADO** hasta recibir confirmación de Arturo.
 
+## Incremento — Catálogo reutilizable y selector de casas
+
+- **Estado:** IMPLEMENTADO; compilación y validación visual local pendientes.
+- `CozyFarmBuildingCatalog` contiene cinco variantes con identificador estable, nombre, rectángulo de atlas y metadatos de puerta, portal, aparición, collider, escala, sombra y sorting.
+- `Generate Cozy Full-Pack Building Sprites` genera todas las variantes registradas.
+- `CozyFarmHouseStyleWindow` añade `Tools → Farm Simulator → House Style Selector`.
+- El selector recuerda el estilo elegido mediante `EditorPrefs` y permite generar o aplicar la variante desde una sola ventana.
+- `CozyFarmHouseExteriorUpgrader` reconstruye la composición visual `Cozy Full-Pack House v5` y consume los metadatos de la variante.
+- Se añadieron pruebas de identificadores, rutas, regiones y metadatos positivos.
+- Las cuatro variantes nuevas no se consideran aprobadas visualmente hasta revisarlas individualmente en Unity.
+
 ## Incidencia de compatibilidad Unity 6
 
 - `TextureImporter.spriteAlignment` no existe como propiedad directa en Unity 6.3.
@@ -40,11 +51,11 @@ Este archivo complementa `BUGS.MD` durante el PR #14.
 
 ## Validación pendiente
 
-1. reconstruir catálogo y escena;
-2. probar `arar → sembrar → regar → dormir`;
-3. comprobar ausencia de fondo verde;
-4. comprobar persistencia del suelo;
-5. regenerar y aplicar la casa Full-Pack;
-6. comprobar que la casa está completa y no contiene sprites vecinos;
+1. actualizar la rama y confirmar que Unity compila;
+2. abrir `Tools → Farm Simulator → House Style Selector`;
+3. generar los cinco sprites;
+4. aplicar cada variante y comprobar que contiene una sola casa completa;
+5. validar escala, puerta, portal, collider, punto de aparición, sombra y sorting;
+6. probar entrada y salida de la casa con cada estilo;
 7. ejecutar EditMode y PlayMode completos;
-8. después trasladar los estados finales al registro maestro `BUGS.MD`.
+8. no marcar variantes ni `BUG-0012` como **VERIFICADO** hasta recibir confirmación de Arturo.
