@@ -24,32 +24,32 @@ Registro histórico de errores detectados, investigados y corregidos durante el 
 
 ## Bugs activos
 
-## BUG-0014 — La huella lógica de los edificios no coincide con la base visual
+## BUG-0014 — El panel del Footprint Editor no representaba todas las celdas guardadas
 
 - **Estado:** CORREGIDO
 - **Severidad:** S3 — Media
 - **Detectado:** 2026-08-06
-- **Sistema:** Farm Development Kit / prefabs de edificios
+- **Sistema:** Farm Development Kit / huellas lógicas de edificios
 - **Rama afectada:** `agent/cozy-art-pipeline`
-- **Correcciones funcionales:** `79585178ce8f752f2c0172721c861809e5078064`, `7903348eaaccf428faab231ab4ba2099f1a62b61`, `0484756f8cc0e5a1752c72bfb26682af582ee72b`
-- **Prueba de regresión:** `e9583964368838c463dd9a1c185020b73091980d`
+- **Correcciones:** `dc44fc52663c0303ae6af6657f723c8d21c3091d`, `225157451d83db5ff65161d40c3696328c29b14d`
+- **Prueba de regresión:** `90dc5b8010853ed7d71b950caed63cce19b73e50`
 - **Reportado por:** Arturo
 
 ### Comportamiento observado
 
-La máscara `4 × 3` aparecía demasiado abajo respecto de la casa. Además, el Footprint Editor podía mostrar doce celdas mientras `Place on scene grid` instanciaba todavía una versión anterior del prefab con diez celdas.
+En una huella `4 × 3`, el contador y la superposición sobre el sprite indicaban diez celdas ocupadas, pero el panel de botones solo mostraba ocho. La máscara de Scene parecía distinta de la matriz editada.
 
 ### Causa raíz
 
-El generador reutilizable aplicaba el baseline con signo invertido (`-Baseline`) aunque los sprites generados tienen pivote inferior central. Esto desplazaba el visual hacia arriba respecto del origen lógico. El Building Browser también podía reutilizar un prefab desactualizado después de editar la definición.
+La máscara runtime y el valor predeterminado de las casas utilizaban columnas `-2, -1, 0, 1`. El panel del editor calculaba el inicio horizontal con otra fórmula y mostraba `-1, 0, 1, 2`. Las dos celdas de la columna `-2` existían y participaban en colisiones, pero no podían verse ni editarse desde el panel.
 
 ### Solución aplicada
 
-Los prefabs reutilizables se normalizan ahora alrededor de la base inferior central del sprite. El visual queda en `(0, 0)` y portal, spawn y collider se convierten al mismo espacio local. El Building Browser regenera el prefab antes de colocarlo. El Footprint Editor dibuja sobre el sprite la misma máscara exacta utilizada por el prefab, el gizmo de Scene, el snap y las colisiones.
+Se centralizó el origen horizontal en `GridBuildingFootprint.GetCanvasMinimumX()` y la enumeración del lienzo en `CreateRectangleOffsets()`. Runtime, relleno rectangular y panel editor comparten ahora la misma convención. En un ancho de cuatro, el ancla `(0,0)` aparece en la tercera columna y las diez celdas guardadas deben ser visibles.
 
 ### Validación pendiente
 
-Eliminar las instancias anteriores, colocar una casa con `Regenerate + place on scene grid`, confirmar coincidencia exacta entre editor y Scene, probar colisiones verde/rojo y ejecutar EditMode completo. No pasar a **VERIFICADO** hasta recibir confirmación local.
+Confirmar en Unity que contador, matriz, previsualización y Scene muestran el mismo patrón; regenerar el prefab y ejecutar EditMode completo. No pasar a **VERIFICADO** hasta recibir confirmación local.
 
 ---
 
@@ -281,7 +281,7 @@ Se separaron el suelo lógico 2D y su representación visual.
 
 ### 2026-08-06
 
-- Se registró `BUG-0014` por la discrepancia entre la base visual, la máscara lógica y prefabs desactualizados; quedó corregido pendiente de validación local.
+- Se registró `BUG-0014` por la discrepancia entre el panel, la previsualización y la máscara runtime en lienzos de ancho par; quedó corregido pendiente de validación local.
 - Se registró `BUG-0011` por la regresión de compilación en `FarmPlotBehaviour` y quedó corregido pendiente de validación local.
 - Se documentó la decisión de representar cultivos como entidades runtime con `SpriteRenderer` y reservar Tilemaps para el mundo.
 - Se verificaron `BUG-0007` y `BUG-0008`.
