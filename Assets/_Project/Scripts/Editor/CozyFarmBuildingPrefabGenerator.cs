@@ -58,7 +58,10 @@ namespace FarmSimulator.Editor
             {
                 root.transform.position = Vector3.zero;
                 root.AddComponent<GridBuildingFootprint>()
-                    .Configure(definition.Id, definition.GridSize);
+                    .Configure(
+                        definition.Id,
+                        definition.GridSize,
+                        definition.FootprintOffsets);
 
                 Transform composition = Child(CompositionRootName, root.transform);
                 Transform visual = Child(VisualName, composition);
