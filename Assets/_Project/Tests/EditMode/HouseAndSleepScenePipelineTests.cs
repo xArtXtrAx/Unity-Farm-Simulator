@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using FarmSimulator.Application.Scenes;
 using FarmSimulator.Editor;
@@ -17,6 +18,7 @@ namespace FarmSimulator.Tests.EditMode
         [Test]
         public void GeneratesBothScenesAndAddsThemToBuildSettings()
         {
+            CozyFarmHouseArtPipeline.EnsureAssets();
             HouseAndSleepScenePipeline.EnsureScenes();
 
             Assert.That(
@@ -62,6 +64,7 @@ namespace FarmSimulator.Tests.EditMode
         [Test]
         public void GeneratedScenesPreservePlayerRootAndContainFlowObjects()
         {
+            CozyFarmHouseArtPipeline.EnsureAssets();
             HouseAndSleepScenePipeline.EnsureScenes();
 
             Scene farm =
@@ -130,22 +133,138 @@ namespace FarmSimulator.Tests.EditMode
             }
         }
 
-        private static T FindInScene<T>(Scene scene)
-            where T : Component
+        [Test]
+        public void GeneratedScenesUseCuratedCozyFarmCabinSprites()
         {
-            foreach (GameObject root in
-                     scene.GetRootGameObjects())
+            CozyFarmHouseArtPipeline.EnsureAssets();
+            HouseAndSleepScenePipeline.EnsureScenes();
+
+            Scene farm =
+                EditorSceneManager.OpenScene(
+                    ProjectSceneNames.FarmPath,
+                    OpenSceneMode.Additive);
+
+            try
             {
-                T result =
-                    root.GetComponentInChildren<T>(
-                        includeInactive: true);
-                if (result != null)
+                string[] farmSprites = SpriteNames(farm);
+                CollectionAssert.IsSubsetOf(
+                    new[]
+                    {
+                        "cozy_wood_panel_light",
+                        "cozy_wood_panel_dark",
+                        "cozy_flower_crates",
+                        "cozy_bridge_wood",
+                        "cozy_tree_spring",
+                        "cozy_bench_light",
+                        "cozy_lamp_green",
+                    },
+                    farmSprites);
+                Assert.That(
+                    FindGameObject(farm, "House Body"),
+                    Is.Null);
+                Assert.That(
+                    FindGameObject(farm, "Roof"),
+                    Is.Null);
+                AssertRenderersAreUntinted(farm);
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(
+                    farm,
+                    removeScene: true);
+            }
+
+            Scene house =
+                EditorSceneManager.OpenScene(
+                    ProjectSceneNames.HouseInteriorPath,
+                    OpenSceneMode.Additive);
+
+            try
+            {
+                string[] houseSprites = SpriteNames(house);
+                CollectionAssert.IsSubsetOf(
+                    new[]
+                    {
+                        "cozy_wood_panel_light",
+                        "cozy_wood_panel_dark",
+                        "cozy_bench_light",
+                        "cozy_fence_horizontal",
+                        "cozy_flower_crates",
+                        "cozy_crates_dark",
+                        "cozy_lamp_green",
+                    },
+                    houseSprites);
+                Assert.That(
+                    FindGameObject(house, "Bed Mattress"),
+                    Is.Not.Null);
+                Assert.That(
+                    FindGameObject(house, "Bed Pillow"),
+                    Is.Not.Null);
+                AssertRenderersAreUntinted(house);
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(
+                    house,
+                    removeScene: true);
+            }
+        }
+
+        private static void AssertRenderersAreUntinted(Scene scene)
+        {
+            foreach (SpriteRenderer renderer in
+                     ComponentsInScene<SpriteRenderer>(scene))
+            {
+                Assert.That(
+                    renderer.color,
+                    Is.EqualTo(Color.white),
+                    renderer.gameObject.name);
+            }
+        }
+
+        private static string[] SpriteNames(Scene scene)
+        {
+            return ComponentsInScene<SpriteRenderer>(scene)
+                .Where(renderer => renderer.sprite != null)
+                .Select(renderer => renderer.sprite.name)
+                .Distinct()
+                .ToArray();
+        }
+
+        private static GameObject FindGameObject(
+            Scene scene,
+            string objectName)
+        {
+            foreach (Transform transform in
+                     ComponentsInScene<Transform>(scene))
+            {
+                if (transform.name == objectName)
                 {
-                    return result;
+                    return transform.gameObject;
                 }
             }
 
             return null;
+        }
+
+        private static IEnumerable<T> ComponentsInScene<T>(Scene scene)
+            where T : Component
+        {
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                foreach (T component in
+                         root.GetComponentsInChildren<T>(
+                             includeInactive: true))
+                {
+                    yield return component;
+                }
+            }
+        }
+
+        private static T FindInScene<T>(Scene scene)
+            where T : Component
+        {
+            return ComponentsInScene<T>(scene).FirstOrDefault();
         }
     }
 }
