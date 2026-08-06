@@ -1,9 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using FarmSimulator.Application.Player;
 using FarmSimulator.Application.Scenes;
-using FarmSimulator.Presentation.Player;
 using FarmSimulator.Presentation.Scenes;
 using FarmSimulator.Presentation.Time;
 using FarmSimulator.Presentation.World;
@@ -27,11 +27,7 @@ namespace FarmSimulator.Editor
         [MenuItem(MenuRoot + "Generate Missing Farm + HouseInterior")]
         public static void GenerateMissingScenes()
         {
-            GenerateScene(ProjectSceneNames.FarmPath, BuildFarm, false);
-            GenerateScene(ProjectSceneNames.HouseInteriorPath, BuildHouse, false);
-            EnsureBuildSettings();
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            RunGeneration(replace: false);
         }
 
         [MenuItem(MenuRoot + "Replace Farm + HouseInterior (with backup)")]
@@ -39,32 +35,76 @@ namespace FarmSimulator.Editor
         {
             if (!EditorUtility.DisplayDialog(
                     "Replace Farm and HouseInterior",
-                    "This creates timestamped backups of existing scenes and then " +
-                    "rebuilds both scenes with the modern non-Legacy authoring layout. " +
-                    "The old reset pipeline is not used.",
+                    "This creates timestamped backups and rebuilds both scenes. " +
+                    "Only exact references assigned in the Scene Recovery Art Profile are used.",
                     "Back up and replace",
                     "Cancel"))
             {
                 return;
             }
 
-            BackupIfPresent(ProjectSceneNames.FarmPath);
-            BackupIfPresent(ProjectSceneNames.HouseInteriorPath);
-            GenerateScene(ProjectSceneNames.FarmPath, BuildFarm, true);
-            GenerateScene(ProjectSceneNames.HouseInteriorPath, BuildHouse, true);
-            EnsureBuildSettings();
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            RunGeneration(replace: true);
         }
 
-        private static void GenerateScene(
+        private static void RunGeneration(bool replace)
+        {
+            SceneRecoveryArtProfile profile =
+                SceneRecoveryArtProfile.LoadOrCreate();
+            List<string> messages = new List<string>();
+
+            try
+            {
+                bool farmChanged = GenerateScene(
+                    ProjectSceneNames.FarmPath,
+                    scene => BuildFarm(scene, profile),
+                    replace,
+                    messages);
+                bool houseChanged = GenerateScene(
+                    ProjectSceneNames.HouseInteriorPath,
+                    scene => BuildHouse(scene, profile),
+                    replace,
+                    messages);
+
+                EnsureBuildSettings();
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+
+                if (!farmChanged && !houseChanged)
+                {
+                    messages.Add(
+                        "No scene was generated because Farm and HouseInterior already exist.");
+                }
+
+                AppendProfileWarnings(profile, messages);
+                string report = string.Join("\n", messages);
+                Debug.Log("Scene Recovery result:\n" + report);
+                EditorUtility.DisplayDialog(
+                    "Scene Recovery",
+                    report,
+                    "OK");
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+                EditorUtility.DisplayDialog(
+                    "Scene Recovery failed",
+                    exception.Message +
+                    "\n\nSee the Console for the complete stack trace.",
+                    "OK");
+            }
+        }
+
+        private static bool GenerateScene(
             string path,
             Action<Scene> builder,
-            bool replace)
+            bool replace,
+            ICollection<string> messages)
         {
-            if (!replace && AssetDatabase.LoadAssetAtPath<SceneAsset>(path) != null)
+            bool exists = AssetDatabase.LoadAssetAtPath<SceneAsset>(path) != null;
+            if (!replace && exists)
             {
-                return;
+                messages.Add($"Skipped existing scene: {path}");
+                return false;
             }
 
             if (IsOpen(path))
@@ -73,9 +113,14 @@ namespace FarmSimulator.Editor
                     $"Close '{path}' before regenerating it.");
             }
 
-            if (replace)
+            if (replace && exists)
             {
-                AssetDatabase.DeleteAsset(path);
+                BackupIfPresent(path);
+                if (!AssetDatabase.DeleteAsset(path))
+                {
+                    throw new InvalidOperationException(
+                        $"Unity could not delete '{path}' after backing it up.");
+                }
             }
 
             Scene scene = EditorSceneManager.NewScene(
@@ -94,25 +139,36 @@ namespace FarmSimulator.Editor
             {
                 EditorSceneManager.CloseScene(scene, true);
             }
+
+            messages.Add($"Generated: {path}");
+            return true;
         }
 
-        private static void BuildFarm(Scene scene)
+        private static void BuildFarm(
+            Scene scene,
+            SceneRecoveryArtProfile profile)
         {
             GameObject root = CreateRoot(scene, "Farm World");
-            GameObject gridObject = new GameObject("Farm Authoring Grid");
-            SceneManager.MoveGameObjectToScene(gridObject, scene);
-            gridObject.transform.SetParent(root.transform, false);
-            gridObject.AddComponent<Grid>();
+            GameObject grid = CreateGrid(root.transform, "Farm Authoring Grid");
+            Tilemap ground = CreateTilemap(grid.transform, "Ground", -100);
+            Tilemap paths = CreateTilemap(grid.transform, "Paths", -90);
+            CreateTilemap(grid.transform, "Soil", -80);
+            CreateTilemap(grid.transform, "Decoration", 0);
 
-            Tilemap ground = CreateTilemap(gridObject.transform, "Ground", -100);
-            CreateTilemap(gridObject.transform, "Paths", -90);
-            CreateTilemap(gridObject.transform, "Soil", -80);
-            CreateTilemap(gridObject.transform, "Decoration", 0);
-
-            TileBase grass = FindTile("grass");
-            if (grass != null)
+            if (profile.farmGroundTile != null)
             {
-                FillRectangle(ground, new BoundsInt(-24, -16, 0, 48, 32, 1), grass);
+                FillRectangle(
+                    ground,
+                    new BoundsInt(-24, -16, 0, 48, 32, 1),
+                    profile.farmGroundTile);
+            }
+
+            if (profile.farmPathTile != null)
+            {
+                FillRectangle(
+                    paths,
+                    new BoundsInt(-1, -6, 0, 3, 8, 1),
+                    profile.farmPathTile);
             }
 
             GameObject player = CreatePlayer(scene, root.transform, new Vector2(0f, -4f));
@@ -120,35 +176,52 @@ namespace FarmSimulator.Editor
                 new Vector2(0f, -4f), FacingDirection.Up);
             CreateSpawn(root.transform, ProjectSpawnIds.FarmHouseDoor,
                 new Vector2(0f, 1f), FacingDirection.Down);
-
             CreatePortal(root.transform, "House Entrance Portal",
                 new Vector2(0f, 1.5f), "Entrar a la casa",
                 ProjectSceneNames.HouseInterior,
                 ProjectSpawnIds.HouseEntrance);
 
-            CreateCamera(scene, player.transform, 9f, new Color32(90, 135, 82, 255));
+            if (profile.farmHouseSprite != null)
+            {
+                CreateSpriteObject(
+                    root.transform,
+                    "Hero House Visual",
+                    profile.farmHouseSprite,
+                    new Vector2(0f, 4f),
+                    10);
+            }
+
             CreateBounds(root.transform, new Vector2(48f, 32f));
+            CreateCamera(scene, player.transform, 9f,
+                new Color32(90, 135, 82, 255));
             CreateAuthoringMarker(root.transform,
-                "Farm scene rebuilt with modern Tilemap layers. " +
-                "Paint using the current seasonal Tile Browser / Tile Palette.");
+                "Modern Farm skeleton. All art comes only from Scene Recovery Art Profile.");
         }
 
-        private static void BuildHouse(Scene scene)
+        private static void BuildHouse(
+            Scene scene,
+            SceneRecoveryArtProfile profile)
         {
             GameObject root = CreateRoot(scene, "House Interior World");
-            GameObject gridObject = new GameObject("House Authoring Grid");
-            SceneManager.MoveGameObjectToScene(gridObject, scene);
-            gridObject.transform.SetParent(root.transform, false);
-            gridObject.AddComponent<Grid>();
+            GameObject grid = CreateGrid(root.transform, "House Authoring Grid");
+            Tilemap ground = CreateTilemap(grid.transform, "Ground", -100);
+            Tilemap walls = CreateTilemap(grid.transform, "Walls", -20);
+            CreateTilemap(grid.transform, "Decoration", 0);
 
-            Tilemap ground = CreateTilemap(gridObject.transform, "Ground", -100);
-            CreateTilemap(gridObject.transform, "Walls", -20);
-            CreateTilemap(gridObject.transform, "Decoration", 0);
-
-            TileBase floor = FindTile("wood") ?? FindTile("floor");
-            if (floor != null)
+            if (profile.houseFloorTile != null)
             {
-                FillRectangle(ground, new BoundsInt(-8, -5, 0, 16, 10, 1), floor);
+                FillRectangle(
+                    ground,
+                    new BoundsInt(-8, -5, 0, 16, 10, 1),
+                    profile.houseFloorTile);
+            }
+
+            if (profile.houseWallTile != null)
+            {
+                FillBorder(
+                    walls,
+                    new BoundsInt(-8, -5, 0, 16, 10, 1),
+                    profile.houseWallTile);
             }
 
             GameObject player = CreatePlayer(scene, root.transform, new Vector2(0f, -3f));
@@ -156,7 +229,6 @@ namespace FarmSimulator.Editor
                 new Vector2(0f, -3f), FacingDirection.Up);
             CreateSpawn(root.transform, ProjectSpawnIds.HouseBedWake,
                 new Vector2(3f, 1f), FacingDirection.Left);
-
             CreatePortal(root.transform, "House Exit Portal",
                 new Vector2(0f, -4f), "Salir a la granja",
                 ProjectSceneNames.Farm,
@@ -168,20 +240,45 @@ namespace FarmSimulator.Editor
             BoxCollider2D bedCollider = bed.AddComponent<BoxCollider2D>();
             bedCollider.isTrigger = true;
             bedCollider.size = new Vector2(1.5f, 1f);
-            BedInteractable interactable = bed.AddComponent<BedInteractable>();
-            interactable.Configure("Dormir hasta mañana", ProjectSpawnIds.HouseBedWake);
-
-            Sprite bedSprite = FindSprite("bed");
-            if (bedSprite != null)
+            bed.AddComponent<BedInteractable>()
+                .Configure("Dormir hasta mañana", ProjectSpawnIds.HouseBedWake);
+            if (profile.bedSprite != null)
             {
-                bed.AddComponent<SpriteRenderer>().sprite = bedSprite;
+                SpriteRenderer renderer = bed.AddComponent<SpriteRenderer>();
+                renderer.sprite = profile.bedSprite;
+                renderer.sortingOrder = 10;
             }
 
-            CreateCamera(scene, player.transform, 6f, new Color32(48, 38, 32, 255));
             CreateBounds(root.transform, new Vector2(16f, 10f));
+            CreateCamera(scene, player.transform, 6f,
+                new Color32(48, 38, 32, 255));
             CreateAuthoringMarker(root.transform,
-                "HouseInterior rebuilt with modern authoring layers. " +
-                "Decorate from the current Cozy Interior library.");
+                "Modern HouseInterior skeleton. All art comes only from Scene Recovery Art Profile.");
+        }
+
+        private static void AppendProfileWarnings(
+            SceneRecoveryArtProfile profile,
+            ICollection<string> messages)
+        {
+            List<string> missing = new List<string>();
+            if (profile.farmGroundTile == null) missing.Add("Farm Ground Tile");
+            if (profile.farmPathTile == null) missing.Add("Farm Path Tile");
+            if (profile.farmHouseSprite == null) missing.Add("Farm House Sprite");
+            if (profile.houseFloorTile == null) missing.Add("House Floor Tile");
+            if (profile.houseWallTile == null) missing.Add("House Wall Tile");
+            if (profile.bedSprite == null) missing.Add("Bed Sprite");
+
+            if (missing.Count == 0)
+            {
+                messages.Add("Art profile complete: all exact references were used.");
+                return;
+            }
+
+            messages.Add(
+                "Unassigned art was intentionally left empty: " +
+                string.Join(", ", missing) + ".");
+            messages.Add(
+                "Assign them at Scene Recovery > Configure Art Profile, then use Replace with backup.");
         }
 
         private static GameObject CreateRoot(Scene scene, string name)
@@ -191,17 +288,27 @@ namespace FarmSimulator.Editor
             return root;
         }
 
+        private static GameObject CreateGrid(Transform parent, string name)
+        {
+            GameObject grid = new GameObject(name);
+            grid.transform.SetParent(parent, false);
+            grid.AddComponent<Grid>();
+            return grid;
+        }
+
         private static Tilemap CreateTilemap(Transform parent, string name, int order)
         {
             GameObject child = new GameObject(name);
             child.transform.SetParent(parent, false);
             Tilemap tilemap = child.AddComponent<Tilemap>();
-            TilemapRenderer renderer = child.AddComponent<TilemapRenderer>();
-            renderer.sortingOrder = order;
+            child.AddComponent<TilemapRenderer>().sortingOrder = order;
             return tilemap;
         }
 
-        private static void FillRectangle(Tilemap tilemap, BoundsInt bounds, TileBase tile)
+        private static void FillRectangle(
+            Tilemap tilemap,
+            BoundsInt bounds,
+            TileBase tile)
         {
             foreach (Vector3Int position in bounds.allPositionsWithin)
             {
@@ -209,41 +316,22 @@ namespace FarmSimulator.Editor
             }
         }
 
-        private static TileBase FindTile(string token)
+        private static void FillBorder(
+            Tilemap tilemap,
+            BoundsInt bounds,
+            TileBase tile)
         {
-            string[] guids = AssetDatabase.FindAssets("t:TileBase");
-            return guids
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .Where(path => path.IndexOf("SeasonalTiles", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    path.IndexOf("Tile", StringComparison.OrdinalIgnoreCase) >= 0)
-                .Where(path => path.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0)
-                .Select(path => AssetDatabase.LoadAssetAtPath<TileBase>(path))
-                .FirstOrDefault(tile => tile != null);
-        }
-
-        private static Sprite FindSprite(string token)
-        {
-            string[] guids = AssetDatabase.FindAssets("t:Sprite");
-            foreach (string guid in guids)
+            foreach (Vector3Int position in bounds.allPositionsWithin)
             {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
-                if (path.IndexOf("CozyInterior", StringComparison.OrdinalIgnoreCase) < 0 ||
-                    path.IndexOf(token, StringComparison.OrdinalIgnoreCase) < 0)
+                bool border = position.x == bounds.xMin ||
+                    position.x == bounds.xMax - 1 ||
+                    position.y == bounds.yMin ||
+                    position.y == bounds.yMax - 1;
+                if (border)
                 {
-                    continue;
-                }
-
-                Sprite sprite = AssetDatabase.LoadAllAssetsAtPath(path)
-                    .OfType<Sprite>()
-                    .FirstOrDefault(candidate =>
-                        candidate.name.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0);
-                if (sprite != null)
-                {
-                    return sprite;
+                    tilemap.SetTile(position, tile);
                 }
             }
-
-            return null;
         }
 
         private static GameObject CreatePlayer(
@@ -251,14 +339,16 @@ namespace FarmSimulator.Editor
             Transform parent,
             Vector2 position)
         {
-            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);
             if (prefab == null)
             {
                 throw new InvalidOperationException(
                     $"Player prefab missing at '{PlayerPrefabPath}'.");
             }
 
-            GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
+            GameObject instance =
+                (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
             instance.name = "Player";
             instance.transform.SetParent(parent, true);
             instance.transform.position = position;
@@ -282,42 +372,55 @@ namespace FarmSimulator.Editor
             string name,
             Vector2 position,
             string prompt,
-            string scene,
+            string targetScene,
             string spawnId)
         {
-            GameObject portalObject = new GameObject(name);
-            portalObject.transform.SetParent(parent, false);
-            portalObject.transform.localPosition = position;
-            BoxCollider2D collider = portalObject.AddComponent<BoxCollider2D>();
+            GameObject portal = new GameObject(name);
+            portal.transform.SetParent(parent, false);
+            portal.transform.localPosition = position;
+            BoxCollider2D collider = portal.AddComponent<BoxCollider2D>();
             collider.isTrigger = true;
             collider.size = new Vector2(1.5f, 1f);
-            portalObject.AddComponent<ScenePortal>()
-                .Configure(prompt, scene, spawnId);
+            portal.AddComponent<ScenePortal>()
+                .Configure(prompt, targetScene, spawnId);
+        }
+
+        private static void CreateSpriteObject(
+            Transform parent,
+            string name,
+            Sprite sprite,
+            Vector2 position,
+            int order)
+        {
+            GameObject item = new GameObject(name);
+            item.transform.SetParent(parent, false);
+            item.transform.localPosition = position;
+            SpriteRenderer renderer = item.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            renderer.sortingOrder = order;
         }
 
         private static void CreateCamera(
             Scene scene,
             Transform target,
-            float orthographicSize,
+            float size,
             Color background)
         {
             GameObject cameraObject = new GameObject("Main Camera");
             SceneManager.MoveGameObjectToScene(cameraObject, scene);
             Camera camera = cameraObject.AddComponent<Camera>();
             camera.orthographic = true;
-            camera.orthographicSize = orthographicSize;
+            camera.orthographicSize = size;
             camera.backgroundColor = background;
             cameraObject.tag = "MainCamera";
             cameraObject.transform.position = new Vector3(0f, 0f, -10f);
 
-            PlayerFollowCamera2D follow = cameraObject.AddComponent<PlayerFollowCamera2D>();
+            PlayerFollowCamera2D follow =
+                cameraObject.AddComponent<PlayerFollowCamera2D>();
             SerializedObject serialized = new SerializedObject(follow);
             SerializedProperty targetProperty = serialized.FindProperty("target");
-            if (targetProperty != null)
-            {
-                targetProperty.objectReferenceValue = target;
-                serialized.ApplyModifiedPropertiesWithoutUndo();
-            }
+            targetProperty.objectReferenceValue = target;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void CreateBounds(Transform parent, Vector2 size)
@@ -331,13 +434,17 @@ namespace FarmSimulator.Editor
             GameObject movement = new GameObject("Movement Boundary");
             movement.transform.SetParent(parent, false);
             CreateBoundaryEdge(movement.transform, "Boundary Left",
-                new Vector2(-size.x * 0.5f - 0.5f, 0f), new Vector2(1f, size.y + 2f));
+                new Vector2(-size.x * 0.5f - 0.5f, 0f),
+                new Vector2(1f, size.y + 2f));
             CreateBoundaryEdge(movement.transform, "Boundary Right",
-                new Vector2(size.x * 0.5f + 0.5f, 0f), new Vector2(1f, size.y + 2f));
+                new Vector2(size.x * 0.5f + 0.5f, 0f),
+                new Vector2(1f, size.y + 2f));
             CreateBoundaryEdge(movement.transform, "Boundary Bottom",
-                new Vector2(0f, -size.y * 0.5f - 0.5f), new Vector2(size.x + 2f, 1f));
+                new Vector2(0f, -size.y * 0.5f - 0.5f),
+                new Vector2(size.x + 2f, 1f));
             CreateBoundaryEdge(movement.transform, "Boundary Top",
-                new Vector2(0f, size.y * 0.5f + 0.5f), new Vector2(size.x + 2f, 1f));
+                new Vector2(0f, size.y * 0.5f + 0.5f),
+                new Vector2(size.x + 2f, 1f));
         }
 
         private static void CreateBoundaryEdge(
@@ -385,8 +492,10 @@ namespace FarmSimulator.Editor
         {
             for (int index = 0; index < SceneManager.sceneCount; index++)
             {
-                Scene scene = SceneManager.GetSceneAt(index);
-                if (string.Equals(scene.path, path, StringComparison.Ordinal))
+                if (string.Equals(
+                        SceneManager.GetSceneAt(index).path,
+                        path,
+                        StringComparison.Ordinal))
                 {
                     return true;
                 }
@@ -404,17 +513,20 @@ namespace FarmSimulator.Editor
                 ProjectSceneNames.HouseInteriorPath,
             };
 
-            var scenes = EditorBuildSettings.scenes.ToList();
+            List<EditorBuildSettingsScene> scenes =
+                EditorBuildSettings.scenes.ToList();
             foreach (string path in required)
             {
                 int index = scenes.FindIndex(scene => scene.path == path);
+                EditorBuildSettingsScene entry =
+                    new EditorBuildSettingsScene(path, true);
                 if (index < 0)
                 {
-                    scenes.Add(new EditorBuildSettingsScene(path, true));
+                    scenes.Add(entry);
                 }
                 else
                 {
-                    scenes[index] = new EditorBuildSettingsScene(path, true);
+                    scenes[index] = entry;
                 }
             }
 
@@ -425,8 +537,7 @@ namespace FarmSimulator.Editor
     [DisallowMultipleComponent]
     public sealed class ModernSceneAuthoringMarker : MonoBehaviour
     {
-        [SerializeField]
-        [TextArea(3, 8)]
+        [SerializeField, TextArea(3, 8)]
         private string note;
 
         public string Note => note;
