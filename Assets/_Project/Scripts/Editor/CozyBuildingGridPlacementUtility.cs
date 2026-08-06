@@ -21,7 +21,13 @@ namespace FarmSimulator.Editor
                 return;
             }
 
-            SnapToNearestCell(selected);
+            if (!SnapToNearestCell(selected))
+            {
+                EditorUtility.DisplayDialog(
+                    "Farm Development Kit",
+                    "That footprint overlaps another generated building. The previous position was restored.",
+                    "OK");
+            }
         }
 
         public static GameObject PlacePrefab(GameObject prefab)
@@ -36,36 +42,75 @@ namespace FarmSimulator.Editor
                 : SceneView.lastActiveSceneView.pivot;
             target.z = 0f;
             instance.transform.position = target;
-            SnapToNearestCell(instance);
+            if (!SnapToNearestCell(instance))
+            {
+                Undo.DestroyObjectImmediate(instance);
+                EditorUtility.DisplayDialog(
+                    "Farm Development Kit",
+                    "The nearest grid footprint is occupied by another building.",
+                    "OK");
+                return null;
+            }
+
             Selection.activeGameObject = instance;
             return instance;
         }
 
-        public static void SnapToNearestCell(GameObject instance)
+        public static bool SnapToNearestCell(GameObject instance)
         {
             if (instance == null) throw new ArgumentNullException(nameof(instance));
+            GridBuildingFootprint footprint = instance.GetComponent<GridBuildingFootprint>();
+            Vector3 previousPosition = instance.transform.position;
+            Vector2Int previousCell = footprint == null
+                ? Vector2Int.zero
+                : footprint.AnchorCell;
+
             Grid grid = UnityEngine.Object.FindObjectsByType<Grid>(
                     FindObjectsInactive.Include,
                     FindObjectsSortMode.None)
                 .FirstOrDefault();
+            Vector3Int cell;
+            Vector3 snappedPosition;
             if (grid == null)
             {
-                instance.transform.position = new Vector3(
-                    Mathf.Round(instance.transform.position.x),
-                    Mathf.Round(instance.transform.position.y),
-                    0f);
-                return;
+                cell = new Vector3Int(
+                    Mathf.RoundToInt(instance.transform.position.x),
+                    Mathf.RoundToInt(instance.transform.position.y),
+                    0);
+                snappedPosition = new Vector3(cell.x, cell.y, 0f);
+            }
+            else
+            {
+                cell = grid.WorldToCell(instance.transform.position);
+                snappedPosition = grid.GetCellCenterWorld(cell);
             }
 
             Undo.RecordObject(instance.transform, "Snap building to grid");
-            Vector3Int cell = grid.WorldToCell(instance.transform.position);
-            instance.transform.position = grid.GetCellCenterWorld(cell);
-            GridBuildingFootprint footprint = instance.GetComponent<GridBuildingFootprint>();
+            instance.transform.position = snappedPosition;
             if (footprint != null)
             {
+                Undo.RecordObject(footprint, "Update building footprint");
                 footprint.SetAnchorCell(new Vector2Int(cell.x, cell.y));
+                if (OverlapsAnother(footprint))
+                {
+                    instance.transform.position = previousPosition;
+                    footprint.SetAnchorCell(previousCell);
+                    return false;
+                }
+
                 EditorUtility.SetDirty(footprint);
             }
+
+            return true;
+        }
+
+        public static bool OverlapsAnother(GridBuildingFootprint footprint)
+        {
+            if (footprint == null) return false;
+            return UnityEngine.Object.FindObjectsByType<GridBuildingFootprint>(
+                    FindObjectsInactive.Include,
+                    FindObjectsSortMode.None)
+                .Any(other => other != footprint && footprint.Overlaps(other));
         }
     }
 }
