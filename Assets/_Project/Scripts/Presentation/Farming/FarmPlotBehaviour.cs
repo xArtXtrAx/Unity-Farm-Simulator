@@ -208,7 +208,8 @@ namespace FarmSimulator.Presentation.Farming
         private void CommitVisualChange()
         {
             Render();
-            FindFirstObjectByType<InventoryHotbarView>()?.Refresh();
+            InventoryHotbarView hotbar = FindFirstObjectByType<InventoryHotbarView>();
+            hotbar?.TryRefresh();
         }
 
         private void HandleDayChanged(FarmSimulator.Domain.Time.GameDate date) => Render();
