@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4f7a0e13a81466f97c8ffb38d6932cd, type: 3}
+  m_Name: green-gable-house-autumn
+  m_EditorClassIdentifier: FarmSimulator.Editor::FarmSimulator.Editor.CozyBuildingDefinition
+  id: green-gable-house-autumn
+  displayName: "Green Gable House \u2014 Autumn Roof"
+  category: 0
+  atlasRect:
+    x: 1033
+    y: 548
+    width: 68
+    height: 86
+  gridSize: {x: 6, y: 3}
+  footprintOffsets:
+  - {x: -2, y: 0}
+  - {x: -1, y: 0}
+  - {x: 0, y: 0}
+  - {x: 1, y: 0}
+  - {x: 2, y: 0}
+  - {x: -2, y: 1}
+  - {x: -1, y: 1}
+  - {x: 0, y: 1}
+  - {x: 1, y: 1}
+  - {x: 2, y: 1}
+  - {x: -2, y: 2}
+  - {x: -1, y: 2}
+  - {x: 0, y: 2}
+  - {x: 1, y: 2}
+  - {x: 2, y: 2}
+  footprintAuthored: 1
+  footprintAnchorOffset: {x: -0.18, y: 0.58}
+  footprintAnchorAuthored: 1
+  doorAnchor: {x: 0.5, y: 0.08}
+  portalOffset: {x: 0, y: -1.55}
+  spawnOffset: {x: 0, y: -2.15}
+  colliderSize: {x: 3.59, y: 2.51}
+  colliderOffset: {x: -0.11, y: -0.26}
+  colliderAuthored: 1
+  catalogColliderSize: {x: 5.35, y: 2.45}
+  catalogColliderOffset: {x: 0, y: -0.25}
+  maximumWidth: 5.8
+  maximumHeight: 4.45
+  baseline: -1.62
+  shadowOffset: {x: 0, y: -1.67}
+  shadowScale: {x: 1.25, y: 0.28}
+  sortingOrder: 20
+  supportsInterior: 1
+  generatedSprite: {fileID: 21300000, guid: 1c1c96540d85d0341838a209044bf6a9, type: 3}
+  generatedPrefab: {fileID: 6945179327189868229, guid: f99550641d5bda64ab001d8bf060fdbf, type: 3}
