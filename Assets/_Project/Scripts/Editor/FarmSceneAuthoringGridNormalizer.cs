@@ -9,8 +9,9 @@ using UnityEngine.SceneManagement;
 namespace FarmSimulator.Editor
 {
     /// <summary>
-    /// Enforces one visual Tilemap authority in Farm and keeps generated plot
-    /// implementation details out of the normal authoring hierarchy.
+    /// Enforces one visual Tilemap authority in Farm:
+    /// Farm World/Farm Authoring Grid.
+    /// Plot entities remain visible because they are gameplay authoring objects.
     /// </summary>
     [InitializeOnLoad]
     public static class FarmSceneAuthoringGridNormalizer
@@ -37,8 +38,8 @@ namespace FarmSimulator.Editor
                 "Farm scene cleanup",
                 changed
                     ? "Farm was normalized. Duplicate terrain grids were removed and " +
-                      "generated plots were hidden from the editor hierarchy."
-                    : "Farm is already clean: one authoring grid and no generated plot clutter.",
+                      "plot entities remain visible in the hierarchy."
+                    : "Farm is already clean and uses one canonical authoring grid.",
                 "OK");
         }
 
@@ -97,7 +98,7 @@ namespace FarmSimulator.Editor
                 }
 
                 bool changed = RemoveDuplicateGrids(farmWorld.transform, canonical);
-                changed |= HideGeneratedPlots(farmWorld.transform);
+                changed |= RestoreVisiblePlots(farmWorld.transform);
 
                 if (!changed)
                 {
@@ -112,8 +113,7 @@ namespace FarmSimulator.Editor
                 }
 
                 Debug.Log(
-                    "[Farm Scene Cleanup] Farm normalized: one terrain grid and generated " +
-                    "plot objects hidden from the editor hierarchy.");
+                    "[Farm Scene Cleanup] Farm normalized: one terrain grid and visible plot entities.");
                 return true;
             }
             finally
@@ -149,7 +149,7 @@ namespace FarmSimulator.Editor
             return duplicates.Length > 0;
         }
 
-        private static bool HideGeneratedPlots(Transform farmWorld)
+        private static bool RestoreVisiblePlots(Transform farmWorld)
         {
             Transform fieldRoot = farmWorld
                 .GetComponentsInChildren<Transform>(true)
@@ -168,7 +168,7 @@ namespace FarmSimulator.Editor
                     continue;
                 }
 
-                HideFlags desired = plot.hideFlags | HideFlags.HideInHierarchy;
+                HideFlags desired = plot.hideFlags & ~HideFlags.HideInHierarchy;
                 if (plot.hideFlags == desired)
                 {
                     continue;
