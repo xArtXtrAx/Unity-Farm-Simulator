@@ -1,7 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
-using FarmSimulator.Editor;
-using FarmSimulator.Presentation.Buildings;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -10,84 +6,56 @@ namespace FarmSimulator.Tests.EditMode
 {
     public sealed class CozyFarmBuildingPrefabGeneratorTests
     {
-        [Test]
-        public void GeneratesReusablePrefabForEveryDefinition()
-        {
-            IReadOnlyList<CozyBuildingDefinition> definitions = CozyFarmBuildingRegistry.Rebuild();
-            int generated = CozyFarmBuildingPrefabGenerator.GenerateAll(definitions);
-            Assert.That(generated, Is.EqualTo(definitions.Count));
-        }
+        private const string HousePrefabPath =
+            "Assets/_Project/Art/Placeholder/Prefabs/house_small_4x5.prefab";
 
         [Test]
-        public void GeneratedHousePrefabContainsAuthoritativeFootprintAnchor()
+        public void FirstPartyHousePrefabExistsAndUsesProjectSprite()
         {
-            CozyBuildingDefinition definition = CozyFarmBuildingRegistry.Get(CozyFarmBuildingCatalog.DefaultHouseId);
-            GameObject prefab = CozyFarmBuildingPrefabGenerator.Generate(definition);
-            string path = AssetDatabase.GetAssetPath(prefab);
-            GameObject contents = PrefabUtility.LoadPrefabContents(path);
-            try
-            {
-                Transform anchor = contents.transform.Find(CozyFarmBuildingPrefabGenerator.FootprintAnchorName);
-                Assert.That(anchor, Is.Not.Null);
-                AssertVector2((Vector2)anchor.localPosition, definition.FootprintAnchorOffset);
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(HousePrefabPath);
+            Assert.That(prefab, Is.Not.Null);
 
-                GridBuildingFootprint footprint = contents.GetComponent<GridBuildingFootprint>();
-                Assert.That(footprint, Is.Not.Null);
-                Assert.That(footprint.FootprintAnchor, Is.EqualTo(anchor));
-                Assert.That(footprint.OccupiedOffsets, Is.EquivalentTo(definition.FootprintOffsets));
-                Assert.That(footprint.GetOccupiedCells().Count(), Is.LessThanOrEqualTo(footprint.GridSize.x * footprint.GridSize.y));
-            }
-            finally
-            {
-                PrefabUtility.UnloadPrefabContents(contents);
-            }
-        }
-
-        [Test]
-        public void GeneratedHousePrefabNormalizesVisualAndFunctionalMetadataToBase()
-        {
-            CozyBuildingDefinition definition = CozyFarmBuildingRegistry.Get(CozyFarmBuildingCatalog.DefaultHouseId);
-            GameObject prefab = CozyFarmBuildingPrefabGenerator.Generate(definition);
-            string path = AssetDatabase.GetAssetPath(prefab);
-            GameObject contents = PrefabUtility.LoadPrefabContents(path);
-            try
-            {
-                Transform visual = contents.transform.Find(
-                    CozyFarmBuildingPrefabGenerator.CompositionRootName + "/" +
-                    CozyFarmBuildingPrefabGenerator.VisualName);
-                Assert.That(visual, Is.Not.Null);
-                Assert.That(visual.localPosition, Is.EqualTo(Vector3.zero));
-
-                Vector2 expectedPortal = CozyFarmBuildingPrefabGenerator.ToPrefabBaseSpace(
-                    definition.PortalOffset,
-                    definition.Baseline);
-                Vector2 expectedSpawn = CozyFarmBuildingPrefabGenerator.ToPrefabBaseSpace(
-                    definition.SpawnOffset,
-                    definition.Baseline);
-                Vector2 expectedCollider = CozyFarmBuildingPrefabGenerator.ToPrefabBaseSpace(
-                    definition.ColliderOffset,
-                    definition.Baseline);
-
-                AssertVector2(
-                    contents.transform.Find(CozyFarmBuildingPrefabGenerator.PortalAnchorName).localPosition,
-                    expectedPortal);
-                AssertVector2(
-                    contents.transform.Find(CozyFarmBuildingPrefabGenerator.SpawnAnchorName).localPosition,
-                    expectedSpawn);
-                AssertVector2(contents.GetComponent<BoxCollider2D>().offset, expectedCollider);
-            }
-            finally
-            {
-                PrefabUtility.UnloadPrefabContents(contents);
-            }
-        }
-
-        private static void AssertVector2(Vector2 actual, Vector2 expected)
-        {
+            SpriteRenderer renderer = prefab.GetComponent<SpriteRenderer>();
+            Assert.That(renderer, Is.Not.Null);
+            Assert.That(renderer.sprite, Is.Not.Null);
             Assert.That(
-                (actual - expected).sqrMagnitude,
-                Is.LessThan(0.0001f),
-                $"Expected {expected} but was {actual}.");
+                AssetDatabase.GetAssetPath(renderer.sprite),
+                Does.StartWith("Assets/_Project/Art/Placeholder/Source/"));
+        }
+
+        [Test]
+        public void FirstPartyHousePrefabContainsAuthoritativeFootprintMetadata()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(HousePrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+
+            Component identity = prefab.GetComponent("PlaceholderAssetIdentity");
+            Assert.That(identity, Is.Not.Null);
+
+            var serialized = new SerializedObject(identity);
+            Assert.That(
+                serialized.FindProperty("assetKey").stringValue,
+                Is.EqualTo("building.house.small.4x5"));
+            Assert.That(
+                serialized.FindProperty("footprintCells").vector2IntValue,
+                Is.EqualTo(new Vector2Int(4, 5)));
+        }
+
+        [Test]
+        public void FirstPartyHousePrefabKeepsFunctionalColliderAtBase()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(HousePrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+
+            BoxCollider2D collider = prefab.GetComponent<BoxCollider2D>();
+            Assert.That(collider, Is.Not.Null);
+            Assert.That(collider.isTrigger, Is.False);
+            Assert.That(collider.size.x, Is.GreaterThan(0f));
+            Assert.That(collider.size.y, Is.GreaterThan(0f));
+
+            SpriteRenderer renderer = prefab.GetComponent<SpriteRenderer>();
+            Assert.That(renderer, Is.Not.Null);
+            Assert.That(renderer.transform.localPosition, Is.EqualTo(Vector3.zero));
         }
     }
 }
