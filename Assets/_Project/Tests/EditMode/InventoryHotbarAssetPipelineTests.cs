@@ -89,7 +89,7 @@ namespace FarmSimulator.Tests.EditMode
         }
 
         [Test]
-        public void HotbarMapsOnlyApprovedCozyFarmIcons()
+        public void HotbarMapsOnlyDefinitiveFirstPartyCropIcons()
         {
             InventoryHotbarView view =
                 LoadPrefab().GetComponent<InventoryHotbarView>();
@@ -98,10 +98,10 @@ namespace FarmSimulator.Tests.EditMode
             {
                 ItemId.TurnipSeeds.Value,
                 ItemId.Turnip.Value,
-                ItemId.CarrotSeeds.Value,
-                ItemId.Carrot.Value,
-                ItemId.CabbageSeeds.Value,
-                ItemId.Cabbage.Value
+                ItemId.PotatoSeeds.Value,
+                ItemId.Potato.Value,
+                ItemId.RadishSeeds.Value,
+                ItemId.Radish.Value
             };
 
             CollectionAssert.AreEquivalent(expectedIds, view.IconItemIds);
@@ -118,7 +118,7 @@ namespace FarmSimulator.Tests.EditMode
         }
 
         [Test]
-        public void InitialInventoryRendersToolsAsExplicitPlaceholders()
+        public void InitialInventoryRendersToolsAndDefinitiveSeedIcons()
         {
             GameObject instance = UnityEngine.Object.Instantiate(LoadPrefab());
             try
@@ -130,7 +130,9 @@ namespace FarmSimulator.Tests.EditMode
 
                 InventoryHotbarSlotView hoe = view.GetSlotView(0);
                 InventoryHotbarSlotView wateringCan = view.GetSlotView(1);
-                InventoryHotbarSlotView seeds = view.GetSlotView(2);
+                InventoryHotbarSlotView turnipSeeds = view.GetSlotView(2);
+                InventoryHotbarSlotView potatoSeeds = view.GetSlotView(3);
+                InventoryHotbarSlotView radishSeeds = view.GetSlotView(4);
 
                 Assert.That(hoe.Icon.enabled, Is.False);
                 Assert.That(hoe.PlaceholderText.gameObject.activeSelf, Is.True);
@@ -139,9 +141,14 @@ namespace FarmSimulator.Tests.EditMode
                 Assert.That(
                     wateringCan.PlaceholderText.text,
                     Is.EqualTo("RG"));
-                Assert.That(seeds.Icon.enabled, Is.True);
-                Assert.That(seeds.Icon.sprite.name, Is.EqualTo("cozy_turnip_seeds"));
-                Assert.That(seeds.QuantityText.text, Is.EqualTo("×20"));
+
+                Assert.That(turnipSeeds.Icon.enabled, Is.True);
+                Assert.That(turnipSeeds.Icon.sprite.name, Is.EqualTo("turnip_stage_0"));
+                Assert.That(turnipSeeds.QuantityText.text, Is.EqualTo("×20"));
+                Assert.That(potatoSeeds.Icon.enabled, Is.True);
+                Assert.That(potatoSeeds.Icon.sprite.name, Is.EqualTo("potato_stage_0"));
+                Assert.That(radishSeeds.Icon.enabled, Is.True);
+                Assert.That(radishSeeds.Icon.sprite.name, Is.EqualTo("radish_stage_0"));
                 Assert.That(view.SelectedIndex, Is.Zero);
                 Assert.That(
                     view.SelectedItemText.text,
