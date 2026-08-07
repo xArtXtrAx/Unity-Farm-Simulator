@@ -46,6 +46,7 @@ namespace FarmSimulator.Editor
         static FarmSceneFarmingUpgrader()
         {
             EditorApplication.delayCall += EnsureApplied;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         }
 
         [MenuItem("Tools/Farm Simulator/Apply Farming Field To Farm Scene")]
@@ -60,8 +61,21 @@ namespace FarmSimulator.Editor
         /// </summary>
         public static void ApplyAfterSceneRecovery() => Apply(force: true);
 
+        private static void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            if (state == PlayModeStateChange.EnteredEditMode)
+            {
+                EditorApplication.delayCall += EnsureApplied;
+            }
+        }
+
         private static void Apply(bool force)
         {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                return;
+            }
+
             if (EditorApplication.isCompiling || EditorApplication.isUpdating)
             {
                 EditorApplication.delayCall += EnsureApplied;
