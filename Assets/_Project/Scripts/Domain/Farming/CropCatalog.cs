@@ -14,42 +14,15 @@ namespace FarmSimulator.Domain.Farming
             int daysToMature)
         {
             if (string.IsNullOrWhiteSpace(id))
-            {
-                throw new ArgumentException(
-                    "Crop id is required.",
-                    nameof(id));
-            }
-
+                throw new ArgumentException("Crop id is required.", nameof(id));
             if (string.IsNullOrWhiteSpace(name))
-            {
-                throw new ArgumentException(
-                    "Crop name is required.",
-                    nameof(name));
-            }
-
-            if (ItemCatalog.Get(seedItemId).Category !=
-                ItemCategory.Seed)
-            {
-                throw new ArgumentException(
-                    "Seed item must belong to the Seed category.",
-                    nameof(seedItemId));
-            }
-
-            if (ItemCatalog.Get(harvestItemId).Category !=
-                ItemCategory.Crop)
-            {
-                throw new ArgumentException(
-                    "Harvest item must belong to the Crop category.",
-                    nameof(harvestItemId));
-            }
-
+                throw new ArgumentException("Crop name is required.", nameof(name));
+            if (ItemCatalog.Get(seedItemId).Category != ItemCategory.Seed)
+                throw new ArgumentException("Seed item must belong to the Seed category.", nameof(seedItemId));
+            if (ItemCatalog.Get(harvestItemId).Category != ItemCategory.Crop)
+                throw new ArgumentException("Harvest item must belong to the Crop category.", nameof(harvestItemId));
             if (daysToMature < 1)
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(daysToMature),
-                    daysToMature,
-                    "Days to mature must be at least one.");
-            }
+                throw new ArgumentOutOfRangeException(nameof(daysToMature), daysToMature, "Days to mature must be at least one.");
 
             Id = id;
             Name = name;
@@ -78,53 +51,39 @@ namespace FarmSimulator.Domain.Farming
                 ItemId.Turnip,
                 daysToMature: 2),
             new CropDefinition(
-                "carrot",
-                "Zanahoria",
-                ItemId.CarrotSeeds,
-                ItemId.Carrot,
+                "potato",
+                "Papa",
+                ItemId.PotatoSeeds,
+                ItemId.Potato,
                 daysToMature: 3),
             new CropDefinition(
-                "cabbage",
-                "Col",
-                ItemId.CabbageSeeds,
-                ItemId.Cabbage,
+                "radish",
+                "Rábano",
+                ItemId.RadishSeeds,
+                ItemId.Radish,
                 daysToMature: 4)
         };
 
-        private static readonly Dictionary<ItemId, CropDefinition>
-            BySeed = CreateBySeed();
+        private static readonly Dictionary<ItemId, CropDefinition> BySeed = CreateBySeed();
 
-        public static IReadOnlyList<CropDefinition> All =>
-            Array.AsReadOnly(Definitions);
+        public static IReadOnlyList<CropDefinition> All => Array.AsReadOnly(Definitions);
 
-        public static bool TryGetBySeed(
-            ItemId seedItemId,
-            out CropDefinition definition)
-        {
-            return BySeed.TryGetValue(seedItemId, out definition);
-        }
+        public static bool TryGetBySeed(ItemId seedItemId, out CropDefinition definition) =>
+            BySeed.TryGetValue(seedItemId, out definition);
 
         public static CropDefinition GetBySeed(ItemId seedItemId)
         {
-            if (TryGetBySeed(seedItemId, out CropDefinition definition))
-            {
-                return definition;
-            }
-
-            throw new KeyNotFoundException(
-                $"No crop is registered for seed '{seedItemId.Value}'.");
+            if (TryGetBySeed(seedItemId, out CropDefinition definition)) return definition;
+            throw new KeyNotFoundException($"No crop is registered for seed '{seedItemId.Value}'.");
         }
 
         private static Dictionary<ItemId, CropDefinition> CreateBySeed()
         {
-            var result =
-                new Dictionary<ItemId, CropDefinition>();
-
+            var result = new Dictionary<ItemId, CropDefinition>();
             foreach (CropDefinition definition in Definitions)
             {
                 result.Add(definition.SeedItemId, definition);
             }
-
             return result;
         }
     }
