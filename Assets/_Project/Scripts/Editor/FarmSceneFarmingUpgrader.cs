@@ -43,48 +43,88 @@ namespace FarmSimulator.Editor
         private const string DirtTilePath =
             PlaceholderTileRoot + "/path_dirt.asset";
 
+        private static bool playModeTransitionBlocked;
+
         static FarmSceneFarmingUpgrader()
         {
-            EditorApplication.delayCall += EnsureApplied;
+            QueueEnsureApplied();
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         }
 
         [MenuItem("Tools/Farm Simulator/Apply Farming Field To Farm Scene")]
         public static void ApplyFromMenu() => Apply(force: true);
 
-        public static void EnsureApplied() => Apply(force: false);
+        public static void EnsureApplied()
+        {
+            if (ShouldAvoidSceneAuthoring())
+                return;
+
+            Apply(force: false);
+        }
 
         /// <summary>
         /// Explicit recovery hook. Scene Recovery may rebuild Farm from an empty
         /// scene, so this reapplies the complete first-party farming field after
         /// the recovered scene has imported.
         /// </summary>
-        public static void ApplyAfterSceneRecovery() => Apply(force: true);
+        public static void ApplyAfterSceneRecovery()
+        {
+            if (ShouldAvoidSceneAuthoring())
+                return;
+
+            Apply(force: true);
+        }
 
         private static void OnPlayModeStateChanged(PlayModeStateChange state)
         {
-            if (state == PlayModeStateChange.EnteredEditMode)
+            switch (state)
             {
-                EditorApplication.delayCall += EnsureApplied;
+                case PlayModeStateChange.ExitingEditMode:
+                case PlayModeStateChange.EnteredPlayMode:
+                    playModeTransitionBlocked = true;
+                    EditorApplication.delayCall -= EnsureApplied;
+                    break;
+
+                case PlayModeStateChange.ExitingPlayMode:
+                    playModeTransitionBlocked = true;
+                    EditorApplication.delayCall -= EnsureApplied;
+                    break;
+
+                case PlayModeStateChange.EnteredEditMode:
+                    playModeTransitionBlocked = false;
+                    QueueEnsureApplied();
+                    break;
             }
+        }
+
+        private static bool ShouldAvoidSceneAuthoring() =>
+            playModeTransitionBlocked ||
+            EditorApplication.isPlaying ||
+            EditorApplication.isPlayingOrWillChangePlaymode;
+
+        private static void QueueEnsureApplied()
+        {
+            if (ShouldAvoidSceneAuthoring())
+                return;
+
+            EditorApplication.delayCall -= EnsureApplied;
+            EditorApplication.delayCall += EnsureApplied;
         }
 
         private static void Apply(bool force)
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode)
-            {
+            if (ShouldAvoidSceneAuthoring())
                 return;
-            }
 
             if (EditorApplication.isCompiling || EditorApplication.isUpdating)
             {
-                EditorApplication.delayCall += EnsureApplied;
+                QueueEnsureApplied();
                 return;
             }
 
             if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ProjectSceneNames.FarmPath) == null)
             {
-                EditorApplication.delayCall += EnsureApplied;
+                QueueEnsureApplied();
                 return;
             }
 
@@ -96,10 +136,18 @@ namespace FarmSimulator.Editor
                 return;
             }
 
+            // Re-check immediately before using EditorSceneManager. A play-mode
+            // transition can begin after a delayed callback has already started.
+            if (ShouldAvoidSceneAuthoring())
+                return;
+
             Scene scene = SceneManager.GetSceneByPath(ProjectSceneNames.FarmPath);
             bool openedHere = !scene.IsValid() || !scene.isLoaded;
             if (openedHere)
             {
+                if (ShouldAvoidSceneAuthoring())
+                    return;
+
                 scene = EditorSceneManager.OpenScene(
                     ProjectSceneNames.FarmPath,
                     OpenSceneMode.Additive);
@@ -336,9 +384,16 @@ namespace FarmSimulator.Editor
             string[] movedAssets,
             string[] movedFromAssetPaths)
         {
+            if (EditorApplication.isPlaying ||
+                EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                return;
+            }
+
             if (importedAssets.Any(path => string.Equals(
                     path, ProjectSceneNames.FarmPath, StringComparison.Ordinal)))
             {
+                EditorApplication.delayCall -= FarmSceneFarmingUpgrader.EnsureApplied;
                 EditorApplication.delayCall += FarmSceneFarmingUpgrader.EnsureApplied;
             }
         }
