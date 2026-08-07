@@ -12,8 +12,7 @@ namespace FarmSimulator.Editor
     [InitializeOnLoad]
     public static class PlaceholderCropSpriteBinder
     {
-        private const string CropFolder =
-            "Assets/_Project/Art/Placeholder/Crops";
+        private const string CropFolder = "Assets/_Project/Art/Placeholder/Crops";
 
         static PlaceholderCropSpriteBinder()
         {
@@ -34,28 +33,21 @@ namespace FarmSimulator.Editor
             }
 
             if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ProjectSceneNames.FarmPath) == null)
-            {
                 return;
-            }
 
             Sprite[] turnipStages = LoadSixStages("turnip", sourceStageCount: 5);
             Sprite[] potatoStages = LoadSixStages("potato", sourceStageCount: 6);
             Sprite[] radishStages = LoadSixStages("radish", sourceStageCount: 5);
             if (!Complete(turnipStages) || !Complete(potatoStages) || !Complete(radishStages))
             {
-                Debug.LogWarning(
-                    "[Farming] Placeholder crop sprites are incomplete; plot binding was skipped.");
+                Debug.LogWarning("[Farming] Placeholder crop sprites are incomplete; plot binding was skipped.");
                 return;
             }
 
             Scene scene = SceneManager.GetSceneByPath(ProjectSceneNames.FarmPath);
             bool openedHere = !scene.IsValid() || !scene.isLoaded;
             if (openedHere)
-            {
-                scene = EditorSceneManager.OpenScene(
-                    ProjectSceneNames.FarmPath,
-                    OpenSceneMode.Additive);
-            }
+                scene = EditorSceneManager.OpenScene(ProjectSceneNames.FarmPath, OpenSceneMode.Additive);
 
             bool changed = false;
             try
@@ -68,25 +60,14 @@ namespace FarmSimulator.Editor
                 {
                     var serialized = new SerializedObject(plot);
                     bool plotChanged = false;
-                    plotChanged |= AssignArray(
-                        serialized.FindProperty("turnipStages"),
-                        turnipStages);
+                    plotChanged |= AssignArray(serialized.FindProperty("turnipStages"), turnipStages);
+                    plotChanged |= AssignArray(serialized.FindProperty("potatoStages"), potatoStages);
+                    plotChanged |= AssignArray(serialized.FindProperty("radishStages"), radishStages);
 
-                    // The current domain still exposes the second and third crop slots as
-                    // carrot/cabbage. Keep those serialized contracts stable while using the
-                    // approved potato and radish art until the domain-name migration lands.
-                    plotChanged |= AssignArray(
-                        serialized.FindProperty("carrotStages"),
-                        potatoStages);
-                    plotChanged |= AssignArray(
-                        serialized.FindProperty("cabbageStages"),
-                        radishStages);
-
-                    if (plotChanged)
+                    if (plotChanged && serialized.ApplyModifiedPropertiesWithoutUndo())
                     {
-                        serialized.ApplyModifiedPropertiesWithoutUndo();
-                        EditorUtility.SetDirty(plot);
                         changed = true;
+                        EditorUtility.SetDirty(plot);
                     }
                 }
 
@@ -94,25 +75,16 @@ namespace FarmSimulator.Editor
                 {
                     EditorSceneManager.MarkSceneDirty(scene);
                     if (!EditorSceneManager.SaveScene(scene, ProjectSceneNames.FarmPath))
-                    {
-                        throw new InvalidOperationException(
-                            "Could not save Farm after binding placeholder crop sprites.");
-                    }
+                        throw new InvalidOperationException("Could not save Farm after binding placeholder crop sprites.");
                 }
 
                 if (plots.Length > 0 && (changed || saveEvenWhenUnchanged))
-                {
-                    Debug.Log(
-                        $"[Farming] Bound placeholder crop sprites to {plots.Length} plots " +
-                        "(turnip, potato compatibility slot, radish compatibility slot).");
-                }
+                    Debug.Log($"[Farming] Bound turnip, potato and radish sprites to {plots.Length} plots.");
             }
             finally
             {
                 if (openedHere && scene.IsValid() && scene.isLoaded)
-                {
                     EditorSceneManager.CloseScene(scene, true);
-                }
             }
         }
 
@@ -126,19 +98,14 @@ namespace FarmSimulator.Editor
             }
 
             for (int index = sourceStageCount; index < stages.Length; index++)
-            {
                 stages[index] = stages[sourceStageCount - 1];
-            }
             return stages;
         }
 
         private static bool AssignArray(SerializedProperty property, Sprite[] sprites)
         {
             if (property == null || !property.isArray)
-            {
-                throw new InvalidOperationException(
-                    "FarmPlotBehaviour crop-stage serialization contract was not found.");
-            }
+                throw new InvalidOperationException("FarmPlotBehaviour crop-stage serialization contract was not found.");
 
             bool changed = property.arraySize != sprites.Length;
             property.arraySize = sprites.Length;
@@ -153,13 +120,13 @@ namespace FarmSimulator.Editor
         }
 
         private static bool Complete(Sprite[] sprites) =>
-            sprites != null &&
-            sprites.Length == 6 &&
-            sprites.All(sprite => sprite != null);
+            sprites != null && sprites.Length == 6 && sprites.All(sprite => sprite != null);
     }
 
     internal sealed class PlaceholderCropSpritePostprocessor : AssetPostprocessor
     {
+        private const string CropFolderPrefix = "Assets/_Project/Art/Placeholder/Crops/";
+
         private static void OnPostprocessAllAssets(
             string[] importedAssets,
             string[] deletedAssets,
@@ -173,8 +140,5 @@ namespace FarmSimulator.Editor
                 EditorApplication.delayCall += PlaceholderCropSpriteBinder.EnsureApplied;
             }
         }
-
-        private const string CropFolderPrefix =
-            "Assets/_Project/Art/Placeholder/Crops/";
     }
 }
