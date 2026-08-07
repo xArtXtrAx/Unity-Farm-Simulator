@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6cf51671de1a4db4aa97db551ea1a0dd, type: 3}
   m_Name: house_wall_oriented
   m_EditorClassIdentifier: FarmSimulator.Presentation::FarmSimulator.Presentation.Art.HouseBorderTile
-  sprite: {fileID: 21300000, guid: 6943ba5d1215cfe9a324250b2dafc28730967784, type: 3}
+  sprite: {fileID: 21300000, guid: a711e90750ae4ba0864c8259a1c96312, type: 3}
   color: {r: 1, g: 1, b: 1, a: 1}
