@@ -13,7 +13,10 @@ namespace FarmSimulator.Presentation.Scenes
         [SerializeField]
         private string defaultSpawnId;
 
-        private void Awake()
+        // Resolve in Start rather than Awake. Scene objects are all deserialized
+        // and their Awake callbacks have completed by this point, so a pending
+        // spawn cannot be consumed before SceneSpawnPoint components are ready.
+        private void Start()
         {
             ResolveNow();
         }
