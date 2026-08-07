@@ -32,7 +32,7 @@ namespace FarmSimulator.Tests.EditMode
         [Test]
         public void ModernRecoveryCreatesBothScenesAndBuildSettingsEntries()
         {
-            ModernFarmSceneAuthoring.GenerateMissingScenes();
+            ModernFarmSceneAuthoring.GenerateMissingScenesSilently();
 
             Assert.That(
                 AssetDatabase.LoadAssetAtPath<SceneAsset>(ProjectSceneNames.FarmPath),
@@ -52,7 +52,7 @@ namespace FarmSimulator.Tests.EditMode
         [Test]
         public void FarmUsesModernTilemapHierarchyAndRuntimeFlowObjects()
         {
-            ModernFarmSceneAuthoring.GenerateMissingScenes();
+            ModernFarmSceneAuthoring.GenerateMissingScenesSilently();
             Scene farm = EditorSceneManager.OpenScene(
                 ProjectSceneNames.FarmPath,
                 OpenSceneMode.Additive);
@@ -84,7 +84,7 @@ namespace FarmSimulator.Tests.EditMode
         [Test]
         public void HouseContainsBedPortalSpawnsAndModernAuthoringLayers()
         {
-            ModernFarmSceneAuthoring.GenerateMissingScenes();
+            ModernFarmSceneAuthoring.GenerateMissingScenesSilently();
             Scene house = EditorSceneManager.OpenScene(
                 ProjectSceneNames.HouseInteriorPath,
                 OpenSceneMode.Additive);
