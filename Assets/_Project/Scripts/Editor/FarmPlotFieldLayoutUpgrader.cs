@@ -11,8 +11,7 @@ namespace FarmSimulator.Editor
 {
     /// <summary>
     /// Keeps the authored farm field as three rows of five persistent plot entities.
-    /// Existing plot visuals and gameplay components are preserved; missing plots are
-    /// cloned from the first valid plot and receive stable identifiers.
+    /// This is editor authoring only and must never mutate scenes during Play Mode.
     /// </summary>
     [InitializeOnLoad]
     public static class FarmPlotFieldLayoutUpgrader
@@ -25,10 +24,14 @@ namespace FarmSimulator.Editor
         private static readonly Vector3 FirstPlotPosition = new Vector3(-6f, -3f, 0f);
 
         private static bool isRunning;
+        private static bool callbackQueued;
+        private static bool playTransitionActive;
 
         static FarmPlotFieldLayoutUpgrader()
         {
-            EditorApplication.delayCall += EnsureApplied;
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+            QueueEnsureApplied();
         }
 
         [MenuItem(
@@ -36,6 +39,12 @@ namespace FarmSimulator.Editor
             "Arrange 3 x 5 Plot Field")]
         public static void ApplyFromMenu()
         {
+            if (!CanAuthorScenes())
+            {
+                Debug.LogWarning("[Farm Plot Layout] Scene authoring is unavailable during Play Mode.");
+                return;
+            }
+
             bool changed = Apply();
             EditorUtility.DisplayDialog(
                 "Farm plot layout",
@@ -47,18 +56,66 @@ namespace FarmSimulator.Editor
 
         public static void EnsureApplied()
         {
+            callbackQueued = false;
+
+            if (!CanAuthorScenes())
+            {
+                return;
+            }
+
             if (EditorApplication.isCompiling || EditorApplication.isUpdating)
             {
-                EditorApplication.delayCall += EnsureApplied;
+                QueueEnsureApplied();
                 return;
             }
 
             Apply();
         }
 
+        private static void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            switch (state)
+            {
+                case PlayModeStateChange.ExitingEditMode:
+                case PlayModeStateChange.EnteredPlayMode:
+                case PlayModeStateChange.ExitingPlayMode:
+                    playTransitionActive = true;
+                    CancelQueuedCallback();
+                    break;
+                case PlayModeStateChange.EnteredEditMode:
+                    playTransitionActive = false;
+                    QueueEnsureApplied();
+                    break;
+            }
+        }
+
+        private static bool CanAuthorScenes() =>
+            !playTransitionActive &&
+            !EditorApplication.isPlaying &&
+            !EditorApplication.isPlayingOrWillChangePlaymode &&
+            !Application.isPlaying;
+
+        private static void QueueEnsureApplied()
+        {
+            if (callbackQueued || !CanAuthorScenes())
+            {
+                return;
+            }
+
+            callbackQueued = true;
+            EditorApplication.delayCall += EnsureApplied;
+        }
+
+        private static void CancelQueuedCallback()
+        {
+            EditorApplication.delayCall -= EnsureApplied;
+            callbackQueued = false;
+        }
+
         private static bool Apply()
         {
-            if (isRunning ||
+            if (!CanAuthorScenes() ||
+                isRunning ||
                 AssetDatabase.LoadAssetAtPath<SceneAsset>(ProjectSceneNames.FarmPath) == null)
             {
                 return false;
@@ -72,6 +129,11 @@ namespace FarmSimulator.Editor
             {
                 if (openedHere)
                 {
+                    if (!CanAuthorScenes())
+                    {
+                        return false;
+                    }
+
                     scene = EditorSceneManager.OpenScene(
                         ProjectSceneNames.FarmPath,
                         OpenSceneMode.Additive);
@@ -186,6 +248,11 @@ namespace FarmSimulator.Editor
                     return false;
                 }
 
+                if (!CanAuthorScenes())
+                {
+                    return false;
+                }
+
                 EditorSceneManager.MarkSceneDirty(scene);
                 if (!EditorSceneManager.SaveScene(scene, ProjectSceneNames.FarmPath))
                 {
@@ -200,7 +267,7 @@ namespace FarmSimulator.Editor
             }
             finally
             {
-                if (openedHere && scene.IsValid() && scene.isLoaded)
+                if (openedHere && scene.IsValid() && scene.isLoaded && !Application.isPlaying)
                 {
                     EditorSceneManager.CloseScene(scene, true);
                 }
@@ -251,6 +318,8 @@ namespace FarmSimulator.Editor
             int column = index % Columns;
             return $"Plot {column + 1}-{row + 1}";
         }
+
+        internal static bool CanScheduleAutomaticAuthoring => CanAuthorScenes();
     }
 
     internal sealed class FarmPlotFieldLayoutPostprocessor : AssetPostprocessor
@@ -261,12 +330,17 @@ namespace FarmSimulator.Editor
             string[] movedAssets,
             string[] movedFromAssetPaths)
         {
+            if (!FarmPlotFieldLayoutUpgrader.CanScheduleAutomaticAuthoring)
+            {
+                return;
+            }
+
             if (importedAssets.Any(path => string.Equals(
                     path,
                     ProjectSceneNames.FarmPath,
                     StringComparison.Ordinal)))
             {
-                EditorApplication.delayCall += FarmPlotFieldLayoutUpgrader.EnsureApplied;
+                FarmPlotFieldLayoutUpgrader.EnsureApplied();
             }
         }
     }
