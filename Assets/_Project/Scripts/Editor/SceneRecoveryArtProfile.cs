@@ -1,4 +1,5 @@
 using System;
+using FarmSimulator.Presentation.Art;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -25,7 +26,7 @@ namespace FarmSimulator.Editor
         private const string HouseFloorTilePath =
             "Assets/_Project/Art/Placeholder/Tiles/house_floor.asset";
         private const string HouseWallTilePath =
-            "Assets/_Project/Art/Placeholder/Tiles/house_wall.asset";
+            "Assets/_Project/Art/Placeholder/Tiles/house_wall_oriented.asset";
 
         [Header("Farm")]
         public TileBase farmGroundTile;
@@ -64,8 +65,13 @@ namespace FarmSimulator.Editor
                 TileBase path = LoadRequired<TileBase>(PathTilePath);
                 Sprite house = LoadRequired<Sprite>(HouseSpritePath);
                 Sprite bed = LoadRequired<Sprite>(BedSpritePath);
-                Tile floor = EnsureTile(HouseFloorSpritePath, HouseFloorTilePath, "house_floor");
-                Tile wall = EnsureTile(HouseWallSpritePath, HouseWallTilePath, "house_wall");
+                Tile floor = EnsureTile(
+                    HouseFloorSpritePath,
+                    HouseFloorTilePath,
+                    "house_floor");
+                HouseBorderTile wall = EnsureHouseBorderTile(
+                    HouseWallSpritePath,
+                    HouseWallTilePath);
 
                 profile.farmGroundTile = ground;
                 profile.farmPathTile = path;
@@ -88,7 +94,7 @@ namespace FarmSimulator.Editor
                     "- Farm Path Tile\n" +
                     "- Farm House Sprite\n" +
                     "- House Floor Tile\n" +
-                    "- House Wall Tile\n" +
+                    "- House Wall Tile (oriented border)\n" +
                     "- Bed Sprite\n\n" +
                     "No third-party art was used.";
 
@@ -123,6 +129,34 @@ namespace FarmSimulator.Editor
             tile.sprite = sprite;
             tile.color = Color.white;
             tile.colliderType = Tile.ColliderType.None;
+            EditorUtility.SetDirty(tile);
+            return tile;
+        }
+
+        private static HouseBorderTile EnsureHouseBorderTile(
+            string spritePath,
+            string tilePath)
+        {
+            Sprite sprite = LoadRequired<Sprite>(spritePath);
+            HouseBorderTile tile =
+                AssetDatabase.LoadAssetAtPath<HouseBorderTile>(tilePath);
+            if (tile == null)
+            {
+                UnityEngine.Object existing =
+                    AssetDatabase.LoadMainAssetAtPath(tilePath);
+                if (existing != null && !AssetDatabase.DeleteAsset(tilePath))
+                {
+                    throw new InvalidOperationException(
+                        $"Could not replace incompatible wall tile at '{tilePath}'.");
+                }
+
+                EnsureFolder(System.IO.Path.GetDirectoryName(tilePath)?.Replace('\\', '/'));
+                tile = CreateInstance<HouseBorderTile>();
+                AssetDatabase.CreateAsset(tile, tilePath);
+            }
+
+            tile.name = "house_wall_oriented";
+            tile.Configure(sprite);
             EditorUtility.SetDirty(tile);
             return tile;
         }
