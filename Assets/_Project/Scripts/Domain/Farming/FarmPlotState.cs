@@ -1,4 +1,3 @@
-using System;
 using FarmSimulator.Domain.Items;
 
 namespace FarmSimulator.Domain.Farming
@@ -14,65 +13,30 @@ namespace FarmSimulator.Domain.Farming
         public int GrowthDays => growthDays;
         public bool HasCrop => seedItemId.HasValue;
 
-        public CropDefinition Crop =>
-            HasCrop
-                ? CropCatalog.GetBySeed(seedItemId.Value)
-                : null;
+        public CropDefinition Crop => HasCrop ? CropCatalog.GetBySeed(seedItemId.Value) : null;
 
-        public bool IsMature =>
-            HasCrop && growthDays >= Crop.DaysToMature;
+        public bool IsMature => HasCrop && growthDays >= Crop.DaysToMature;
 
-        public int VisualStage
-        {
-            get
-            {
-                if (!HasCrop)
-                {
-                    return -1;
-                }
-
-                if (IsMature)
-                {
-                    return CropCatalog.FinalVisualStage;
-                }
-
-                return Math.Min(
-                    CropCatalog.FinalVisualStage - 1,
-                    growthDays *
-                    CropCatalog.FinalVisualStage /
-                    Crop.DaysToMature);
-            }
-        }
+        public int VisualStage => HasCrop ? Crop.GetVisualStage(growthDays) : -1;
 
         public bool Till()
         {
-            if (IsTilled)
-            {
-                return false;
-            }
-
+            if (IsTilled) return false;
             IsTilled = true;
             return true;
         }
 
         public bool Water()
         {
-            if (!IsTilled || IsWatered)
-            {
-                return false;
-            }
-
+            if (!IsTilled || IsWatered) return false;
             IsWatered = true;
             return true;
         }
 
         public bool Plant(ItemId candidateSeed)
         {
-            if (!IsTilled || HasCrop ||
-                !CropCatalog.TryGetBySeed(candidateSeed, out _))
-            {
+            if (!IsTilled || HasCrop || !CropCatalog.TryGetBySeed(candidateSeed, out _))
                 return false;
-            }
 
             seedItemId = candidateSeed;
             growthDays = 0;
@@ -82,7 +46,6 @@ namespace FarmSimulator.Domain.Farming
         public bool AdvanceDay()
         {
             bool changed = IsWatered;
-
             if (HasCrop && IsWatered && !IsMature)
             {
                 growthDays++;
