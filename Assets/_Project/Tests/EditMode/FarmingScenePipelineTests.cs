@@ -15,7 +15,7 @@ namespace FarmSimulator.Tests.EditMode
     public sealed class FarmingScenePipelineTests
     {
         [Test]
-        public void FarmContainsNinePlotsAndTerrainOnlyTilemaps()
+        public void FarmContainsFifteenPlotsAndTerrainOnlyTilemaps()
         {
             HouseAndSleepScenePipeline.EnsureScenes();
             Assert.That(
@@ -39,7 +39,8 @@ namespace FarmSimulator.Tests.EditMode
                     .ToArray();
                 Assert.That(
                     plots.Length,
-                    Is.EqualTo(FarmSceneFarmingUpgrader.Columns * FarmSceneFarmingUpgrader.Rows));
+                    Is.EqualTo(15),
+                    "The authored farm field is three rows of five persistent plot entities.");
 
                 string[] identifiers = plots.Select(plot => plot.PlotId)
                     .OrderBy(value => value)
