@@ -70,9 +70,9 @@ namespace FarmSimulator.Presentation.Farming
             cropRenderer = plotCropRenderer ?? throw new ArgumentNullException(nameof(plotCropRenderer));
             grassSprite = untilledSprite ?? throw new ArgumentNullException(nameof(untilledSprite));
             tilledSoilSprite = tilledSprite ?? throw new ArgumentNullException(nameof(tilledSprite));
-            turnipStages = ValidateStages(turnipGrowthStages, nameof(turnipGrowthStages));
-            potatoStages = ValidateStages(potatoGrowthStages, nameof(potatoGrowthStages));
-            radishStages = ValidateStages(radishGrowthStages, nameof(radishGrowthStages));
+            turnipStages = ValidateStages(turnipGrowthStages, ItemId.TurnipSeeds, nameof(turnipGrowthStages));
+            potatoStages = ValidateStages(potatoGrowthStages, ItemId.PotatoSeeds, nameof(potatoGrowthStages));
+            radishStages = ValidateStages(radishGrowthStages, ItemId.RadishSeeds, nameof(radishGrowthStages));
             ConfigureInteraction("Preparar parcela", interactionPriority: 5);
             Render();
         }
@@ -228,10 +228,15 @@ namespace FarmSimulator.Presentation.Farming
                 nameof(seedItemId), seedItemId.Value, "Crop sprites are not configured.");
         }
 
-        private static Sprite[] ValidateStages(Sprite[] stages, string parameterName)
+        private static Sprite[] ValidateStages(Sprite[] stages, ItemId seedItemId, string parameterName)
         {
-            if (stages == null || stages.Length != CropCatalog.FinalVisualStage + 1)
-                throw new ArgumentException("A crop must provide exactly six visual stages.", parameterName);
+            CropDefinition crop = CropCatalog.GetBySeed(seedItemId);
+            if (stages == null || stages.Length != crop.VisualStageCount)
+            {
+                throw new ArgumentException(
+                    $"{crop.Name} must provide exactly {crop.VisualStageCount} visual stages.",
+                    parameterName);
+            }
 
             var copy = (Sprite[])stages.Clone();
             for (int index = 0; index < copy.Length; index++)
