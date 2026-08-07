@@ -32,20 +32,22 @@ namespace FarmSimulator.Domain.Items
         public static ItemId RadishSeeds { get; } = new ItemId("radish-seeds");
         public static ItemId Radish { get; } = new ItemId("radish");
 
+        [Obsolete("Use PotatoSeeds. This alias exists only while serialized/editor references migrate.")]
+        public static ItemId CarrotSeeds => PotatoSeeds;
+        [Obsolete("Use Potato. This alias exists only while serialized/editor references migrate.")]
+        public static ItemId Carrot => Potato;
+        [Obsolete("Use RadishSeeds. This alias exists only while serialized/editor references migrate.")]
+        public static ItemId CabbageSeeds => RadishSeeds;
+        [Obsolete("Use Radish. This alias exists only while serialized/editor references migrate.")]
+        public static ItemId Cabbage => Radish;
+
         public string Value => value ?? string.Empty;
         public bool IsKnown => TryParse(Value, out _);
 
         public static ItemId Parse(string value)
         {
-            if (TryParse(value, out ItemId itemId))
-            {
-                return itemId;
-            }
-
-            throw new ArgumentOutOfRangeException(
-                nameof(value),
-                value,
-                $"Unknown item id: {value ?? "<null>"}.");
+            if (TryParse(value, out ItemId itemId)) return itemId;
+            throw new ArgumentOutOfRangeException(nameof(value), value, $"Unknown item id: {value ?? "<null>"}.");
         }
 
         public static bool TryParse(string value, out ItemId itemId)
@@ -60,53 +62,29 @@ namespace FarmSimulator.Domain.Items
                 case "potato": itemId = Potato; return true;
                 case "radish-seeds": itemId = RadishSeeds; return true;
                 case "radish": itemId = Radish; return true;
-                default:
-                    itemId = default;
-                    return false;
+                default: itemId = default; return false;
             }
         }
 
-        public bool Equals(ItemId other) =>
-            string.Equals(Value, other.Value, StringComparison.Ordinal);
-
-        public override bool Equals(object obj) =>
-            obj is ItemId other && Equals(other);
-
-        public override int GetHashCode() =>
-            StringComparer.Ordinal.GetHashCode(Value);
-
+        public bool Equals(ItemId other) => string.Equals(Value, other.Value, StringComparison.Ordinal);
+        public override bool Equals(object obj) => obj is ItemId other && Equals(other);
+        public override int GetHashCode() => StringComparer.Ordinal.GetHashCode(Value);
         public override string ToString() => Value;
-
         public static bool operator ==(ItemId left, ItemId right) => left.Equals(right);
         public static bool operator !=(ItemId left, ItemId right) => !left.Equals(right);
     }
 
     public sealed class ItemDefinition
     {
-        public ItemDefinition(
-            ItemId id,
-            string name,
-            string shortLabel,
-            ItemCategory category,
-            int stackLimit,
-            int? buyPrice = null,
-            int? sellPrice = null)
+        public ItemDefinition(ItemId id, string name, string shortLabel, ItemCategory category, int stackLimit, int? buyPrice = null, int? sellPrice = null)
         {
-            if (!id.IsKnown)
-                throw new ArgumentOutOfRangeException(nameof(id), "Item id must be registered.");
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException("Item name is required.", nameof(name));
-            if (string.IsNullOrWhiteSpace(shortLabel))
-                throw new ArgumentException("Item short label is required.", nameof(shortLabel));
-            if (!Enum.IsDefined(typeof(ItemCategory), category))
-                throw new ArgumentOutOfRangeException(nameof(category), category, "Item category must be registered.");
-            if (stackLimit < 1)
-                throw new ArgumentOutOfRangeException(nameof(stackLimit), stackLimit, "Stack limit must be at least one.");
-            if (buyPrice.HasValue && buyPrice.Value < 1)
-                throw new ArgumentOutOfRangeException(nameof(buyPrice), buyPrice, "Buy price must be positive when present.");
-            if (sellPrice.HasValue && sellPrice.Value < 1)
-                throw new ArgumentOutOfRangeException(nameof(sellPrice), sellPrice, "Sell price must be positive when present.");
-
+            if (!id.IsKnown) throw new ArgumentOutOfRangeException(nameof(id), "Item id must be registered.");
+            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Item name is required.", nameof(name));
+            if (string.IsNullOrWhiteSpace(shortLabel)) throw new ArgumentException("Item short label is required.", nameof(shortLabel));
+            if (!Enum.IsDefined(typeof(ItemCategory), category)) throw new ArgumentOutOfRangeException(nameof(category), category, "Item category must be registered.");
+            if (stackLimit < 1) throw new ArgumentOutOfRangeException(nameof(stackLimit), stackLimit, "Stack limit must be at least one.");
+            if (buyPrice.HasValue && buyPrice.Value < 1) throw new ArgumentOutOfRangeException(nameof(buyPrice), buyPrice, "Buy price must be positive when present.");
+            if (sellPrice.HasValue && sellPrice.Value < 1) throw new ArgumentOutOfRangeException(nameof(sellPrice), sellPrice, "Sell price must be positive when present.");
             Id = id;
             Name = name;
             ShortLabel = shortLabel;
@@ -141,10 +119,8 @@ namespace FarmSimulator.Domain.Items
             new ItemDefinition(ItemId.Radish, "Rábano", "RB", ItemCategory.Crop, 99, sellPrice: 150)
         };
 
-        private static readonly IReadOnlyList<ItemDefinition> ReadOnlyDefinitions =
-            Array.AsReadOnly(Definitions);
-        private static readonly Dictionary<ItemId, ItemDefinition> DefinitionsById =
-            CreateDefinitionsById();
+        private static readonly IReadOnlyList<ItemDefinition> ReadOnlyDefinitions = Array.AsReadOnly(Definitions);
+        private static readonly Dictionary<ItemId, ItemDefinition> DefinitionsById = CreateDefinitionsById();
 
         public static IReadOnlyList<ItemDefinition> All => ReadOnlyDefinitions;
 
@@ -176,19 +152,13 @@ namespace FarmSimulator.Domain.Items
             return TryGet(parsed, out definition);
         }
 
-        public static bool IsPurchasable(string itemId) =>
-            TryGet(itemId, out ItemDefinition definition) && definition.IsPurchasable;
-
-        public static bool IsSellable(string itemId) =>
-            TryGet(itemId, out ItemDefinition definition) && definition.IsSellable;
+        public static bool IsPurchasable(string itemId) => TryGet(itemId, out ItemDefinition definition) && definition.IsPurchasable;
+        public static bool IsSellable(string itemId) => TryGet(itemId, out ItemDefinition definition) && definition.IsSellable;
 
         private static Dictionary<ItemId, ItemDefinition> CreateDefinitionsById()
         {
             var definitionsById = new Dictionary<ItemId, ItemDefinition>();
-            foreach (ItemDefinition definition in Definitions)
-            {
-                definitionsById.Add(definition.Id, definition);
-            }
+            foreach (ItemDefinition definition in Definitions) definitionsById.Add(definition.Id, definition);
             return definitionsById;
         }
     }
