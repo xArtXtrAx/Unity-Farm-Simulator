@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using FarmSimulator.Domain.Items;
 using FarmSimulator.Presentation.Inventory;
 using UnityEditor;
@@ -63,25 +61,21 @@ namespace FarmSimulator.Editor
             out string[] itemIds,
             out Sprite[] sprites)
         {
-            var available = new Dictionary<string, Sprite>(
-                StringComparer.Ordinal);
-
-            AddSprites(
-                InventoryHotbarAssetCatalog.ItemsSpriteSheetPath,
-                available);
-            AddSprites(
-                InventoryHotbarAssetCatalog.SeedsSpriteSheetPath,
-                available);
-
             itemIds = new string[IconItemOrder.Length];
             sprites = new Sprite[IconItemOrder.Length];
 
             for (int index = 0; index < IconItemOrder.Length; index++)
             {
                 ItemId itemId = IconItemOrder[index];
-                string spriteName =
-                    InventoryHotbarAssetCatalog.AvailableSpriteNames[itemId];
-                if (!available.TryGetValue(spriteName, out Sprite sprite))
+                if (!InventoryHotbarAssetCatalog.AvailableSpritePaths.TryGetValue(
+                        itemId,
+                        out string spritePath))
+                {
+                    return false;
+                }
+
+                Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+                if (sprite == null)
                 {
                     return false;
                 }
@@ -91,18 +85,6 @@ namespace FarmSimulator.Editor
             }
 
             return true;
-        }
-
-        private static void AddSprites(
-            string assetPath,
-            IDictionary<string, Sprite> destination)
-        {
-            foreach (Sprite sprite in AssetDatabase
-                         .LoadAllAssetRepresentationsAtPath(assetPath)
-                         .OfType<Sprite>())
-            {
-                destination[sprite.name] = sprite;
-            }
         }
 
         private static bool IsPrefabCurrent()
@@ -259,7 +241,7 @@ namespace FarmSimulator.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log(
-                "Generated inventory hotbar prefab with eight slots and definitive crop IDs.");
+                "Generated inventory hotbar prefab with eight slots and first-party crop icons.");
         }
 
         private static InventoryHotbarSlotView CreateSlot(
