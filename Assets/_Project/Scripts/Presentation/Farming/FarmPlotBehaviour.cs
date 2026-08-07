@@ -6,6 +6,7 @@ using FarmSimulator.Presentation.Interaction;
 using FarmSimulator.Presentation.Inventory;
 using FarmSimulator.Presentation.World;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace FarmSimulator.Presentation.Farming
 {
@@ -16,10 +17,8 @@ namespace FarmSimulator.Presentation.Farming
         public const float MaximumCropHeight = 0.86f;
         public const float CropBaseline = 0f;
 
-        private static readonly Color UntilledGuideColor =
-            new Color32(128, 105, 72, 82);
-        private static readonly Color WateredSoilColor =
-            new Color32(116, 92, 72, 255);
+        private static readonly Color UntilledGuideColor = new Color32(128, 105, 72, 82);
+        private static readonly Color WateredSoilColor = new Color32(116, 92, 72, 255);
 
         [SerializeField] private string plotId;
         [SerializeField] private SpriteRenderer soilRenderer;
@@ -27,8 +26,10 @@ namespace FarmSimulator.Presentation.Farming
         [SerializeField] private Sprite grassSprite;
         [SerializeField] private Sprite tilledSoilSprite;
         [SerializeField] private Sprite[] turnipStages;
-        [SerializeField] private Sprite[] carrotStages;
-        [SerializeField] private Sprite[] cabbageStages;
+        [FormerlySerializedAs("carrotStages")]
+        [SerializeField] private Sprite[] potatoStages;
+        [FormerlySerializedAs("cabbageStages")]
+        [SerializeField] private Sprite[] radishStages;
 
         public string PlotId => plotId;
         public FarmPlotState PlotState => State;
@@ -36,9 +37,7 @@ namespace FarmSimulator.Presentation.Farming
         public SpriteRenderer CropRenderer => cropRenderer;
         public override string InteractionPrompt => BuildPrompt();
 
-        private FarmPlotState State =>
-            GameSessionRuntime.Instance.Farm.GetOrCreatePlot(plotId);
-
+        private FarmPlotState State => GameSessionRuntime.Instance.Farm.GetOrCreatePlot(plotId);
         private InventoryState Inventory => GameSessionRuntime.Instance.Inventory;
 
         private void OnEnable()
@@ -50,9 +49,7 @@ namespace FarmSimulator.Presentation.Farming
         private void OnDisable()
         {
             if (GameSessionRuntime.TryGetExisting(out GameSessionRuntime session))
-            {
                 session.DayChanged -= HandleDayChanged;
-            }
         }
 
         public void Configure(
@@ -62,31 +59,21 @@ namespace FarmSimulator.Presentation.Farming
             Sprite untilledSprite,
             Sprite tilledSprite,
             Sprite[] turnipGrowthStages,
-            Sprite[] carrotGrowthStages,
-            Sprite[] cabbageGrowthStages)
+            Sprite[] potatoGrowthStages,
+            Sprite[] radishGrowthStages)
         {
             if (string.IsNullOrWhiteSpace(identifier))
-            {
                 throw new ArgumentException("Plot id is required.", nameof(identifier));
-            }
 
             plotId = identifier;
-            soilRenderer = plotSoilRenderer ??
-                throw new ArgumentNullException(nameof(plotSoilRenderer));
-            cropRenderer = plotCropRenderer ??
-                throw new ArgumentNullException(nameof(plotCropRenderer));
-            grassSprite = untilledSprite ??
-                throw new ArgumentNullException(nameof(untilledSprite));
-            tilledSoilSprite = tilledSprite ??
-                throw new ArgumentNullException(nameof(tilledSprite));
+            soilRenderer = plotSoilRenderer ?? throw new ArgumentNullException(nameof(plotSoilRenderer));
+            cropRenderer = plotCropRenderer ?? throw new ArgumentNullException(nameof(plotCropRenderer));
+            grassSprite = untilledSprite ?? throw new ArgumentNullException(nameof(untilledSprite));
+            tilledSoilSprite = tilledSprite ?? throw new ArgumentNullException(nameof(tilledSprite));
             turnipStages = ValidateStages(turnipGrowthStages, nameof(turnipGrowthStages));
-            carrotStages = ValidateStages(carrotGrowthStages, nameof(carrotGrowthStages));
-            cabbageStages = ValidateStages(cabbageGrowthStages, nameof(cabbageGrowthStages));
+            potatoStages = ValidateStages(potatoGrowthStages, nameof(potatoGrowthStages));
+            radishStages = ValidateStages(radishGrowthStages, nameof(radishGrowthStages));
             ConfigureInteraction("Preparar parcela", interactionPriority: 5);
-
-            // AddComponent invokes OnEnable before editor-time dependencies are assigned.
-            // Render again after configuration so generated scenes serialize the subtle
-            // untilled guide instead of preserving the renderer's temporary disabled state.
             Render();
         }
 
@@ -136,18 +123,14 @@ namespace FarmSimulator.Presentation.Farming
             if (soilRenderer == null || cropRenderer == null ||
                 grassSprite == null || tilledSoilSprite == null ||
                 string.IsNullOrWhiteSpace(plotId))
-            {
                 return;
-            }
 
             FarmPlotState state = State;
             soilRenderer.sprite = tilledSoilSprite;
             soilRenderer.enabled = true;
             soilRenderer.color = !state.IsTilled
                 ? UntilledGuideColor
-                : state.IsWatered
-                    ? WateredSoilColor
-                    : Color.white;
+                : state.IsWatered ? WateredSoilColor : Color.white;
 
             if (!state.HasCrop)
             {
@@ -166,17 +149,12 @@ namespace FarmSimulator.Presentation.Farming
 
         private void NormalizeCropVisual(Sprite sprite)
         {
-            if (sprite == null)
-            {
-                return;
-            }
+            if (sprite == null) return;
 
             Vector2 size = sprite.bounds.size;
             float scale = size.x <= Mathf.Epsilon || size.y <= Mathf.Epsilon
                 ? 1f
-                : Mathf.Min(
-                    MaximumCropWidth / size.x,
-                    MaximumCropHeight / size.y);
+                : Mathf.Min(MaximumCropWidth / size.x, MaximumCropHeight / size.y);
             cropRenderer.transform.localScale = new Vector3(scale, scale, 1f);
             cropRenderer.transform.localPosition = new Vector3(0f, CropBaseline, 0f);
         }
@@ -185,9 +163,7 @@ namespace FarmSimulator.Presentation.Farming
         {
             if (!state.Plant(seedItemId)) return;
             if (!Inventory.ConsumeSelected())
-            {
                 throw new InvalidOperationException("A planted seed could not be consumed.");
-            }
             CommitVisualChange();
         }
 
@@ -203,10 +179,7 @@ namespace FarmSimulator.Presentation.Farming
             if (!state.TryHarvest(out ItemId harvestedItemId)) return;
             AddItemResult result = Inventory.AddItem(harvestedItemId);
             if (!result.Changed)
-            {
-                throw new InvalidOperationException(
-                    "Harvested crop could not be added to inventory.");
-            }
+                throw new InvalidOperationException("Harvested crop could not be added to inventory.");
             CommitVisualChange();
         }
 
@@ -234,17 +207,13 @@ namespace FarmSimulator.Presentation.Farming
             if (selectedItem == ItemId.WateringCan)
             {
                 if (!state.IsTilled) return "Primero ara la parcela";
-                return state.IsWatered
-                    ? "La parcela ya está regada"
-                    : "Regar parcela";
+                return state.IsWatered ? "La parcela ya está regada" : "Regar parcela";
             }
 
             if (CropCatalog.TryGetBySeed(selectedItem, out CropDefinition crop))
             {
                 if (!state.IsTilled) return "Primero ara la parcela";
-                return state.HasCrop
-                    ? "La parcela ya tiene un cultivo"
-                    : $"Sembrar {crop.Name}";
+                return state.HasCrop ? "La parcela ya tiene un cultivo" : $"Sembrar {crop.Name}";
             }
 
             return "Este objeto no sirve en la parcela";
@@ -253,30 +222,22 @@ namespace FarmSimulator.Presentation.Farming
         private Sprite[] StagesFor(ItemId seedItemId)
         {
             if (seedItemId == ItemId.TurnipSeeds) return turnipStages;
-            if (seedItemId == ItemId.CarrotSeeds) return carrotStages;
-            if (seedItemId == ItemId.CabbageSeeds) return cabbageStages;
+            if (seedItemId == ItemId.PotatoSeeds) return potatoStages;
+            if (seedItemId == ItemId.RadishSeeds) return radishStages;
             throw new ArgumentOutOfRangeException(
-                nameof(seedItemId),
-                seedItemId.Value,
-                "Crop sprites are not configured.");
+                nameof(seedItemId), seedItemId.Value, "Crop sprites are not configured.");
         }
 
         private static Sprite[] ValidateStages(Sprite[] stages, string parameterName)
         {
             if (stages == null || stages.Length != CropCatalog.FinalVisualStage + 1)
-            {
-                throw new ArgumentException(
-                    "A crop must provide exactly six visual stages.",
-                    parameterName);
-            }
+                throw new ArgumentException("A crop must provide exactly six visual stages.", parameterName);
 
             var copy = (Sprite[])stages.Clone();
             for (int index = 0; index < copy.Length; index++)
             {
-                if (copy[index] != null) continue;
-                throw new ArgumentException(
-                    "Crop visual stages cannot contain null sprites.",
-                    parameterName);
+                if (copy[index] == null)
+                    throw new ArgumentException("Crop visual stages cannot contain null sprites.", parameterName);
             }
             return copy;
         }
