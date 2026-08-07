@@ -112,6 +112,8 @@ namespace FarmSimulator.Tests.EditMode
         [TestCase("radish", 5)]
         public void FinalCropSpritesUseSixteenPixelsPerUnit(string cropName, int stageCount)
         {
+            CropSpriteImportSettings.EnsureAll();
+
             for (int stage = 0; stage < stageCount; stage++)
             {
                 string path = $"Assets/_Project/Art/Placeholder/Crops/{cropName}_stage_{stage}.png";
