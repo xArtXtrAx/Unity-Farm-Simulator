@@ -22,7 +22,6 @@ namespace FarmSimulator.Editor
         public const string TileAssetRoot = CatalogRoot + "/CozyFarm";
         public const string GroundTileRoot = TileAssetRoot + "/Ground";
         public const string DecorationTileRoot = TileAssetRoot + "/Decoration";
-        public const string GeneratedCropRoot = CatalogRoot + "/Generated/Crops";
         public const string PaletteRoot = CatalogRoot + "/Palettes";
 
         public const string GrassTilePath = GroundTileRoot + "/Grass.asset";
@@ -32,15 +31,6 @@ namespace FarmSimulator.Editor
 
         private const string TileSheetPath =
             "Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/tiles.png";
-        private const string CropSheetPath =
-            "Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/crops.png";
-
-        private static readonly string[] CropPrefixes =
-        {
-            "cozy_turnip_stage_",
-            "cozy_carrot_stage_",
-            "cozy_cabbage_stage_",
-        };
 
         [MenuItem("Tools/Farm Simulator/Rebuild Cozy Tile Catalog")]
         public static void RebuildFromMenu()
@@ -48,8 +38,7 @@ namespace FarmSimulator.Editor
             Rebuild();
             EditorUtility.DisplayDialog(
                 "Cozy Tile Catalog",
-                "Ground, Paths, Soil and Decoration palettes are ready. " +
-                "Crop stages were generated as transparent runtime sprites.",
+                "Ground, Paths, Soil and Decoration palettes are ready.",
                 "OK");
         }
 
@@ -62,25 +51,18 @@ namespace FarmSimulator.Editor
                     .All(category =>
                         AssetDatabase.LoadAssetAtPath<GameObject>(
                             GetPalettePath(category)) != null);
-            bool cropsReady = AssetDatabase.FindAssets(
-                "t:Sprite",
-                new[] { GeneratedCropRoot }).Length == 18;
 
-            if (!palettesReady || !cropsReady)
-            {
+            if (!palettesReady)
                 Rebuild();
-            }
         }
 
         public static GameObject Rebuild()
         {
             EnsureFolder(GroundTileRoot);
             EnsureFolder(DecorationTileRoot);
-            EnsureFolder(GeneratedCropRoot);
             EnsureFolder(PaletteRoot);
 
             Dictionary<string, Sprite> tiles = LoadRepresentations(TileSheetPath);
-            GenerateTransparentCropSprites(LoadRepresentations(CropSheetPath));
 
             Tile grass = CreateOrUpdateTile(
                 GrassTilePath,
@@ -129,19 +111,6 @@ namespace FarmSimulator.Editor
             return groundPalette;
         }
 
-        public static Sprite[] LoadGeneratedCropStages(string prefix)
-        {
-            EnsureAssets();
-            var result = new Sprite[6];
-            for (int stage = 0; stage < result.Length; stage++)
-            {
-                string path = GeneratedCropRoot + "/" + prefix + stage + ".png";
-                result[stage] = AssetDatabase.LoadAssetAtPath<Sprite>(path);
-            }
-
-            return result;
-        }
-
         public static GameObject LoadPalette(CozyPaletteCategory category)
         {
             EnsureAssets();
@@ -154,149 +123,6 @@ namespace FarmSimulator.Editor
         public static string GetPalettePath(CozyPaletteCategory category) =>
             PaletteRoot + "/" + GetPaletteName(category) + ".prefab";
 
-        private static void GenerateTransparentCropSprites(
-            IReadOnlyDictionary<string, Sprite> sourceSprites)
-        {
-            TextureImporter importer =
-                AssetImporter.GetAtPath(CropSheetPath) as TextureImporter;
-            if (importer == null)
-            {
-                throw new InvalidOperationException(
-                    "Could not access the Cozy Farm crop texture importer.");
-            }
-
-            bool wasReadable = importer.isReadable;
-            if (!wasReadable)
-            {
-                importer.isReadable = true;
-                importer.SaveAndReimport();
-            }
-
-            try
-            {
-                Texture2D source = AssetDatabase.LoadAssetAtPath<Texture2D>(CropSheetPath);
-                foreach (string prefix in CropPrefixes)
-                {
-                    for (int stage = 0; stage < 6; stage++)
-                    {
-                        string name = prefix + stage;
-                        Sprite sprite = Required(sourceSprites, name);
-                        Rect rect = sprite.rect;
-                        int width = Mathf.RoundToInt(rect.width);
-                        int height = Mathf.RoundToInt(rect.height);
-                        Color[] pixels = source.GetPixels(
-                            Mathf.RoundToInt(rect.x),
-                            Mathf.RoundToInt(rect.y),
-                            width,
-                            height);
-                        pixels = NormalizeToTileCell(pixels, width, height);
-
-                        var generated = new Texture2D(
-                            width,
-                            height,
-                            TextureFormat.RGBA32,
-                            false);
-                        generated.filterMode = FilterMode.Point;
-                        generated.SetPixels(pixels);
-                        generated.Apply(false, false);
-                        File.WriteAllBytes(
-                            GeneratedCropRoot + "/" + name + ".png",
-                            generated.EncodeToPNG());
-                        UnityEngine.Object.DestroyImmediate(generated);
-                    }
-                }
-            }
-            finally
-            {
-                if (!wasReadable)
-                {
-                    importer.isReadable = false;
-                    importer.SaveAndReimport();
-                }
-            }
-
-            AssetDatabase.Refresh();
-            foreach (string prefix in CropPrefixes)
-            {
-                for (int stage = 0; stage < 6; stage++)
-                {
-                    ConfigureGeneratedSprite(
-                        GeneratedCropRoot + "/" + prefix + stage + ".png");
-                }
-            }
-        }
-
-        private static Color[] NormalizeToTileCell(
-            IReadOnlyList<Color> source,
-            int width,
-            int height)
-        {
-            int minX = width;
-            int minY = height;
-            int maxX = -1;
-            int maxY = -1;
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    if (source[(y * width) + x].a <= 0.01f)
-                    {
-                        continue;
-                    }
-
-                    minX = Mathf.Min(minX, x);
-                    minY = Mathf.Min(minY, y);
-                    maxX = Mathf.Max(maxX, x);
-                    maxY = Mathf.Max(maxY, y);
-                }
-            }
-
-            if (maxX < minX || maxY < minY)
-            {
-                return source.ToArray();
-            }
-
-            int contentWidth = maxX - minX + 1;
-            int contentHeight = maxY - minY + 1;
-            int destinationX = (width - contentWidth) / 2;
-            int destinationY = Mathf.Min(1, height - contentHeight);
-            var result = new Color[width * height];
-            for (int y = 0; y < contentHeight; y++)
-            {
-                for (int x = 0; x < contentWidth; x++)
-                {
-                    result[((destinationY + y) * width) + destinationX + x] =
-                        source[((minY + y) * width) + minX + x];
-                }
-            }
-
-            return result;
-        }
-
-        private static void ConfigureGeneratedSprite(string path)
-        {
-            TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
-            if (importer == null)
-            {
-                return;
-            }
-
-            importer.textureType = TextureImporterType.Sprite;
-            importer.spriteImportMode = SpriteImportMode.Single;
-            importer.spritePixelsPerUnit = 16f;
-            var settings = new TextureImporterSettings();
-            importer.ReadTextureSettings(settings);
-            settings.spriteAlignment = (int)SpriteAlignment.Center;
-            settings.spritePivot = new Vector2(0.5f, 0.5f);
-            importer.SetTextureSettings(settings);
-            importer.filterMode = FilterMode.Point;
-            importer.mipmapEnabled = false;
-            importer.alphaIsTransparency = true;
-            importer.textureCompression = TextureImporterCompression.Uncompressed;
-            importer.wrapMode = TextureWrapMode.Clamp;
-            importer.SaveAndReimport();
-        }
-
         private static GameObject CreatePalette(
             CozyPaletteCategory category,
             Action<Tilemap> populate) =>
@@ -308,9 +134,7 @@ namespace FarmSimulator.Editor
         private static void PopulateLinear(Tilemap tilemap, IReadOnlyList<Tile> items)
         {
             for (int index = 0; index < items.Count; index++)
-            {
                 tilemap.SetTile(new Vector3Int(index, 0, 0), items[index]);
-            }
         }
 
         private static Tile CreateOrUpdateTile(string assetPath, Sprite sprite)
@@ -342,9 +166,7 @@ namespace FarmSimulator.Editor
             string name)
         {
             if (sprites.TryGetValue(name, out Sprite sprite) && sprite != null)
-            {
                 return sprite;
-            }
 
             throw new InvalidOperationException(
                 $"The Cozy Farm catalog is missing sprite '{name}'.");
@@ -358,9 +180,7 @@ namespace FarmSimulator.Editor
             {
                 string next = current + "/" + parts[index];
                 if (!AssetDatabase.IsValidFolder(next))
-                {
                     AssetDatabase.CreateFolder(current, parts[index]);
-                }
 
                 current = next;
             }
