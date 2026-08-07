@@ -93,7 +93,7 @@ namespace FarmSimulator.Editor
             !playTransitionActive &&
             !EditorApplication.isPlaying &&
             !EditorApplication.isPlayingOrWillChangePlaymode &&
-            !Application.isPlaying;
+            !UnityEngine.Application.isPlaying;
 
         private static void QueueEnsureApplied()
         {
@@ -267,7 +267,7 @@ namespace FarmSimulator.Editor
             }
             finally
             {
-                if (openedHere && scene.IsValid() && scene.isLoaded && !Application.isPlaying)
+                if (openedHere && scene.IsValid() && scene.isLoaded && !UnityEngine.Application.isPlaying)
                 {
                     EditorSceneManager.CloseScene(scene, true);
                 }
