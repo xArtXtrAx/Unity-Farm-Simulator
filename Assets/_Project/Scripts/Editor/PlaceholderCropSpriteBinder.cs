@@ -35,10 +35,10 @@ namespace FarmSimulator.Editor
             if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ProjectSceneNames.FarmPath) == null)
                 return;
 
-            Sprite[] turnipStages = LoadSixStages("turnip", sourceStageCount: 5);
-            Sprite[] potatoStages = LoadSixStages("potato", sourceStageCount: 6);
-            Sprite[] radishStages = LoadSixStages("radish", sourceStageCount: 5);
-            if (!Complete(turnipStages) || !Complete(potatoStages) || !Complete(radishStages))
+            Sprite[] turnipStages = LoadStages("turnip", stageCount: 5);
+            Sprite[] potatoStages = LoadStages("potato", stageCount: 6);
+            Sprite[] radishStages = LoadStages("radish", stageCount: 5);
+            if (!Complete(turnipStages, 5) || !Complete(potatoStages, 6) || !Complete(radishStages, 5))
             {
                 Debug.LogWarning("[Farming] Placeholder crop sprites are incomplete; plot binding was skipped.");
                 return;
@@ -88,17 +88,14 @@ namespace FarmSimulator.Editor
             }
         }
 
-        private static Sprite[] LoadSixStages(string cropName, int sourceStageCount)
+        private static Sprite[] LoadStages(string cropName, int stageCount)
         {
-            var stages = new Sprite[6];
-            for (int index = 0; index < sourceStageCount; index++)
+            var stages = new Sprite[stageCount];
+            for (int index = 0; index < stageCount; index++)
             {
                 string path = $"{CropFolder}/{cropName}_stage_{index}.png";
                 stages[index] = AssetDatabase.LoadAssetAtPath<Sprite>(path);
             }
-
-            for (int index = sourceStageCount; index < stages.Length; index++)
-                stages[index] = stages[sourceStageCount - 1];
             return stages;
         }
 
@@ -119,8 +116,8 @@ namespace FarmSimulator.Editor
             return changed;
         }
 
-        private static bool Complete(Sprite[] sprites) =>
-            sprites != null && sprites.Length == 6 && sprites.All(sprite => sprite != null);
+        private static bool Complete(Sprite[] sprites, int expectedCount) =>
+            sprites != null && sprites.Length == expectedCount && sprites.All(sprite => sprite != null);
     }
 
     internal sealed class PlaceholderCropSpritePostprocessor : AssetPostprocessor
