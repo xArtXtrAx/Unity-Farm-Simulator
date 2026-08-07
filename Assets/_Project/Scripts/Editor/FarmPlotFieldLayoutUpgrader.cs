@@ -97,7 +97,7 @@ namespace FarmSimulator.Editor
                 GameObject[] existing = fieldRoot.Cast<Transform>()
                     .Where(child => child.name.StartsWith(PlotPrefix, StringComparison.Ordinal))
                     .Select(child => child.gameObject)
-                    .OrderBy(plot => plot.name, StringComparer.Ordinal)
+                    .OrderBy(PlotSortKey)
                     .ToArray();
 
                 GameObject template = existing.FirstOrDefault(
@@ -130,7 +130,7 @@ namespace FarmSimulator.Editor
                 GameObject[] plots = fieldRoot.Cast<Transform>()
                     .Where(child => child.name.StartsWith(PlotPrefix, StringComparison.Ordinal))
                     .Select(child => child.gameObject)
-                    .OrderBy(plot => plot.name, StringComparer.Ordinal)
+                    .OrderBy(PlotSortKey)
                     .Take(desiredCount)
                     .ToArray();
 
@@ -151,6 +151,12 @@ namespace FarmSimulator.Editor
                     if (plot.transform.position != desiredPosition)
                     {
                         plot.transform.position = desiredPosition;
+                        changed = true;
+                    }
+
+                    if (plot.transform.GetSiblingIndex() != index)
+                    {
+                        plot.transform.SetSiblingIndex(index);
                         changed = true;
                     }
 
@@ -189,7 +195,7 @@ namespace FarmSimulator.Editor
 
                 Debug.Log(
                     "[Farm Plot Layout] Arranged 15 visible plot entities as three rows of five " +
-                    "at x=-6..-2 and y=-3..-1.");
+                    "with stable hierarchy order at x=-6..-2 and y=-3..-1.");
                 return true;
             }
             finally
@@ -201,6 +207,42 @@ namespace FarmSimulator.Editor
 
                 isRunning = false;
             }
+        }
+
+        private static int PlotSortKey(GameObject plot)
+        {
+            if (TryParsePlotCoordinates(plot.name, out int column, out int row))
+            {
+                return (row * Columns) + column;
+            }
+
+            return int.MaxValue;
+        }
+
+        private static bool TryParsePlotCoordinates(
+            string name,
+            out int column,
+            out int row)
+        {
+            column = 0;
+            row = 0;
+
+            if (!name.StartsWith(PlotPrefix, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            string[] parts = name.Substring(PlotPrefix.Length).Split('-');
+            if (parts.Length != 2 ||
+                !int.TryParse(parts[0], out int oneBasedColumn) ||
+                !int.TryParse(parts[1], out int oneBasedRow))
+            {
+                return false;
+            }
+
+            column = oneBasedColumn - 1;
+            row = oneBasedRow - 1;
+            return column >= 0 && row >= 0;
         }
 
         private static string PlotName(int index)
