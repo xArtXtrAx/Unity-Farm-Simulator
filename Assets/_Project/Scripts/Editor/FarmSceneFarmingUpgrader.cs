@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using FarmSimulator.Application.Scenes;
 using FarmSimulator.Presentation.Farming;
@@ -28,10 +27,21 @@ namespace FarmSimulator.Editor
             "Farming Core Loop v3",
         };
 
-        private const string TileSheetPath =
-            "Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/tiles.png";
+        private const string PlaceholderSourceRoot =
+            "Assets/_Project/Art/Placeholder/Source";
+        private const string PlaceholderTileRoot =
+            "Assets/_Project/Art/Placeholder/Tiles";
         private const string CropFolder =
             "Assets/_Project/Art/Placeholder/Crops";
+
+        private const string GrassSpritePath =
+            PlaceholderSourceRoot + "/ground_grass.png";
+        private const string TilledSoilSpritePath =
+            PlaceholderSourceRoot + "/soil_tilled.png";
+        private const string GrassTilePath =
+            PlaceholderTileRoot + "/ground_grass.asset";
+        private const string DirtTilePath =
+            PlaceholderTileRoot + "/path_dirt.asset";
 
         static FarmSceneFarmingUpgrader()
         {
@@ -42,6 +52,13 @@ namespace FarmSimulator.Editor
         public static void ApplyFromMenu() => Apply(force: true);
 
         public static void EnsureApplied() => Apply(force: false);
+
+        /// <summary>
+        /// Explicit recovery hook. Scene Recovery may rebuild Farm from an empty
+        /// scene, so this reapplies the complete first-party farming field after
+        /// the recovered scene has imported.
+        /// </summary>
+        public static void ApplyAfterSceneRecovery() => Apply(force: true);
 
         private static void Apply(bool force)
         {
@@ -61,7 +78,7 @@ namespace FarmSimulator.Editor
             if (!sprites.IsComplete)
             {
                 Debug.LogWarning(
-                    "Farming field is waiting for the curated Cozy Farm terrain and final crop sprites.");
+                    "Farming field is waiting for the first-party placeholder terrain and final crop sprites.");
                 return;
             }
 
@@ -96,7 +113,7 @@ namespace FarmSimulator.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log(
-                "Applied Farming Core Loop v4: terrain Tilemaps plus plot-owned crop SpriteRenderers.");
+                "Applied Farming Core Loop v4 using first-party terrain Tilemaps plus plot-owned crop SpriteRenderers.");
         }
 
         private static void BuildField(Scene scene, SpriteLibrary sprites)
@@ -206,16 +223,14 @@ namespace FarmSimulator.Editor
 
         private static SpriteLibrary LoadSprites()
         {
-            CozyFarmTileCatalog.EnsureAssets();
-            Dictionary<string, Sprite> tiles = LoadRepresentations(TileSheetPath);
             return new SpriteLibrary(
-                Get(tiles, "cozy_grass"),
-                Get(tiles, "cozy_tilled_soil"),
+                AssetDatabase.LoadAssetAtPath<Sprite>(GrassSpritePath),
+                AssetDatabase.LoadAssetAtPath<Sprite>(TilledSoilSpritePath),
                 LoadCropStages("turnip", 5),
                 LoadCropStages("potato", 6),
                 LoadCropStages("radish", 5),
-                AssetDatabase.LoadAssetAtPath<TileBase>(CozyFarmTileCatalog.GrassTilePath),
-                AssetDatabase.LoadAssetAtPath<TileBase>(CozyFarmTileCatalog.DirtTilePath));
+                AssetDatabase.LoadAssetAtPath<TileBase>(GrassTilePath),
+                AssetDatabase.LoadAssetAtPath<TileBase>(DirtTilePath));
         }
 
         private static Sprite[] LoadCropStages(string cropName, int stageCount)
@@ -227,17 +242,6 @@ namespace FarmSimulator.Editor
                     $"{CropFolder}/{cropName}_stage_{index}.png");
             }
             return sprites;
-        }
-
-        private static Dictionary<string, Sprite> LoadRepresentations(string path) =>
-            AssetDatabase.LoadAllAssetRepresentationsAtPath(path)
-                .OfType<Sprite>()
-                .ToDictionary(sprite => sprite.name, StringComparer.Ordinal);
-
-        private static Sprite Get(IReadOnlyDictionary<string, Sprite> sprites, string name)
-        {
-            sprites.TryGetValue(name, out Sprite sprite);
-            return sprite;
         }
 
         private static GameObject FindRoot(Scene scene, string name) =>
