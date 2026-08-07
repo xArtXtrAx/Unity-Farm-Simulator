@@ -13,7 +13,7 @@ namespace FarmSimulator.Presentation.Inventory
         public const string ResourcePath =
             "Prefabs/UI/InventoryHotbar";
         public const string ImportSignature =
-            "inventory-hotbar-prefab-v1";
+            "inventory-hotbar-prefab-v2-first-party";
 
         public const string RootObjectName = "Inventory Hotbar";
         public const string PanelObjectName = "Hotbar Panel";
@@ -27,24 +27,22 @@ namespace FarmSimulator.Presentation.Inventory
         public const float BottomMargin = 18f;
         public const float PanelHeight = 58f;
 
-        public const string ItemsSpriteSheetPath =
-            "Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/items.png";
-        public const string SeedsSpriteSheetPath =
-            "Assets/_Project/Art/ThirdParty/CozyFarm/Pilot/Source/seeds.png";
+        private const string CropRoot =
+            "Assets/_Project/Art/Placeholder/Crops";
 
         private static readonly IReadOnlyDictionary<ItemId, string>
-            SpriteNames = new Dictionary<ItemId, string>
+            SpritePaths = new Dictionary<ItemId, string>
             {
-                { ItemId.TurnipSeeds, "cozy_turnip_seeds" },
-                { ItemId.Turnip, "cozy_turnip" },
-                { ItemId.CarrotSeeds, "cozy_carrot_seeds" },
-                { ItemId.Carrot, "cozy_carrot" },
-                { ItemId.CabbageSeeds, "cozy_cabbage_seeds" },
-                { ItemId.Cabbage, "cozy_cabbage" }
+                { ItemId.TurnipSeeds, CropRoot + "/turnip_stage_0.png" },
+                { ItemId.Turnip, CropRoot + "/turnip_stage_4.png" },
+                { ItemId.PotatoSeeds, CropRoot + "/potato_stage_0.png" },
+                { ItemId.Potato, CropRoot + "/potato_stage_5.png" },
+                { ItemId.RadishSeeds, CropRoot + "/radish_stage_0.png" },
+                { ItemId.Radish, CropRoot + "/radish_stage_4.png" }
             };
 
         public static IReadOnlyDictionary<ItemId, string>
-            AvailableSpriteNames => SpriteNames;
+            AvailableSpritePaths => SpritePaths;
 
         public static string SlotObjectName(int index)
         {
