@@ -67,19 +67,27 @@ namespace FarmSimulator.Editor
                 foreach (FarmPlotBehaviour plot in plots)
                 {
                     var serialized = new SerializedObject(plot);
-                    changed |= AssignArray(serialized.FindProperty("turnipStages"), turnipStages);
+                    bool plotChanged = false;
+                    plotChanged |= AssignArray(
+                        serialized.FindProperty("turnipStages"),
+                        turnipStages);
 
                     // The current domain still exposes the second and third crop slots as
                     // carrot/cabbage. Keep those serialized contracts stable while using the
                     // approved potato and radish art until the domain-name migration lands.
-                    changed |= AssignArray(serialized.FindProperty("carrotStages"), potatoStages);
-                    changed |= AssignArray(serialized.FindProperty("cabbageStages"), radishStages);
+                    plotChanged |= AssignArray(
+                        serialized.FindProperty("carrotStages"),
+                        potatoStages);
+                    plotChanged |= AssignArray(
+                        serialized.FindProperty("cabbageStages"),
+                        radishStages);
 
-                    if (serialized.ApplyModifiedPropertiesWithoutUndo())
+                    if (plotChanged)
                     {
+                        serialized.ApplyModifiedPropertiesWithoutUndo();
+                        EditorUtility.SetDirty(plot);
                         changed = true;
                     }
-                    EditorUtility.SetDirty(plot);
                 }
 
                 if ((changed || saveEvenWhenUnchanged) && plots.Length > 0)
@@ -96,7 +104,7 @@ namespace FarmSimulator.Editor
                 {
                     Debug.Log(
                         $"[Farming] Bound placeholder crop sprites to {plots.Length} plots " +
-                        "(turnip, potato compatibility slot, radish compatibility slot)." );
+                        "(turnip, potato compatibility slot, radish compatibility slot).");
                 }
             }
             finally
