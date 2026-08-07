@@ -514,7 +514,9 @@ namespace FarmSimulator.Tests.EditMode
             AssertSlot(inventory, 0, "hoe", 1);
             AssertSlot(inventory, 1, "watering-can", 1);
             AssertSlot(inventory, 2, "turnip-seeds", 20);
-            for (int index = 3; index < inventory.SlotCount; index += 1)
+            AssertSlot(inventory, 3, "potato-seeds", 20);
+            AssertSlot(inventory, 4, "radish-seeds", 20);
+            for (int index = 5; index < inventory.SlotCount; index += 1)
             {
                 AssertEmptySlot(inventory, index);
             }
