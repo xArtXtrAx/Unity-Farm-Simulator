@@ -16,10 +16,10 @@ namespace FarmSimulator.Editor
         {
             ItemId.TurnipSeeds,
             ItemId.Turnip,
-            ItemId.CarrotSeeds,
-            ItemId.Carrot,
-            ItemId.CabbageSeeds,
-            ItemId.Cabbage
+            ItemId.PotatoSeeds,
+            ItemId.Potato,
+            ItemId.RadishSeeds,
+            ItemId.Radish
         };
 
         static InventoryHotbarAssetPipeline()
@@ -259,7 +259,7 @@ namespace FarmSimulator.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log(
-                "Generated inventory hotbar prefab with eight slots and curated Cozy Farm icons.");
+                "Generated inventory hotbar prefab with eight slots and definitive crop IDs.");
         }
 
         private static InventoryHotbarSlotView CreateSlot(
