@@ -34,6 +34,8 @@ namespace FarmSimulator.Tests.EditMode
         [TestCase(0, "hoe", "Azada", "AZ", 1, true)]
         [TestCase(1, "watering-can", "Regadera", "RG", 1, false)]
         [TestCase(2, "turnip-seeds", "Semillas de nabo", "SN", 20, false)]
+        [TestCase(3, "potato-seeds", "Semillas de papa", "SP", 20, false)]
+        [TestCase(4, "radish-seeds", "Semillas de rábano", "SR", 20, false)]
         public void InitialOccupiedSlotsMapCatalogPresentation(
             int index,
             string expectedItemId,
@@ -56,8 +58,6 @@ namespace FarmSimulator.Tests.EditMode
             Assert.That(slot.IsEmpty, Is.False);
         }
 
-        [TestCase(3)]
-        [TestCase(4)]
         [TestCase(5)]
         [TestCase(6)]
         [TestCase(7)]
@@ -163,13 +163,13 @@ namespace FarmSimulator.Tests.EditMode
             IReadOnlyList<HotbarSlotPresentation> before =
                 model.Snapshot();
 
-            inventory.SetSlot(0, ItemId.Cabbage, 12);
+            inventory.SetSlot(0, ItemId.Radish, 12);
             IReadOnlyList<HotbarSlotPresentation> after =
                 model.Snapshot();
 
             Assert.That(before[0].ItemId, Is.EqualTo("hoe"));
             Assert.That(before[0].Quantity, Is.EqualTo(1));
-            Assert.That(after[0].ItemId, Is.EqualTo("cabbage"));
+            Assert.That(after[0].ItemId, Is.EqualTo("radish"));
             Assert.That(after[0].Quantity, Is.EqualTo(12));
         }
     }
