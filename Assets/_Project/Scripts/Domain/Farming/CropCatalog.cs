@@ -11,7 +11,8 @@ namespace FarmSimulator.Domain.Farming
             string name,
             ItemId seedItemId,
             ItemId harvestItemId,
-            int daysToMature)
+            int daysToMature,
+            int visualStageCount)
         {
             if (string.IsNullOrWhiteSpace(id))
                 throw new ArgumentException("Crop id is required.", nameof(id));
@@ -23,12 +24,15 @@ namespace FarmSimulator.Domain.Farming
                 throw new ArgumentException("Harvest item must belong to the Crop category.", nameof(harvestItemId));
             if (daysToMature < 1)
                 throw new ArgumentOutOfRangeException(nameof(daysToMature), daysToMature, "Days to mature must be at least one.");
+            if (visualStageCount < 2)
+                throw new ArgumentOutOfRangeException(nameof(visualStageCount), visualStageCount, "A crop must provide at least two visual stages.");
 
             Id = id;
             Name = name;
             SeedItemId = seedItemId;
             HarvestItemId = harvestItemId;
             DaysToMature = daysToMature;
+            VisualStageCount = visualStageCount;
         }
 
         public string Id { get; }
@@ -36,12 +40,23 @@ namespace FarmSimulator.Domain.Farming
         public ItemId SeedItemId { get; }
         public ItemId HarvestItemId { get; }
         public int DaysToMature { get; }
+        public int VisualStageCount { get; }
+        public int FinalVisualStage => VisualStageCount - 1;
+
+        public int GetVisualStage(int growthDays)
+        {
+            int clampedGrowthDays = Math.Min(Math.Max(growthDays, 0), DaysToMature);
+            if (clampedGrowthDays >= DaysToMature)
+                return FinalVisualStage;
+
+            return Math.Min(
+                FinalVisualStage - 1,
+                clampedGrowthDays * FinalVisualStage / DaysToMature);
+        }
     }
 
     public static class CropCatalog
     {
-        public const int FinalVisualStage = 5;
-
         private static readonly CropDefinition[] Definitions =
         {
             new CropDefinition(
@@ -49,19 +64,22 @@ namespace FarmSimulator.Domain.Farming
                 "Nabo",
                 ItemId.TurnipSeeds,
                 ItemId.Turnip,
-                daysToMature: 2),
+                daysToMature: 2,
+                visualStageCount: 5),
             new CropDefinition(
                 "potato",
                 "Papa",
                 ItemId.PotatoSeeds,
                 ItemId.Potato,
-                daysToMature: 3),
+                daysToMature: 3,
+                visualStageCount: 6),
             new CropDefinition(
                 "radish",
                 "Rábano",
                 ItemId.RadishSeeds,
                 ItemId.Radish,
-                daysToMature: 4)
+                daysToMature: 4,
+                visualStageCount: 5)
         };
 
         private static readonly Dictionary<ItemId, CropDefinition> BySeed = CreateBySeed();
