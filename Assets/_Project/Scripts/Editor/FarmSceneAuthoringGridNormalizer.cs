@@ -9,15 +9,16 @@ using UnityEngine.SceneManagement;
 namespace FarmSimulator.Editor
 {
     /// <summary>
-    /// Enforces one visual Tilemap authority in Farm:
-    /// Farm World/Farm Authoring Grid.
-    /// Farming systems may own plots and runtime logic, but never a second terrain grid.
+    /// Enforces one visual Tilemap authority in Farm and keeps generated plot
+    /// implementation details out of the normal authoring hierarchy.
     /// </summary>
     [InitializeOnLoad]
     public static class FarmSceneAuthoringGridNormalizer
     {
         private const string FarmWorldName = "Farm World";
         private const string GridName = "Farm Authoring Grid";
+        private const string FieldRootName = "Farm Plot Field";
+        private const string PlotPrefix = "Plot ";
 
         private static bool isRunning;
 
@@ -35,9 +36,9 @@ namespace FarmSimulator.Editor
             EditorUtility.DisplayDialog(
                 "Farm scene cleanup",
                 changed
-                    ? "Duplicate Farm Authoring Grid objects were removed. " +
-                      "The canonical grid under Farm World was preserved."
-                    : "Farm is already clean and uses one canonical authoring grid.",
+                    ? "Farm was normalized. Duplicate terrain grids were removed and " +
+                      "generated plots were hidden from the editor hierarchy."
+                    : "Farm is already clean: one authoring grid and no generated plot clutter.",
                 "OK");
         }
 
@@ -95,36 +96,24 @@ namespace FarmSimulator.Editor
                     return false;
                 }
 
-                Transform[] duplicates = farmWorld
-                    .GetComponentsInChildren<Transform>(true)
-                    .Where(candidate =>
-                        candidate != canonical &&
-                        candidate.name == GridName)
-                    .ToArray();
+                bool changed = RemoveDuplicateGrids(farmWorld.transform, canonical);
+                changed |= HideGeneratedPlots(farmWorld.transform);
 
-                if (duplicates.Length == 0)
+                if (!changed)
                 {
                     return false;
-                }
-
-                foreach (Transform duplicate in duplicates)
-                {
-                    Debug.Log(
-                        "[Farm Scene Cleanup] Removing duplicate terrain grid: " +
-                        GetHierarchyPath(duplicate));
-                    UnityEngine.Object.DestroyImmediate(duplicate.gameObject);
                 }
 
                 EditorSceneManager.MarkSceneDirty(scene);
                 if (!EditorSceneManager.SaveScene(scene, ProjectSceneNames.FarmPath))
                 {
                     throw new InvalidOperationException(
-                        "Unity could not save Farm after removing duplicate authoring grids.");
+                        "Unity could not save Farm after normalizing its hierarchy.");
                 }
 
                 Debug.Log(
-                    $"[Farm Scene Cleanup] Removed {duplicates.Length} duplicate grid(s). " +
-                    "Farm World/Farm Authoring Grid is the only terrain authority.");
+                    "[Farm Scene Cleanup] Farm normalized: one terrain grid and generated " +
+                    "plot objects hidden from the editor hierarchy.");
                 return true;
             }
             finally
@@ -136,6 +125,61 @@ namespace FarmSimulator.Editor
 
                 isRunning = false;
             }
+        }
+
+        private static bool RemoveDuplicateGrids(
+            Transform farmWorld,
+            Transform canonical)
+        {
+            Transform[] duplicates = farmWorld
+                .GetComponentsInChildren<Transform>(true)
+                .Where(candidate =>
+                    candidate != canonical &&
+                    candidate.name == GridName)
+                .ToArray();
+
+            foreach (Transform duplicate in duplicates)
+            {
+                Debug.Log(
+                    "[Farm Scene Cleanup] Removing duplicate terrain grid: " +
+                    GetHierarchyPath(duplicate));
+                UnityEngine.Object.DestroyImmediate(duplicate.gameObject);
+            }
+
+            return duplicates.Length > 0;
+        }
+
+        private static bool HideGeneratedPlots(Transform farmWorld)
+        {
+            Transform fieldRoot = farmWorld
+                .GetComponentsInChildren<Transform>(true)
+                .FirstOrDefault(candidate => candidate.name == FieldRootName);
+            if (fieldRoot == null)
+            {
+                return false;
+            }
+
+            bool changed = false;
+            for (int index = 0; index < fieldRoot.childCount; index++)
+            {
+                GameObject plot = fieldRoot.GetChild(index).gameObject;
+                if (!plot.name.StartsWith(PlotPrefix, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                HideFlags desired = plot.hideFlags | HideFlags.HideInHierarchy;
+                if (plot.hideFlags == desired)
+                {
+                    continue;
+                }
+
+                plot.hideFlags = desired;
+                EditorUtility.SetDirty(plot);
+                changed = true;
+            }
+
+            return changed;
         }
 
         private static Transform FindDirectChild(Transform parent, string name)
