@@ -1,136 +1,66 @@
-using System.Linq;
-using FarmSimulator.Application.Scenes;
-using FarmSimulator.Editor;
 using NUnit.Framework;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace FarmSimulator.Tests.EditMode
 {
     public sealed class CozyInteriorHouseArtTests
     {
-        [Test]
-        public void CuratesHouseSpritesFromImportedInteriorSheets()
+        private static readonly string[] FirstPartySpritePaths =
         {
-            CozyInteriorHouseArtPipeline.EnsureAssets();
+            "Assets/_Project/Art/Placeholder/Source/house_floor.png",
+            "Assets/_Project/Art/Placeholder/Source/house_wall.png",
+            "Assets/_Project/Art/Placeholder/Source/bed_single.png",
+        };
 
-            string[] expected =
-            {
-                "cozy_interior_wall_cream",
-                "cozy_interior_floor_wood",
-                "cozy_interior_door_cream",
-                "cozy_interior_bed_cream",
-                "cozy_interior_rug_warm",
-            };
+        [Test]
+        public void RecoveryProfileUsesFirstPartyInteriorAssets()
+        {
+            SceneRecoveryArtProfile.PrepareFirstPartyArtProfile();
+            SceneRecoveryArtProfile profile = SceneRecoveryArtProfile.LoadOrCreate();
 
-            string[] actual =
-                CozyInteriorHouseArtPipeline.LoadSprites()
-                    .Keys
-                    .OrderBy(name => name)
-                    .ToArray();
+            Assert.That(profile.houseFloorTile, Is.Not.Null);
+            Assert.That(profile.houseWallTile, Is.Not.Null);
+            Assert.That(profile.bedSprite, Is.Not.Null);
 
-            Assert.That(actual, Is.EquivalentTo(expected));
+            Assert.That(
+                AssetDatabase.GetAssetPath(profile.houseFloorTile),
+                Does.StartWith("Assets/_Project/Art/Placeholder/"));
+            Assert.That(
+                AssetDatabase.GetAssetPath(profile.houseWallTile),
+                Does.StartWith("Assets/_Project/Art/Placeholder/"));
+            Assert.That(
+                AssetDatabase.GetAssetPath(profile.bedSprite),
+                Does.StartWith("Assets/_Project/Art/Placeholder/"));
         }
 
         [Test]
-        public void CuratedInteriorSpritesUsePixelArtSettings()
+        public void FirstPartyInteriorSpritesUsePixelArtSettings()
         {
-            string[] paths =
-            {
-                CozyInteriorHouseArtPipeline.WallpapersPath,
-                CozyInteriorHouseArtPipeline.DoorsPath,
-                CozyInteriorHouseArtPipeline.BedsPath,
-                CozyInteriorHouseArtPipeline.RugsPath,
-            };
-
-            CozyInteriorHouseArtPipeline.EnsureAssets();
-
-            foreach (string path in paths)
+            foreach (string path in FirstPartySpritePaths)
             {
                 TextureImporter importer =
                     AssetImporter.GetAtPath(path) as TextureImporter;
-                Assert.That(importer, Is.Not.Null);
-                Assert.That(
-                    importer.spriteImportMode,
-                    Is.EqualTo(SpriteImportMode.Multiple));
-                Assert.That(importer.spritePixelsPerUnit, Is.EqualTo(16f));
-                Assert.That(importer.filterMode, Is.EqualTo(FilterMode.Point));
-                Assert.That(importer.mipmapEnabled, Is.False);
+                Assert.That(importer, Is.Not.Null, path);
+                Assert.That(importer.spriteImportMode, Is.EqualTo(SpriteImportMode.Single), path);
+                Assert.That(importer.spritePixelsPerUnit, Is.EqualTo(16f), path);
+                Assert.That(importer.filterMode, Is.EqualTo(FilterMode.Point), path);
+                Assert.That(importer.mipmapEnabled, Is.False, path);
             }
         }
 
         [Test]
-        public void HouseSceneActuallyUsesCuratedInteriorSprites()
+        public void RecoveryProfileContainsAllRequiredReferences()
         {
-            HouseAndSleepScenePipeline.EnsureScenes();
-            CozyInteriorHouseArtPipeline.EnsureAssets();
+            SceneRecoveryArtProfile.PrepareFirstPartyArtProfile();
+            SceneRecoveryArtProfile profile = SceneRecoveryArtProfile.LoadOrCreate();
 
-            Assert.That(
-                CozyInteriorHouseSceneUpgrader.ApplyToHouseScene(
-                    force: true),
-                Is.True);
-
-            Scene scene = SceneManager.GetSceneByPath(
-                ProjectSceneNames.HouseInteriorPath);
-            bool openedHere = !scene.IsValid() || !scene.isLoaded;
-            if (openedHere)
-            {
-                scene = EditorSceneManager.OpenScene(
-                    ProjectSceneNames.HouseInteriorPath,
-                    OpenSceneMode.Additive);
-            }
-
-            try
-            {
-                Assert.That(
-                    Find(scene, CozyInteriorHouseSceneUpgrader.MarkerName),
-                    Is.Not.Null);
-
-                SpriteRenderer floor = Find(scene, "Wood Floor")
-                    .GetComponentsInChildren<SpriteRenderer>(true)
-                    .First();
-                Assert.That(
-                    floor.sprite.name,
-                    Is.EqualTo("cozy_interior_floor_wood"));
-
-                SpriteRenderer door = Find(scene, "Interior Door")
-                    .GetComponent<SpriteRenderer>();
-                Assert.That(
-                    door.sprite.name,
-                    Is.EqualTo("cozy_interior_door_cream"));
-
-                Transform bedVisual = Find(scene, "Cozy Interior Bed");
-                Assert.That(bedVisual, Is.Not.Null);
-                Assert.That(
-                    bedVisual.GetComponent<SpriteRenderer>().sprite.name,
-                    Is.EqualTo("cozy_interior_bed_cream"));
-            }
-            finally
-            {
-                if (openedHere && scene.IsValid() && scene.isLoaded)
-                {
-                    EditorSceneManager.CloseScene(scene, true);
-                }
-            }
-        }
-
-        private static Transform Find(Scene scene, string objectName)
-        {
-            foreach (GameObject root in scene.GetRootGameObjects())
-            {
-                Transform result = root
-                    .GetComponentsInChildren<Transform>(true)
-                    .FirstOrDefault(
-                        candidate => candidate.name == objectName);
-                if (result != null)
-                {
-                    return result;
-                }
-            }
-
-            return null;
+            Assert.That(profile.farmGroundTile, Is.Not.Null);
+            Assert.That(profile.farmPathTile, Is.Not.Null);
+            Assert.That(profile.farmHouseSprite, Is.Not.Null);
+            Assert.That(profile.houseFloorTile, Is.Not.Null);
+            Assert.That(profile.houseWallTile, Is.Not.Null);
+            Assert.That(profile.bedSprite, Is.Not.Null);
         }
     }
 }
