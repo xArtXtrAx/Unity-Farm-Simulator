@@ -1,5 +1,6 @@
 using System;
 using FarmSimulator.Application.Player;
+using FarmSimulator.Presentation.Farming;
 using FarmSimulator.Presentation.Player;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -39,9 +40,7 @@ namespace FarmSimulator.Presentation.Interaction
             RefreshSelection();
 
             if (ReadInteractionPressed())
-            {
                 TryInteract();
-            }
         }
 
         private void OnDisable()
@@ -60,9 +59,7 @@ namespace FarmSimulator.Presentation.Interaction
             RefreshSelection();
 
             if (selected == null || !selected.CanInteract(gameObject))
-            {
                 return false;
-            }
 
             selected.Interact(gameObject);
             RefreshSelection();
@@ -76,10 +73,10 @@ namespace FarmSimulator.Presentation.Interaction
             Vector2 origin = transform.position;
             Vector2 facing = FacingVector(motor.Facing);
             Vector2 lateralAxis = new Vector2(-facing.y, facing.x);
+            Vector2Int frontCell = CellAt(origin) + Vector2Int.RoundToInt(facing);
 
             InteractableBehaviour[] candidates =
-                FindObjectsByType<InteractableBehaviour>(
-                    FindObjectsSortMode.None);
+                FindObjectsByType<InteractableBehaviour>(FindObjectsSortMode.None);
 
             foreach (InteractableBehaviour candidate in candidates)
             {
@@ -90,22 +87,30 @@ namespace FarmSimulator.Presentation.Interaction
                     continue;
                 }
 
+                if (candidate is FarmPlotBehaviour)
+                {
+                    if (CellAt(candidate.InteractionPosition) != frontCell)
+                        continue;
+
+                    float farmScore = candidate.Priority * 100f;
+                    if (farmScore > bestScore)
+                    {
+                        best = candidate;
+                        bestScore = farmScore;
+                    }
+                    continue;
+                }
+
                 Vector2 delta = candidate.InteractionPosition - origin;
                 float distance = delta.magnitude;
                 if (distance > interactionRange)
-                {
                     continue;
-                }
 
                 float forwardDistance = Vector2.Dot(delta, facing);
-                float sideDistance =
-                    Mathf.Abs(Vector2.Dot(delta, lateralAxis));
+                float sideDistance = Mathf.Abs(Vector2.Dot(delta, lateralAxis));
 
-                if (forwardDistance < -0.05f ||
-                    sideDistance > lateralTolerance)
-                {
+                if (forwardDistance < -0.05f || sideDistance > lateralTolerance)
                     continue;
-                }
 
                 float score =
                     candidate.Priority * 100f -
@@ -114,9 +119,7 @@ namespace FarmSimulator.Presentation.Interaction
                     forwardDistance * 0.05f;
 
                 if (score <= bestScore)
-                {
                     continue;
-                }
 
                 best = candidate;
                 bestScore = score;
@@ -125,18 +128,15 @@ namespace FarmSimulator.Presentation.Interaction
             SetSelected(best);
         }
 
+        public static Vector2Int CellAt(Vector2 worldPosition) =>
+            new Vector2Int(Mathf.FloorToInt(worldPosition.x), Mathf.FloorToInt(worldPosition.y));
+
         private void SetSelected(InteractableBehaviour candidate)
         {
             string prompt = candidate?.InteractionPrompt ?? string.Empty;
 
-            if (selected == candidate &&
-                string.Equals(
-                    selectedPrompt,
-                    prompt,
-                    StringComparison.Ordinal))
-            {
+            if (selected == candidate && string.Equals(selectedPrompt, prompt, StringComparison.Ordinal))
                 return;
-            }
 
             selected = candidate;
             selectedPrompt = prompt;
@@ -154,18 +154,13 @@ namespace FarmSimulator.Presentation.Interaction
         {
             Keyboard keyboard = Keyboard.current;
             if (keyboard != null && keyboard.eKey.wasPressedThisFrame)
-            {
                 return true;
-            }
 
             Gamepad gamepad = Gamepad.current;
             if (gamepad == null && Gamepad.all.Count > 0)
-            {
                 gamepad = Gamepad.all[0];
-            }
 
-            return gamepad != null &&
-                gamepad.buttonSouth.wasPressedThisFrame;
+            return gamepad != null && gamepad.buttonSouth.wasPressedThisFrame;
         }
 
         private static Vector2 FacingVector(FacingDirection direction)
