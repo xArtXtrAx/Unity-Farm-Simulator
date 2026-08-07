@@ -9,9 +9,9 @@ using UnityEngine.SceneManagement;
 namespace FarmSimulator.Editor
 {
     /// <summary>
-    /// Enforces one visual Tilemap authority in Farm:
-    /// Farm World/Farm Authoring Grid.
-    /// Plot entities remain visible because they are gameplay authoring objects.
+    /// Enforces one visual Tilemap authority in Farm while remaining strictly
+    /// editor-only. Automatic normalization must never open or save scenes during
+    /// Play Mode transitions.
     /// </summary>
     [InitializeOnLoad]
     public static class FarmSceneAuthoringGridNormalizer
@@ -22,10 +22,14 @@ namespace FarmSimulator.Editor
         private const string PlotPrefix = "Plot ";
 
         private static bool isRunning;
+        private static bool callbackQueued;
+        private static bool playTransitionActive;
 
         static FarmSceneAuthoringGridNormalizer()
         {
-            EditorApplication.delayCall += EnsureFarmSceneIsClean;
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+            QueueEnsureClean();
         }
 
         [MenuItem(
@@ -33,6 +37,12 @@ namespace FarmSimulator.Editor
             "Normalize Farm Authoring Grid")]
         public static void NormalizeFromMenu()
         {
+            if (!CanAuthorScenes())
+            {
+                Debug.LogWarning("[Farm Scene Cleanup] Scene authoring is unavailable during Play Mode.");
+                return;
+            }
+
             bool changed = NormalizeFarmScene();
             EditorUtility.DisplayDialog(
                 "Farm scene cleanup",
@@ -45,11 +55,18 @@ namespace FarmSimulator.Editor
 
         public static void EnsureFarmSceneIsClean()
         {
+            callbackQueued = false;
+
+            if (!CanAuthorScenes())
+            {
+                return;
+            }
+
             if (isRunning || EditorApplication.isCompiling || EditorApplication.isUpdating)
             {
                 if (!isRunning)
                 {
-                    EditorApplication.delayCall += EnsureFarmSceneIsClean;
+                    QueueEnsureClean();
                 }
 
                 return;
@@ -58,9 +75,50 @@ namespace FarmSimulator.Editor
             NormalizeFarmScene();
         }
 
+        private static void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            switch (state)
+            {
+                case PlayModeStateChange.ExitingEditMode:
+                case PlayModeStateChange.EnteredPlayMode:
+                case PlayModeStateChange.ExitingPlayMode:
+                    playTransitionActive = true;
+                    CancelQueuedCallback();
+                    break;
+                case PlayModeStateChange.EnteredEditMode:
+                    playTransitionActive = false;
+                    QueueEnsureClean();
+                    break;
+            }
+        }
+
+        private static bool CanAuthorScenes() =>
+            !playTransitionActive &&
+            !EditorApplication.isPlaying &&
+            !EditorApplication.isPlayingOrWillChangePlaymode &&
+            !Application.isPlaying;
+
+        private static void QueueEnsureClean()
+        {
+            if (callbackQueued || !CanAuthorScenes())
+            {
+                return;
+            }
+
+            callbackQueued = true;
+            EditorApplication.delayCall += EnsureFarmSceneIsClean;
+        }
+
+        private static void CancelQueuedCallback()
+        {
+            EditorApplication.delayCall -= EnsureFarmSceneIsClean;
+            callbackQueued = false;
+        }
+
         public static bool NormalizeFarmScene()
         {
-            if (isRunning ||
+            if (!CanAuthorScenes() ||
+                isRunning ||
                 AssetDatabase.LoadAssetAtPath<SceneAsset>(ProjectSceneNames.FarmPath) == null)
             {
                 return false;
@@ -74,6 +132,11 @@ namespace FarmSimulator.Editor
             {
                 if (openedHere)
                 {
+                    if (!CanAuthorScenes())
+                    {
+                        return false;
+                    }
+
                     scene = EditorSceneManager.OpenScene(
                         ProjectSceneNames.FarmPath,
                         OpenSceneMode.Additive);
@@ -105,6 +168,11 @@ namespace FarmSimulator.Editor
                     return false;
                 }
 
+                if (!CanAuthorScenes())
+                {
+                    return false;
+                }
+
                 EditorSceneManager.MarkSceneDirty(scene);
                 if (!EditorSceneManager.SaveScene(scene, ProjectSceneNames.FarmPath))
                 {
@@ -118,7 +186,7 @@ namespace FarmSimulator.Editor
             }
             finally
             {
-                if (openedHere && scene.IsValid() && scene.isLoaded)
+                if (openedHere && scene.IsValid() && scene.isLoaded && !Application.isPlaying)
                 {
                     EditorSceneManager.CloseScene(scene, true);
                 }
@@ -208,6 +276,8 @@ namespace FarmSimulator.Editor
 
             return path;
         }
+
+        internal static bool CanScheduleAutomaticAuthoring => CanAuthorScenes();
     }
 
     internal sealed class FarmSceneAuthoringGridCleanupPostprocessor : AssetPostprocessor
@@ -218,13 +288,17 @@ namespace FarmSimulator.Editor
             string[] movedAssets,
             string[] movedFromAssetPaths)
         {
+            if (!FarmSceneAuthoringGridNormalizer.CanScheduleAutomaticAuthoring)
+            {
+                return;
+            }
+
             if (importedAssets.Any(path => string.Equals(
                     path,
                     ProjectSceneNames.FarmPath,
                     StringComparison.Ordinal)))
             {
-                EditorApplication.delayCall +=
-                    FarmSceneAuthoringGridNormalizer.EnsureFarmSceneIsClean;
+                FarmSceneAuthoringGridNormalizer.EnsureFarmSceneIsClean();
             }
         }
     }
