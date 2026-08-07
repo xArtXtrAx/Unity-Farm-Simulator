@@ -27,7 +27,12 @@ namespace FarmSimulator.Editor
         [MenuItem(MenuRoot + "Generate Missing Farm + HouseInterior")]
         public static void GenerateMissingScenes()
         {
-            RunGeneration(replace: false);
+            RunGeneration(replace: false, showDialog: true);
+        }
+
+        public static void GenerateMissingScenesSilently()
+        {
+            RunGeneration(replace: false, showDialog: false);
         }
 
         [MenuItem(MenuRoot + "Replace Farm + HouseInterior (with backup)")]
@@ -43,10 +48,10 @@ namespace FarmSimulator.Editor
                 return;
             }
 
-            RunGeneration(replace: true);
+            RunGeneration(replace: true, showDialog: true);
         }
 
-        private static void RunGeneration(bool replace)
+        private static void RunGeneration(bool replace, bool showDialog)
         {
             SceneRecoveryArtProfile profile =
                 SceneRecoveryArtProfile.LoadOrCreate();
@@ -78,19 +83,27 @@ namespace FarmSimulator.Editor
                 AppendProfileWarnings(profile, messages);
                 string report = string.Join("\n", messages);
                 Debug.Log("Scene Recovery result:\n" + report);
-                EditorUtility.DisplayDialog(
-                    "Scene Recovery",
-                    report,
-                    "OK");
+                if (showDialog)
+                {
+                    EditorUtility.DisplayDialog(
+                        "Scene Recovery",
+                        report,
+                        "OK");
+                }
             }
             catch (Exception exception)
             {
                 Debug.LogException(exception);
-                EditorUtility.DisplayDialog(
-                    "Scene Recovery failed",
-                    exception.Message +
-                    "\n\nSee the Console for the complete stack trace.",
-                    "OK");
+                if (showDialog)
+                {
+                    EditorUtility.DisplayDialog(
+                        "Scene Recovery failed",
+                        exception.Message +
+                        "\n\nSee the Console for the complete stack trace.",
+                        "OK");
+                }
+
+                throw;
             }
         }
 
