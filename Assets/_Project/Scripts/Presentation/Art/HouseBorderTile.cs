@@ -6,7 +6,7 @@ namespace FarmSimulator.Presentation.Art
     /// <summary>
     /// Reuses one first-party wall sprite and rotates it per Tilemap border side.
     /// This keeps HouseInterior recovery deterministic without requiring a
-    /// third-party ruleset or four duplicated wall sprites.
+    /// third-party ruleset or duplicated wall sprites.
     /// </summary>
     [CreateAssetMenu(fileName = "HouseBorderTile", menuName = "Farm Simulator/Tiles/House Border Tile")]
     public sealed class HouseBorderTile : TileBase
@@ -34,43 +34,41 @@ namespace FarmSimulator.Presentation.Art
             tileData.color = color;
             tileData.colliderType = Tile.ColliderType.None;
             tileData.flags = TileFlags.LockColor;
-            tileData.transform = ResolveTransform(position, tilemap);
+
+            Tilemap concreteTilemap = tilemap.GetComponent<Tilemap>();
+            BoundsInt bounds = concreteTilemap != null
+                ? concreteTilemap.cellBounds
+                : new BoundsInt(position, Vector3Int.one);
+            tileData.transform = Matrix4x4.Rotate(
+                Quaternion.Euler(0f, 0f, ResolveRotationDegrees(position, bounds)));
         }
 
-        private static Matrix4x4 ResolveTransform(
+        public static float ResolveRotationDegrees(
             Vector3Int position,
-            ITilemap tilemap)
+            BoundsInt bounds)
         {
-            Tilemap concreteTilemap = tilemap.GetComponent<Tilemap>();
-            if (concreteTilemap == null)
-            {
-                return Matrix4x4.identity;
-            }
-
-            BoundsInt bounds = concreteTilemap.cellBounds;
-            float rotation = 0f;
-
-            // Keep corners aligned with the horizontal runs so the top and
-            // bottom trim remain continuous. Vertical edges are rotated so
-            // the wooden baseboard always faces toward the room interior.
+            // Corners follow the horizontal run so the trim remains continuous.
             if (position.y == bounds.yMax - 1)
             {
-                rotation = 0f;
-            }
-            else if (position.y == bounds.yMin)
-            {
-                rotation = 180f;
-            }
-            else if (position.x == bounds.xMin)
-            {
-                rotation = 90f;
-            }
-            else if (position.x == bounds.xMax - 1)
-            {
-                rotation = -90f;
+                return 0f;
             }
 
-            return Matrix4x4.Rotate(Quaternion.Euler(0f, 0f, rotation));
+            if (position.y == bounds.yMin)
+            {
+                return 180f;
+            }
+
+            if (position.x == bounds.xMin)
+            {
+                return 90f;
+            }
+
+            if (position.x == bounds.xMax - 1)
+            {
+                return -90f;
+            }
+
+            return 0f;
         }
     }
 }
