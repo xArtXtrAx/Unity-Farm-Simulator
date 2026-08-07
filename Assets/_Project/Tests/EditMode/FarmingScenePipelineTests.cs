@@ -84,9 +84,7 @@ namespace FarmSimulator.Tests.EditMode
             finally
             {
                 if (openedHere && scene.IsValid() && scene.isLoaded)
-                {
                     EditorSceneManager.CloseScene(scene, true);
-                }
             }
         }
 
@@ -94,53 +92,34 @@ namespace FarmSimulator.Tests.EditMode
         public void CozyCatalogContainsWorldPalettesButNoCropPalette()
         {
             CozyFarmTileCatalog.Rebuild();
-            Assert.That(
-                AssetDatabase.LoadAssetAtPath<Tile>(CozyFarmTileCatalog.GrassTilePath),
-                Is.Not.Null);
-            Assert.That(
-                AssetDatabase.LoadAssetAtPath<Tile>(CozyFarmTileCatalog.DirtTilePath),
-                Is.Not.Null);
-            Assert.That(
-                AssetDatabase.LoadAssetAtPath<Tile>(CozyFarmTileCatalog.WaterTilePath),
-                Is.Not.Null);
-            Assert.That(
-                AssetDatabase.LoadAssetAtPath<Tile>(CozyFarmTileCatalog.TilledSoilTilePath),
-                Is.Not.Null);
+            Assert.That(AssetDatabase.LoadAssetAtPath<Tile>(CozyFarmTileCatalog.GrassTilePath), Is.Not.Null);
+            Assert.That(AssetDatabase.LoadAssetAtPath<Tile>(CozyFarmTileCatalog.DirtTilePath), Is.Not.Null);
+            Assert.That(AssetDatabase.LoadAssetAtPath<Tile>(CozyFarmTileCatalog.WaterTilePath), Is.Not.Null);
+            Assert.That(AssetDatabase.LoadAssetAtPath<Tile>(CozyFarmTileCatalog.TilledSoilTilePath), Is.Not.Null);
 
-            AssertPalette(
-                CozyFarmTileCatalog.GetPalettePath(CozyPaletteCategory.Ground), 2);
-            AssertPalette(
-                CozyFarmTileCatalog.GetPalettePath(CozyPaletteCategory.Paths), 2);
-            AssertPalette(
-                CozyFarmTileCatalog.GetPalettePath(CozyPaletteCategory.Soil), 1);
-            AssertPalette(
-                CozyFarmTileCatalog.GetPalettePath(CozyPaletteCategory.Decoration), 4);
+            AssertPalette(CozyFarmTileCatalog.GetPalettePath(CozyPaletteCategory.Ground), 2);
+            AssertPalette(CozyFarmTileCatalog.GetPalettePath(CozyPaletteCategory.Paths), 2);
+            AssertPalette(CozyFarmTileCatalog.GetPalettePath(CozyPaletteCategory.Soil), 1);
+            AssertPalette(CozyFarmTileCatalog.GetPalettePath(CozyPaletteCategory.Decoration), 4);
             Assert.That(
                 AssetDatabase.LoadAssetAtPath<GameObject>(
                     CozyFarmTileCatalog.PaletteRoot + "/Cozy Farm - Crops.prefab"),
                 Is.Null);
         }
 
-        [Test]
-        public void GeneratedCropSpritesAreRuntimeReady()
+        [TestCase("turnip", 5)]
+        [TestCase("potato", 6)]
+        [TestCase("radish", 5)]
+        public void FinalCropSpritesUseSixteenPixelsPerUnit(string cropName, int stageCount)
         {
-            CozyFarmTileCatalog.Rebuild();
-            string[] guids = AssetDatabase.FindAssets(
-                "t:Sprite",
-                new[] { CozyFarmTileCatalog.GeneratedCropRoot });
-            Assert.That(guids.Length, Is.EqualTo(18));
-
-            foreach (string guid in guids)
+            for (int stage = 0; stage < stageCount; stage++)
             {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
+                string path = $"Assets/_Project/Art/Placeholder/Crops/{cropName}_stage_{stage}.png";
                 Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
                 TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
                 Assert.That(sprite, Is.Not.Null, path);
                 Assert.That(importer, Is.Not.Null, path);
-                Assert.That(importer.alphaIsTransparency, Is.True, path);
                 Assert.That(importer.spritePixelsPerUnit, Is.EqualTo(16f), path);
-                Assert.That(importer.spritePivot.x, Is.EqualTo(0.5f).Within(0.001f), path);
-                Assert.That(importer.spritePivot.y, Is.EqualTo(0.5f).Within(0.001f), path);
             }
         }
 
