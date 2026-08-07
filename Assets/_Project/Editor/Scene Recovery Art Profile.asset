@@ -16,5 +16,5 @@ MonoBehaviour:
   farmPathTile: {fileID: 11400000, guid: 3089d69571ada4e46bf11e435f6522e8, type: 2}
   farmHouseSprite: {fileID: 21300000, guid: da6766a642795c8429b0db88af67e33f, type: 3}
   houseFloorTile: {fileID: 11400000, guid: 71ab92f6f4d94ca2a0c643355e4d2c10, type: 2}
-  houseWallTile: {fileID: 11400000, guid: 0d39703ee5a24754b0e7e91b29b74e4a, type: 2}
+  houseWallTile: {fileID: 11400000, guid: b9504f1445544a3fa45e12b23d9b1ba1, type: 2}
   bedSprite: {fileID: 21300000, guid: bd56a52432cff4042b2854279bb98b43, type: 3}
