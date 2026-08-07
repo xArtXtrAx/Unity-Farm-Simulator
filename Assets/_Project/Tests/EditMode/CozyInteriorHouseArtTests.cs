@@ -6,6 +6,9 @@ namespace FarmSimulator.Tests.EditMode
 {
     public sealed class CozyInteriorHouseArtTests
     {
+        private const string ProfilePath =
+            "Assets/_Project/Editor/Scene Recovery Art Profile.asset";
+
         private static readonly string[] FirstPartySpritePaths =
         {
             "Assets/_Project/Art/Placeholder/Source/house_floor.png",
@@ -16,21 +19,23 @@ namespace FarmSimulator.Tests.EditMode
         [Test]
         public void RecoveryProfileUsesFirstPartyInteriorAssets()
         {
-            SceneRecoveryArtProfile.PrepareFirstPartyArtProfile();
-            SceneRecoveryArtProfile profile = SceneRecoveryArtProfile.LoadOrCreate();
+            SerializedObject profile = LoadProfile();
+            Object floor = Reference(profile, "houseFloorTile");
+            Object wall = Reference(profile, "houseWallTile");
+            Object bed = Reference(profile, "bedSprite");
 
-            Assert.That(profile.houseFloorTile, Is.Not.Null);
-            Assert.That(profile.houseWallTile, Is.Not.Null);
-            Assert.That(profile.bedSprite, Is.Not.Null);
+            Assert.That(floor, Is.Not.Null);
+            Assert.That(wall, Is.Not.Null);
+            Assert.That(bed, Is.Not.Null);
 
             Assert.That(
-                AssetDatabase.GetAssetPath(profile.houseFloorTile),
+                AssetDatabase.GetAssetPath(floor),
                 Does.StartWith("Assets/_Project/Art/Placeholder/"));
             Assert.That(
-                AssetDatabase.GetAssetPath(profile.houseWallTile),
+                AssetDatabase.GetAssetPath(wall),
                 Does.StartWith("Assets/_Project/Art/Placeholder/"));
             Assert.That(
-                AssetDatabase.GetAssetPath(profile.bedSprite),
+                AssetDatabase.GetAssetPath(bed),
                 Does.StartWith("Assets/_Project/Art/Placeholder/"));
         }
 
@@ -52,15 +57,28 @@ namespace FarmSimulator.Tests.EditMode
         [Test]
         public void RecoveryProfileContainsAllRequiredReferences()
         {
-            SceneRecoveryArtProfile.PrepareFirstPartyArtProfile();
-            SceneRecoveryArtProfile profile = SceneRecoveryArtProfile.LoadOrCreate();
+            SerializedObject profile = LoadProfile();
 
-            Assert.That(profile.farmGroundTile, Is.Not.Null);
-            Assert.That(profile.farmPathTile, Is.Not.Null);
-            Assert.That(profile.farmHouseSprite, Is.Not.Null);
-            Assert.That(profile.houseFloorTile, Is.Not.Null);
-            Assert.That(profile.houseWallTile, Is.Not.Null);
-            Assert.That(profile.bedSprite, Is.Not.Null);
+            Assert.That(Reference(profile, "farmGroundTile"), Is.Not.Null);
+            Assert.That(Reference(profile, "farmPathTile"), Is.Not.Null);
+            Assert.That(Reference(profile, "farmHouseSprite"), Is.Not.Null);
+            Assert.That(Reference(profile, "houseFloorTile"), Is.Not.Null);
+            Assert.That(Reference(profile, "houseWallTile"), Is.Not.Null);
+            Assert.That(Reference(profile, "bedSprite"), Is.Not.Null);
+        }
+
+        private static SerializedObject LoadProfile()
+        {
+            Object asset = AssetDatabase.LoadMainAssetAtPath(ProfilePath);
+            Assert.That(asset, Is.Not.Null, ProfilePath);
+            return new SerializedObject(asset);
+        }
+
+        private static Object Reference(SerializedObject serializedObject, string propertyName)
+        {
+            SerializedProperty property = serializedObject.FindProperty(propertyName);
+            Assert.That(property, Is.Not.Null, propertyName);
+            return property.objectReferenceValue;
         }
     }
 }
