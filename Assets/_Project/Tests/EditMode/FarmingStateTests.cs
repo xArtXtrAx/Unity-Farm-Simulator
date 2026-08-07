@@ -10,7 +10,6 @@ namespace FarmSimulator.Tests.EditMode
         public void UntilledPlotRejectsWaterAndSeeds()
         {
             var plot = new FarmPlotState();
-
             Assert.That(plot.Water(), Is.False);
             Assert.That(plot.Plant(ItemId.TurnipSeeds), Is.False);
             Assert.That(plot.IsTilled, Is.False);
@@ -21,17 +20,14 @@ namespace FarmSimulator.Tests.EditMode
         public void TilledPlotAcceptsWaterAndOneCrop()
         {
             var plot = new FarmPlotState();
-
             Assert.That(plot.Till(), Is.True);
             Assert.That(plot.Till(), Is.False);
             Assert.That(plot.Water(), Is.True);
             Assert.That(plot.Water(), Is.False);
             Assert.That(plot.Plant(ItemId.TurnipSeeds), Is.True);
-            Assert.That(plot.Plant(ItemId.CarrotSeeds), Is.False);
+            Assert.That(plot.Plant(ItemId.PotatoSeeds), Is.False);
             Assert.That(plot.IsWatered, Is.True);
-            Assert.That(
-                plot.SeedItemId,
-                Is.EqualTo(ItemId.TurnipSeeds));
+            Assert.That(plot.SeedItemId, Is.EqualTo(ItemId.TurnipSeeds));
         }
 
         [Test]
@@ -39,14 +35,11 @@ namespace FarmSimulator.Tests.EditMode
         {
             var plot = new FarmPlotState();
             plot.Till();
-            plot.Plant(ItemId.CarrotSeeds);
-
+            plot.Plant(ItemId.PotatoSeeds);
             plot.AdvanceDay();
             Assert.That(plot.GrowthDays, Is.Zero);
-
             plot.Water();
             plot.AdvanceDay();
-
             Assert.That(plot.GrowthDays, Is.EqualTo(1));
             Assert.That(plot.IsWatered, Is.False);
             Assert.That(plot.IsMature, Is.False);
@@ -58,20 +51,14 @@ namespace FarmSimulator.Tests.EditMode
             var plot = new FarmPlotState();
             plot.Till();
             plot.Plant(ItemId.TurnipSeeds);
-
             for (int day = 0; day < 2; day++)
             {
                 plot.Water();
                 plot.AdvanceDay();
             }
-
             Assert.That(plot.IsMature, Is.True);
-            Assert.That(
-                plot.VisualStage,
-                Is.EqualTo(CropCatalog.FinalVisualStage));
-            Assert.That(
-                plot.TryHarvest(out ItemId crop),
-                Is.True);
+            Assert.That(plot.VisualStage, Is.EqualTo(CropCatalog.FinalVisualStage));
+            Assert.That(plot.TryHarvest(out ItemId crop), Is.True);
             Assert.That(crop, Is.EqualTo(ItemId.Turnip));
             Assert.That(plot.HasCrop, Is.False);
             Assert.That(plot.IsTilled, Is.True);
@@ -84,14 +71,11 @@ namespace FarmSimulator.Tests.EditMode
             var farm = new FarmState();
             FarmPlotState first = farm.GetOrCreatePlot("plot-a");
             FarmPlotState second = farm.GetOrCreatePlot("plot-b");
-
             first.Till();
-            first.Plant(ItemId.CabbageSeeds);
+            first.Plant(ItemId.RadishSeeds);
             first.Water();
             second.Till();
-
             int changed = farm.AdvanceDay();
-
             Assert.That(changed, Is.EqualTo(1));
             Assert.That(first.GrowthDays, Is.EqualTo(1));
             Assert.That(second.HasCrop, Is.False);
@@ -102,18 +86,9 @@ namespace FarmSimulator.Tests.EditMode
         [Test]
         public void CropCatalogMapsAllExistingSeeds()
         {
-            Assert.That(
-                CropCatalog.GetBySeed(
-                    ItemId.TurnipSeeds).HarvestItemId,
-                Is.EqualTo(ItemId.Turnip));
-            Assert.That(
-                CropCatalog.GetBySeed(
-                    ItemId.CarrotSeeds).HarvestItemId,
-                Is.EqualTo(ItemId.Carrot));
-            Assert.That(
-                CropCatalog.GetBySeed(
-                    ItemId.CabbageSeeds).HarvestItemId,
-                Is.EqualTo(ItemId.Cabbage));
+            Assert.That(CropCatalog.GetBySeed(ItemId.TurnipSeeds).HarvestItemId, Is.EqualTo(ItemId.Turnip));
+            Assert.That(CropCatalog.GetBySeed(ItemId.PotatoSeeds).HarvestItemId, Is.EqualTo(ItemId.Potato));
+            Assert.That(CropCatalog.GetBySeed(ItemId.RadishSeeds).HarvestItemId, Is.EqualTo(ItemId.Radish));
         }
     }
 }
